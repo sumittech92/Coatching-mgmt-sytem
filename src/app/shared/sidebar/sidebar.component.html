@@ -1,0 +1,61 @@
+<aside class="sidebar-wrapper" [class.mini-sidebar]="getSideBarSate()">
+  <a class="brand" routerLink="/" aria-label="Ageon home"
+    ><span class="brand-mark">a</span><span class="brand-name">ageon<span class="brand-dot">.</span></span></a
+  >
+  <div class="tenant-switcher">
+    <div class="tenant-mark">
+      {{
+        auth.role === "Super Admin"
+          ? "A"
+          : currentPath.startsWith("/shop")
+            ? "A"
+            : tenant.current.businessName.charAt(0)
+      }}
+    </div>
+    <div class="tenant-copy">
+      <small>WORKSPACE</small
+      ><strong>{{
+        auth.role === "Super Admin"
+          ? "Ageon Platform"
+          : currentPath.startsWith("/shop")
+            ? "Atelier & Co."
+            : tenant.current.businessName
+      }}</strong
+      ><span>{{
+        auth.role === "Super Admin"
+          ? "Super administrator"
+          : auth.role === "Student" || auth.role === "Parent"
+            ? auth.role
+            : currentPath.startsWith("/shop")
+              ? "Clothing shop"
+              : tenant.current.businessType === "coaching"
+                ? "Coaching institute"
+                : "Clothing shop"
+      }}</span>
+    </div>
+    <mat-icon>unfold_more</mat-icon>
+  </div>
+  <nav class="sidebar-menu" aria-label="Main navigation">
+    <ng-container *ngFor="let item of navigation">
+      <div
+        class="nav-section"
+        *ngIf="navigation.indexOf(item) === 0 || navigation[navigation.indexOf(item) - 1].section !== item.section"
+      >
+        {{ item.section }}
+      </div>
+      <a
+        class="nav-item"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+        ><mat-icon>{{ item.icon }}</mat-icon
+        ><span>{{ item.label }}</span></a
+      >
+    </ng-container>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="help-icon"><mat-icon>help_outline</mat-icon></div>
+    <div><strong>Need a hand?</strong><small>Visit our help center</small></div>
+    <mat-icon class="footer-arrow">arrow_forward</mat-icon>
+  </div>
+</aside>

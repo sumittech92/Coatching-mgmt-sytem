@@ -1,0 +1,199 @@
+
+<div class="body-title mb-3">
+  <div class="page-title">Dashboard</div>
+</div>
+
+  <div class="row row-cols-1 row-cols-lg-2 row-cols-xxl-4">
+    <div class="col">
+      <mat-card class="rounded-4 flex-fill mb-0 shadow-none border">
+        <mat-card-content>
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="mb-2 text">Pending Requisitions</p>
+              <h4 class="mb-0">9</h4>
+            </div>
+            <div class="">
+              <img src="assets/images/dashboard1.svg" />
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col">
+      <mat-card class="rounded-4">
+        <mat-card-content>
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="mb-2 text">Awaiting pathologist review</p>
+              <h4 class="mb-0">48</h4>
+            </div>
+            <div class="">
+              <img src="assets/images/dashboard2.svg" />
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  
+    <div class="col">
+      <mat-card class="rounded-4">
+        <mat-card-content>
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="mb-2 text">Low Stock items</p>
+              <h4 class="mb-0">2</h4>
+            </div>
+            <div class="">
+              <img src="assets/images/dashboard4.svg" />
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col">
+      <mat-card class="rounded-4">
+        <mat-card-content>
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="mb-2 text">Pending Requisitions</p>
+              <h4 class="mb-0">14</h4>
+            </div>
+            <div class="">
+              <img src="assets/images/dashboard3.svg" />
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+  <!--end row-->
+  
+  <div class="row">
+    <div class="col-7">
+      <mat-card class="rounded-4">
+        <div
+          class="d-flex align-items-center justify-content-between gap-3 py-3 px-3 border-bottom"
+        >
+          <div class="">
+            <h5 class="mb-0">Monthly Procurement Spend Bar</h5>
+          </div>
+        </div>
+        <mat-card-content>
+          <apx-chart
+            [series]="AnalyticsChart5.series"
+            [chart]="AnalyticsChart5.chart"
+            [xaxis]="AnalyticsChart5.xaxis"
+            [title]="AnalyticsChart5.title"
+            [stroke]="AnalyticsChart5.stroke"
+            [colors]="AnalyticsChart5.colors"
+            [fill]="AnalyticsChart5.fill"
+            [legend]="AnalyticsChart5.legend"
+            [dataLabels]="AnalyticsChart5.dataLabels"
+            [markers]="AnalyticsChart5.markers"
+            [grid]="AnalyticsChart5.grid"
+            [tooltip]="AnalyticsChart1.tooltip"
+          >
+          </apx-chart>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-12 col-lg-5">
+      <mat-card class="rounded-4 card">
+        <mat-card-content>
+          <h5 class="mb-3">Statics</h5>
+  
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="mini-stat-card">
+                <p class="mb-1">Pending Requisitions</p>
+                <h4 class="mb-0">9</h4>
+                <img src="assets/images/dashboard1.svg" />
+              </div>
+            </div>
+  
+            <div class="col-6">
+              <div class="mini-stat-card">
+                <p class="mb-1">Awaiting pathologist review</p>
+                <h4 class="mb-0">48</h4>
+                <img src="assets/images/dashboard2.svg" />
+              </div>
+            </div>
+  
+            <div class="col-6">
+              <div class="mini-stat-card">
+                <p class="mb-1">Low Stock items</p>
+                <h4 class="mb-0">2</h4>
+                <img src="assets/images/dashboard4.svg" />
+              </div>
+            </div>
+  
+            <div class="col-6">
+              <div class="mini-stat-card">
+                <p class="mb-1">Pending Requisitions</p>
+                <h4 class="mb-0">14</h4>
+                <img src="assets/images/dashboard3.svg" />
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+  <!--end row-->
+  
+  <!-- <div class="row">
+    <div class="col-7">
+      <mat-card class="rounded-4">
+        <div
+          class="d-flex align-items-center justify-content-between gap-3 py-3 px-3 border-bottom"
+        >
+          <div class="">
+            <h5 class="mb-0">Monthly Procurement Spend Bar</h5>
+          </div>
+        </div>
+        <mat-card-content>
+          <apx-chart
+            [series]="AnalyticsChart6.series"
+            [chart]="AnalyticsChart6.chart"
+            [xaxis]="AnalyticsChart6.xaxis"
+            [title]="AnalyticsChart6.title"
+            [stroke]="AnalyticsChart6.stroke"
+            [colors]="AnalyticsChart6.colors"
+            [fill]="AnalyticsChart6.fill"
+            [legend]="AnalyticsChart5.legend"
+            [dataLabels]="AnalyticsChart6.dataLabels"
+            [markers]="AnalyticsChart6.markers"
+            [grid]="AnalyticsChart6.grid"
+            [tooltip]="AnalyticsChart1.tooltip"
+          >
+          </apx-chart>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-12 col-lg-5 d-flex">
+      <mat-card class="rounded-4 w-100">
+        <mat-card-content>
+          <div class="d-flex align-items-center justify-content-between gap-3">
+            <div class="">
+              <h5 class="mb-0">NABL Compliance Status</h5>
+            </div>
+          </div>
+          <div class="order-status-chart">
+            <apx-chart
+              [series]="AnalyticsChart7.series"
+              [colors]="AnalyticsChart7.colors"
+              [chart]="AnalyticsChart7.chart"
+              [stroke]="AnalyticsChart7.stroke"
+              [legend]="AnalyticsChart7.legend"
+              [labels]="AnalyticsChart7.labels"
+              [dataLabels]="AnalyticsChart7.dataLabels"
+              [plotOptions]="AnalyticsChart7.plotOptions"
+              [tooltip]="AnalyticsChart7.tooltip"
+            >
+            </apx-chart>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div> -->
+  

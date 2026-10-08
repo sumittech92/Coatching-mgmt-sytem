@@ -1,0 +1,3 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+@Component({ selector: 'app-search-toolbar', template: '<div class="row g-2 align-items-center"><div class="col-12 col-md"><mat-form-field appearance="outline" class="w-100"><mat-icon matPrefix>search</mat-icon><input matInput [placeholder]="placeholder" (input)="searchChange.emit($any($event.target).value)"></mat-form-field></div><div class="col-12 col-sm-auto"><ng-content></ng-content></div></div>', styles: [':host{display:block}mat-form-field{font-size:.9rem}'] })
+export class SearchToolbarComponent { @Input() placeholder = 'Search'; @Output() searchChange = new EventEmitter<string>(); }

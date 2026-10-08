@@ -1,0 +1,47 @@
+<div class="dialog">
+    <h5 class="mb-0">Add Department</h5>
+
+    <button mat-icon-button mat-dialog-close>
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <!-- <button class="bg-transparent text-white border-0">X</button> -->
+</div>
+<mat-dialog-content>
+    <div class="p-3">
+
+        <h5 class="text-center mb-4 
+        ">
+            Add New department
+        </h5>
+
+        <!-- Name -->
+        <mat-label>
+            Name
+        </mat-label>
+        <div class="form-group">
+
+
+            <mat-form-field appearance="outline" class="w-100 mb-3">
+
+                <input matInput placeholder="Enter department name">
+            </mat-form-field>
+        </div>
+         <mat-label>
+            Name
+        </mat-label>
+         <div class="form-group">
+        <!-- Code -->
+        <mat-form-field appearance="outline" class="w-100 mb-4">
+            <input matInput placeholder="Enter department code">
+        </mat-form-field>
+</div>
+        <!-- Actions -->
+        <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-danger">Cancel</button>
+            <button type="button" class="btn btn-primary">Save Item</button>
+        </div>
+
+    </div>
+
+</mat-dialog-content>

@@ -1,0 +1,204 @@
+<div class="page-head">
+  <div>
+    <app-breadcrumbs [items]="['Client', 'Attendance']"></app-breadcrumbs>
+    <h1>Attendance</h1>
+    <p>Take a quick register and keep an eye on attendance trends.</p>
+  </div>
+  <div class="view-toggle">
+    <button [class.active]="view === 'daily'" (click)="setView('daily')">Daily view</button
+    ><button [class.active]="view === 'monthly'" (click)="setView('monthly')">Monthly view</button>
+  </div>
+</div>
+<div class="summary-grid">
+  <app-stat-card
+    label="Students in view"
+    [value]="visible.length.toString()"
+    change="Across selected batches"
+    icon="groups"
+  ></app-stat-card
+  ><app-stat-card
+    label="Present today"
+    [value]="present.toString()"
+    change="Present and on time"
+    icon="check_circle_outline"
+  ></app-stat-card
+  ><app-stat-card
+    label="Absent today"
+    [value]="absent.toString()"
+    change="Follow up with families"
+    icon="highlight_off"
+  ></app-stat-card
+  ><app-stat-card
+    label="Average attendance"
+    [value]="average + '%'"
+    change="This month"
+    icon="insights"
+  ></app-stat-card>
+</div>
+<div class="row g-3">
+  <div class="col-12 col-xl-8">
+    <mat-card class="panel-card"
+      ><mat-card-content
+        ><div class="toolbar">
+          <mat-form-field appearance="outline"
+            ><mat-label>Date</mat-label><input matInput type="date" [(ngModel)]="date" /></mat-form-field
+          ><mat-form-field appearance="outline"
+            ><mat-label>Batch</mat-label
+            ><mat-select [(ngModel)]="batch"
+              ><mat-option>All batches</mat-option><mat-option>Physics · Morning</mat-option
+              ><mat-option>Chemistry · Evening</mat-option><mat-option>Mathematics · Morning</mat-option
+              ><mat-option>Foundation · Afternoon</mat-option></mat-select
+            ></mat-form-field
+          ><mat-form-field appearance="outline"
+            ><mat-label>Teacher</mat-label
+            ><mat-select [(ngModel)]="teacher"
+              ><mat-option>All teachers</mat-option><mat-option>Priya Nair</mat-option><mat-option>Ankit Rao</mat-option
+              ><mat-option>Nisha Thomas</mat-option></mat-select
+            ></mat-form-field
+          ><button mat-stroked-button [matMenuTriggerFor]="bulkMenu"><mat-icon>done_all</mat-icon> Mark all</button
+          ><mat-menu #bulkMenu="matMenu"
+            ><button mat-menu-item (click)="markAll('Present')">All present</button
+            ><button mat-menu-item (click)="markAll('Absent')">All absent</button></mat-menu
+          >
+        </div>
+        <div class="register-head">
+          <div>
+            <h2>{{ view === "daily" ? "Daily register" : "Student attendance history" }}</h2>
+            <p>
+              {{
+                view === "daily"
+                  ? "Mark each student present, absent, late or on leave."
+                  : "Tap a student to see their monthly attendance."
+              }}
+            </p>
+          </div>
+          <button mat-flat-button color="primary" *ngIf="view === 'daily'" (click)="save()">Save attendance</button>
+        </div>
+        <div class="attendance-table" *ngIf="view === 'daily'">
+          <div class="table-header"><span>STUDENT</span><span>COURSE & BATCH</span><span>ATTENDANCE</span></div>
+          <div class="student-row" *ngFor="let item of visible">
+            <span class="student-info"
+              ><span class="avatar">{{ item.photo }}</span
+              ><span
+                ><strong>{{ item.name }}</strong
+                ><small>{{ item.id }}</small></span
+              ></span
+            ><span class="batch-copy"
+              ><strong>{{ item.course }}</strong
+              ><small>{{ item.batch }}</small></span
+            ><span class="status-actions"
+              ><button
+                *ngFor="let state of ['Present', 'Absent', 'Late', 'Leave']"
+                [class]="'status-button ' + state.toLowerCase()"
+                [class.selected]="item.status === state"
+                (click)="mark(item, $any(state))"
+              >
+                {{ state }}
+              </button></span
+            >
+          </div>
+        </div>
+        <div class="month-table" *ngIf="view === 'monthly'">
+          <div class="month-grid month-head">
+            <span>STUDENT</span><span *ngFor="let day of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]">{{ day }}</span
+            ><span>RATE</span>
+          </div>
+          <div class="month-grid" *ngFor="let item of visible" (click)="showHistory(item)">
+            <span class="month-student">{{ item.name }}</span
+            ><span
+              *ngFor="let day of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
+              class="day-dot"
+              [class.absent-dot]="day === 3 && item.status === 'Absent'"
+              [class.leave-dot]="day === 6 && item.status === 'Leave'"
+              [class.late-dot]="day === 8 && item.status === 'Late'"
+              >{{
+                day === 3 && item.status === "Absent"
+                  ? "A"
+                  : day === 6 && item.status === "Leave"
+                    ? "L"
+                    : day === 8 && item.status === "Late"
+                      ? "L"
+                      : "P"
+              }}</span
+            ><b>{{ item.percent }}%</b>
+          </div>
+        </div></mat-card-content
+      ></mat-card
+    >
+  </div>
+  <div class="col-12 col-xl-4">
+    <mat-card class="panel-card trend-card"
+      ><mat-card-content
+        ><div class="panel-title">
+          <div>
+            <h2>Monthly attendance</h2>
+            <p>Institute-wide attendance rate</p>
+          </div>
+          <span class="month-select">Sep 2026 <mat-icon>expand_more</mat-icon></span>
+        </div>
+        <div class="trend-summary">
+          <strong>{{ average }}%</strong><app-status-badge label="+2.4%" tone="success"></app-status-badge>
+        </div>
+        <div class="trend-chart">
+          <div class="chart-grid"><i *ngFor="let n of [1, 2, 3, 4]"></i></div>
+          <svg viewBox="0 0 400 150" preserveAspectRatio="none">
+            <path
+              d="M0 92 C35 87 42 48 78 60 S124 86 157 53 S208 70 237 43 S290 55 322 24 S365 42 400 18"
+              fill="none"
+              stroke="#10967d"
+              stroke-width="3"
+            />
+            <path
+              d="M0 115 C38 122 50 92 80 101 S128 115 160 89 S207 112 240 80 S286 99 321 67 S367 82 400 58"
+              fill="none"
+              stroke="#9683d2"
+              stroke-width="2"
+            />
+          </svg>
+          <div class="chart-months">
+            <span>Sep 1</span><span>Sep 7</span><span>Sep 14</span><span>Sep 21</span><span>Sep 28</span>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <span><i class="present-key"></i>Present</span><span><i class="absent-key"></i>Absent</span>
+        </div>
+        <div class="batch-summary">
+          <h3>By batch</h3>
+          <div
+            *ngFor="
+              let item of [
+                { name: 'Physics · Morning', rate: 94 },
+                { name: 'Chemistry · Evening', rate: 89 },
+                { name: 'Foundation · Afternoon', rate: 97 },
+              ]
+            "
+          >
+            <span>{{ item.name }}</span
+            ><strong>{{ item.rate }}%</strong
+            ><mat-progress-bar mode="determinate" [value]="item.rate"></mat-progress-bar>
+          </div></div></mat-card-content></mat-card
+    ><mat-card class="panel-card history-card" *ngIf="history"
+      ><mat-card-content
+        ><div class="panel-title">
+          <h2>Student history</h2>
+          <button mat-icon-button (click)="clearHistory()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="history-profile">
+          <span class="avatar">{{ history.photo }}</span
+          ><span
+            ><strong>{{ history.name }}</strong
+            ><small>{{ history.id }} · September 2026</small></span
+          >
+        </div>
+        <div class="history-stats">
+          <div>
+            <strong>{{ history.percent }}%</strong><small>Attendance</small>
+          </div>
+          <div><strong>21</strong><small>Present days</small></div>
+          <div><strong>2</strong><small>Absent days</small></div>
+        </div>
+        <p class="history-note">Attendance is calculated from marked class days this month.</p></mat-card-content
+      ></mat-card
+    >
+  </div>
+</div>

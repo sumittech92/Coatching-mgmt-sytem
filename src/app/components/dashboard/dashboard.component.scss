@@ -1,0 +1,95 @@
+@mixin alignContent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.widget-icon {
+    @include alignContent ();
+    width: 50px !important;
+    height:50px  !important;
+    background-color: #eee;
+    border-radius: 50%;   
+    font-size: 24px;
+}
+.text{
+    font-size: 16px;
+}
+.mini-stat-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  height: 100%;
+  position: relative;
+}
+
+.mini-stat-card p {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.mini-stat-card img {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+}
+
+.card{
+    height: 93%;
+}
+/* Wrapper – right aligned like SS */
+.date-filter-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+/* Each date block */
+.date-box {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Small label above input */
+.date-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+/* Input size */
+.date-field {
+  width: 190px;
+}
+
+/* Make input slim */
+::ng-deep .date-field .mat-mdc-form-field-flex {
+  height: 36px;
+  align-items: center;
+}
+
+::ng-deep .date-field .mat-mdc-input-element {
+  font-size: 13px;
+  padding: 0 8px;
+}
+
+/* Calendar icon size */
+::ng-deep .date-field .mat-mdc-icon-button {
+  width: 36px;
+  height: 36px;
+}
+
+/* Export button */
+.export-btn {
+     height: 53px;
+    padding: 0px 31px;
+    font-size: 13px;
+    background: #0f172a !important;
+    color: #fff !important;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+label#mat-mdc-form-field-label-2 {
+    top: 16px !important;
+}

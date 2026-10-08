@@ -1,0 +1,3 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+@Component({ selector: 'app-form-field', template: '<mat-form-field appearance="outline" class="w-100"><mat-label>{{label}}</mat-label><input matInput [type]="type" [placeholder]="placeholder" [value]="value" [required]="required" [disabled]="disabled" (input)="valueChange.emit($any($event.target).value)"><mat-hint *ngIf="hint">{{hint}}</mat-hint></mat-form-field>' })
+export class FormFieldComponent { @Input() label = ''; @Input() placeholder = ''; @Input() value = ''; @Input() type = 'text'; @Input() hint = ''; @Input() required = false; @Input() disabled = false; @Output() valueChange = new EventEmitter<string>(); }

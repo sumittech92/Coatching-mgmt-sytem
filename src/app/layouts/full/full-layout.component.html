@@ -1,0 +1,4 @@
+<app-header></app-header>
+<app-sidebar></app-sidebar>
+<main class="main-content"><router-outlet></router-outlet></main>
+<div class="mobile-overlay" [class.show]="getSideBarState()" (click)="toggleSidebar()"></div>

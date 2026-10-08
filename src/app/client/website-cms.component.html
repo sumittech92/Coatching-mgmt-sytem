@@ -1,0 +1,392 @@
+<div class="cms-page">
+  <div class="cms-heading">
+    <div>
+      <app-breadcrumbs [items]="['Client', 'Website']"></app-breadcrumbs>
+      <h1>Website management</h1>
+      <p>Shape the public website for Northstar Academy.</p>
+    </div>
+    <div class="heading-actions">
+      <button mat-stroked-button (click)="preview()"><mat-icon>open_in_new</mat-icon> Preview website</button
+      ><button mat-flat-button color="primary" (click)="save()">
+        <mat-icon>{{ saving ? "sync" : "save" }}</mat-icon
+        >{{ saving ? "Saving…" : "Save changes" }}
+      </button>
+    </div>
+  </div>
+  <div class="save-message" *ngIf="saved">
+    <mat-icon>check_circle</mat-icon>Your website changes are saved in this demo.
+  </div>
+  <div class="cms-layout">
+    <aside class="cms-nav">
+      <div class="cms-nav-title">WEBSITE CONTENT</div>
+      <button
+        *ngFor="let section of sections"
+        [class.active]="activeSection === section.key"
+        (click)="activeSection = section.key"
+      >
+        <mat-icon>{{ section.icon }}</mat-icon
+        >{{ section.label }}<mat-icon class="nav-arrow">chevron_right</mat-icon>
+      </button>
+      <div class="website-status">
+        <span class="live-dot"></span
+        ><span><strong>Website is live</strong><small>northstar-academy.ageon.site</small></span>
+      </div>
+    </aside>
+    <main class="cms-content">
+      <header class="content-heading">
+        <div>
+          <span class="content-eyebrow">EDITING SECTION</span>
+          <h2>{{ activeLabel }}</h2>
+        </div>
+        <span class="autosave"><mat-icon>cloud_done</mat-icon>Saved just now</span>
+      </header>
+      <section *ngIf="activeSection === 'settings'">
+        <mat-card class="cms-card"
+          ><mat-card-content
+            ><div class="section-intro">
+              <span class="section-icon"><mat-icon>tune</mat-icon></span>
+              <div>
+                <h3>Brand & contact information</h3>
+                <p>These details appear throughout your public website.</p>
+              </div>
+            </div>
+            <form (ngSubmit)="save()">
+              <div class="brand-uploads">
+                <div class="upload-preview logo-preview">
+                  <img [src]="profile.settings['logo']" alt="Institute logo preview" /><label
+                    >Change logo<input type="file" accept="image/*" (change)="upload('logo', $event)"
+                  /></label>
+                </div>
+                <div class="upload-preview favicon-preview">
+                  <span>F</span
+                  ><label>Favicon<input type="file" accept="image/*" (change)="upload('favicon', $event)" /></label
+                  ><small>Square image, at least 32 × 32 px</small>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="field-label">Institute name</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="instituteName" [(ngModel)]="profile.settings['name']" required
+                  /></mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Phone</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="phone" [(ngModel)]="profile.settings['phone']"
+                  /></mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Email</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="email" type="email" [(ngModel)]="profile.settings['email']"
+                  /></mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">WhatsApp number</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="whatsapp" [(ngModel)]="profile.settings['whatsapp']"
+                  /></mat-form-field>
+                </div>
+                <div class="col-12">
+                  <label class="field-label">Address</label
+                  ><mat-form-field appearance="outline" class="w-100">
+                    <textarea matInput name="address" rows="2" [(ngModel)]="profile.settings['address']"></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Primary color</label>
+                  <div class="color-control">
+                    <input type="color" name="primary" [(ngModel)]="profile.settings['primary']" /><span>{{
+                      profile.settings["primary"]
+                    }}</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Secondary color</label>
+                  <div class="color-control">
+                    <input type="color" name="secondary" [(ngModel)]="profile.settings['secondary']" /><span>{{
+                      profile.settings["secondary"]
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-footer">
+                <span>Changes update your public website preview.</span
+                ><button mat-flat-button color="primary" type="submit">Save settings</button>
+              </div>
+            </form></mat-card-content
+          ></mat-card
+        >
+      </section>
+      <section *ngIf="activeSection === 'home'">
+        <mat-card class="cms-card"
+          ><mat-card-content
+            ><div class="section-intro">
+              <span class="section-icon"><mat-icon>home</mat-icon></span>
+              <div>
+                <h3>Homepage hero</h3>
+                <p>Set the first impression visitors see on your website.</p>
+              </div>
+            </div>
+            <form (ngSubmit)="save()">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="field-label">Hero title</label
+                  ><mat-form-field appearance="outline" class="w-100">
+                    <textarea matInput rows="2" name="heroTitle" [(ngModel)]="profile.home['title']"></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="col-12">
+                  <label class="field-label">Hero subtitle</label
+                  ><mat-form-field appearance="outline" class="w-100">
+                    <textarea matInput rows="3" name="heroSubtitle" [(ngModel)]="profile.home['subtitle']"></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">CTA text</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="ctaText" [(ngModel)]="profile.home['ctaText']"
+                  /></mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">CTA link</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="ctaLink" [(ngModel)]="profile.home['ctaLink']"
+                  /></mat-form-field>
+                </div>
+                <div class="col-12">
+                  <label class="field-label">Hero image</label>
+                  <div class="hero-upload">
+                    <img [src]="profile.home['image']" alt="Homepage hero preview" /><label mat-stroked-button
+                      >Change image<input type="file" accept="image/*" (change)="upload('image', $event)"
+                    /></label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-footer">
+                <span>Tip: keep your hero text clear and welcoming.</span
+                ><button mat-flat-button color="primary" type="submit">Save homepage</button>
+              </div>
+            </form></mat-card-content
+          ></mat-card
+        >
+      </section>
+      <section *ngIf="activeSection === 'about'">
+        <mat-card class="cms-card"
+          ><mat-card-content
+            ><div class="section-intro">
+              <span class="section-icon"><mat-icon>info_outline</mat-icon></span>
+              <div>
+                <h3>Your institute story</h3>
+                <p>Help families understand what makes Northstar special.</p>
+              </div>
+            </div>
+            <form (ngSubmit)="save()">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="field-label">Description</label
+                  ><mat-form-field appearance="outline" class="w-100">
+                    <textarea
+                      matInput
+                      rows="4"
+                      name="description"
+                      [(ngModel)]="profile.about['description']"
+                    ></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Mission</label
+                  ><mat-form-field appearance="outline" class="w-100">
+                    <textarea matInput rows="3" name="mission" [(ngModel)]="profile.about['mission']"></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Vision</label
+                  ><mat-form-field appearance="outline" class="w-100">
+                    <textarea matInput rows="3" name="vision" [(ngModel)]="profile.about['vision']"></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Experience</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="experience" [(ngModel)]="profile.about['experience']"
+                  /></mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Statistics</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="statistics" [(ngModel)]="profile.about['statistics']"
+                  /></mat-form-field>
+                </div>
+              </div>
+              <div class="form-footer">
+                <span>Share your purpose and experience with visitors.</span
+                ><button mat-flat-button color="primary" type="submit">Save about section</button>
+              </div>
+            </form></mat-card-content
+          ></mat-card
+        >
+      </section>
+      <section *ngIf="['courses', 'faculty', 'results', 'gallery', 'updates'].includes(activeSection)">
+        <div class="collection-toolbar">
+          <div>
+            <span class="collection-count">{{ profile[activeSection].length }} {{ activeSection }}</span>
+            <p>Choose what visitors can see on your website.</p>
+          </div>
+          <button mat-flat-button color="primary" (click)="editCollection($any(activeSection))">
+            <mat-icon>add</mat-icon>Add {{ activeSection === "faculty" ? "faculty" : activeSection.slice(0, -1) }}
+          </button>
+        </div>
+        <div class="cms-collection-grid">
+          <mat-card class="collection-card" *ngFor="let row of profile[$any(activeSection)]"
+            ><mat-card-content
+              ><div class="collection-title">
+                <span class="collection-icon"
+                  ><mat-icon>{{
+                    activeSection === "courses"
+                      ? "menu_book"
+                      : activeSection === "faculty"
+                        ? "school"
+                        : activeSection === "results"
+                          ? "emoji_events"
+                          : activeSection === "gallery"
+                            ? "photo_library"
+                            : "campaign"
+                  }}</mat-icon></span
+                ><button mat-icon-button [matMenuTriggerFor]="itemMenu"><mat-icon>more_horiz</mat-icon></button
+                ><mat-menu #itemMenu="matMenu"
+                  ><button mat-menu-item (click)="editCollection($any(activeSection), row)">
+                    <mat-icon>edit</mat-icon>Edit</button
+                  ><button mat-menu-item (click)="toggle(row)">
+                    <mat-icon>visibility</mat-icon>{{ row["status"] === "Published" ? "Unpublish" : "Publish" }}</button
+                  ><button mat-menu-item (click)="remove($any(activeSection), row)">
+                    <mat-icon>delete_outline</mat-icon>Remove
+                  </button></mat-menu
+                >
+              </div>
+              <strong>{{ row["name"] || row["title"] }}</strong>
+              <p>
+                {{ row["description"] || row["qualification"] || row["achievement"] || row["date"] || row["subjects"] }}
+              </p>
+              <div class="collection-bottom">
+                <app-status-badge
+                  [label]="row['status']"
+                  [tone]="row['status'] === 'Published' ? 'success' : 'neutral'"
+                ></app-status-badge
+                ><small>{{ row["fee"] || row["experience"] || row["score"] || row["date"] || row["type"] }}</small>
+              </div></mat-card-content
+            ></mat-card
+          >
+        </div>
+      </section>
+      <section *ngIf="activeSection === 'contact'">
+        <mat-card class="cms-card"
+          ><mat-card-content
+            ><div class="section-intro">
+              <span class="section-icon"><mat-icon>location_on</mat-icon></span>
+              <div>
+                <h3>Help families find you</h3>
+                <p>Your contact details and map location appear on the Contact page.</p>
+              </div>
+            </div>
+            <form (ngSubmit)="save()">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="field-label">Phone</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="contactPhone" [(ngModel)]="profile.contact['phone']"
+                  /></mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Email</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="contactEmail" [(ngModel)]="profile.contact['email']"
+                  /></mat-form-field>
+                </div>
+                <div class="col-12">
+                  <label class="field-label">Address</label
+                  ><mat-form-field appearance="outline" class="w-100">
+                    <textarea
+                      matInput
+                      rows="2"
+                      name="contactAddress"
+                      [(ngModel)]="profile.contact['address']"
+                    ></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">WhatsApp number</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="contactWhatsapp" [(ngModel)]="profile.contact['whatsapp']"
+                  /></mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <label class="field-label">Google Map link</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input matInput name="mapLink" [(ngModel)]="profile.contact['map']"
+                  /></mat-form-field>
+                </div>
+              </div>
+              <div class="map-placeholder">
+                <mat-icon>map</mat-icon
+                ><span
+                  ><strong>Map preview placeholder</strong
+                  ><small>Visitors will find an interactive map on your public contact page.</small></span
+                >
+              </div>
+              <div class="form-footer">
+                <span>Social profiles are managed in the Social Links section.</span
+                ><button mat-flat-button color="primary" type="submit">Save contact details</button>
+              </div>
+            </form></mat-card-content
+          ></mat-card
+        >
+      </section>
+      <section *ngIf="activeSection === 'social'">
+        <mat-card class="cms-card"
+          ><mat-card-content
+            ><div class="section-intro">
+              <span class="section-icon"><mat-icon>share</mat-icon></span>
+              <div>
+                <h3>Connect your community</h3>
+                <p>Add your social profiles to help families follow along.</p>
+              </div>
+            </div>
+            <form (ngSubmit)="save()">
+              <div
+                class="social-field"
+                *ngFor="
+                  let item of [
+                    { key: 'instagram', label: 'Instagram', icon: 'photo_camera' },
+                    { key: 'facebook', label: 'Facebook', icon: 'facebook' },
+                    { key: 'youtube', label: 'YouTube', icon: 'smart_display' },
+                    { key: 'linkedin', label: 'LinkedIn', icon: 'work' },
+                  ]
+                "
+              >
+                <span class="social-icon"
+                  ><mat-icon>{{ item.icon }}</mat-icon></span
+                >
+                <div class="social-input">
+                  <label class="field-label">{{ item.label }} URL</label
+                  ><mat-form-field appearance="outline" class="w-100"
+                    ><input
+                      matInput
+                      [name]="item.key"
+                      [(ngModel)]="profile.social[item.key]"
+                      [placeholder]="'https://' + item.key + '.com/your-page'"
+                  /></mat-form-field>
+                </div>
+              </div>
+              <div class="form-footer">
+                <span>Only links you add will appear on the website.</span
+                ><button mat-flat-button color="primary" type="submit">Save social links</button>
+              </div>
+            </form></mat-card-content
+          ></mat-card
+        >
+      </section>
+    </main>
+  </div>
+</div>

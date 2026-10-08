@@ -1,0 +1,3 @@
+import { Component, Input } from '@angular/core';
+@Component({ selector: 'app-status-badge', template: '<span class="badge rounded-pill" [ngClass]="tone">{{ label }}</span>', styles: [':host{display:inline-block}.badge{font-size:.72rem;font-weight:600;padding:.45rem .65rem}.success{background:#e4f6ef;color:#17805f}.warning{background:#fff3d9;color:#9d6b00}.danger{background:#ffebeb;color:#b84040}.neutral{background:#edf1f6;color:#617084}.info{background:#e8f1ff;color:#3468ad}'] })
+export class StatusBadgeComponent { @Input() label = 'Active'; @Input() tone: 'success'|'warning'|'danger'|'neutral'|'info' = 'success'; }

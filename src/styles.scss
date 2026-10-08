@@ -1,0 +1,165 @@
+
+:root{
+    --button:linear-gradient(101.09deg, #00B19D 0.68%, #044C44 108.62%);
+    --delete-btn:#FF383C;
+    --bg-color:linear-gradient(101.09deg, #00B19D 0.68%, #044C44 108.62%);
+    --title-green:#01a996 ;
+
+
+}
+
+
+
+body {
+    height: auto;
+    font-family: "Poppins", sans-serif !important;
+}
+.title-green{
+    color: var(--title-green);
+}
+.auth-box {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-login{
+    background: var(--button) !important;
+    border-radius: 8px !important;
+    line-height: 2.005 !important;
+    font-size: 16px !important;
+    color: #fff !important;
+    border: none !important;
+}
+.login-bg-left {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.login-bg-right {
+    height: 100vh;
+    display: flex;
+}
+
+.login-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(13, 20, 37, 1);
+    z-index: -1;
+    width: 50%;
+}
+.login-card {
+    max-width: 570px;
+    width: 100%;
+    margin: auto;
+}
+.login-bg-left img{
+    width: 50%;
+}
+
+mat-label {
+    color: #666;
+    font-size: 16px;
+    line-height: 2.2;
+}
+
+.auth-box {
+    min-height: 100vh;
+}
+.page-title {
+    font-size: 23px;
+    font-weight: 400;
+    color: #000;
+}
+
+.login-separater {
+    span {
+        position: relative;
+        top: 26px;
+        margin-top: -10px;
+        background-color: #fff;
+        padding: 5px;
+        font-size: 13px;
+        color: #949494;
+        z-index: 1;
+    }
+}
+
+
+/* Logo */
+.login-logo {
+    margin-bottom: 30px;
+    margin: auto;
+}
+.account {
+    font-size: 15px;
+}
+
+/* Background */
+.login-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:var(--bg-color);
+}
+
+.text {
+    color: #000;
+    font-size: 16px;
+}
+
+.light_mode .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-floating-label {
+    top: 19px !important;
+}
+
+.mat-mdc-form-field-subscript-wrapper {
+    display: none !important;
+}
+
+
+.light_mode .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.light_mode .mat-mdc-form-field-infix {
+    min-height: 45px;
+}
+
+
+
+
+/* Shared visual rhythm for workspace panels. */
+:root { --ui-ink:#263b32; --ui-muted:#75847b; --ui-border:#e5ebe6; --ui-surface:#fff; --ui-canvas:#f7f8f6; --ui-accent:#247653; }
+body { color:var(--ui-ink); font-size:14px; line-height:1.5; background:var(--ui-canvas); }
+.main-content { min-width:0; overflow-x:hidden; }
+.mat-mdc-card { border-color:var(--ui-border); border-radius:14px; box-shadow:0 5px 20px #203b3208; }
+.mat-mdc-form-field { min-width:0; }
+.mat-mdc-text-field-wrapper { border-radius:9px; }
+.mat-mdc-raised-button,.mat-mdc-unelevated-button,.mat-mdc-outlined-button { min-height:40px; border-radius:9px!important; font-weight:600; }
+.mat-mdc-icon-button { border-radius:9px; }
+.table-responsive { max-width:100%; overscroll-behavior-x:contain; }
+.table { --bs-table-bg:transparent; }
+.table thead th { color:#75847b; font-size:11px; font-weight:700; letter-spacing:.04em; }
+.table tbody td { color:#526158; font-size:13px; }
+@media(max-width:600px) {
+  .main-content { padding-left:14px; padding-right:14px; }
+  .mat-mdc-card-content { padding-left:15px; padding-right:15px; }
+  .mat-mdc-raised-button,.mat-mdc-unelevated-button,.mat-mdc-outlined-button { min-height:42px; }
+}
+
+.public-site .login-cta{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 15px;margin-left:auto;border:1px solid #dce5dc;border-radius:8px;color:var(--deep);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}
+.public-site .login-cta:hover{border-color:var(--brand);color:var(--brand)}
+@media(max-width:800px){.public-site .login-cta{margin-left:auto;margin-right:7px;min-height:38px;padding:0 12px;font-size:12px}}
+@media(max-width:520px){.public-site .login-cta{padding:0 10px;min-height:36px}}
+
+.public-site .map-card iframe{display:block;width:100%;height:300px;border:0;border-radius:8px}
+.public-site .map-card>a{display:inline-block;margin:10px 3px 2px;color:var(--brand);font-size:14px;font-weight:600;text-decoration:underline}
+.public-site .contact-details article p a{color:inherit;text-decoration:none}
+.public-site .contact-details article p a:hover{color:var(--brand);text-decoration:underline}
+.public-site .hero-copy>p,.public-site .inner-hero>p,.public-site .intro-grid p,.public-site .about-split p,.public-site .public-course p,.public-site .course-detail-card>p,.public-site .public-feed p{font-size:15px;line-height:1.7}
+.public-site .section-kicker,.public-site .hero-kicker{font-size:12px;letter-spacing:1px}
+.public-site .course-meta,.public-site .course-detail-line small,.public-site .teacher-subject,.public-site .contact-details article small{font-size:11px;letter-spacing:.3px}
+.public-site .course-bottom strong,.public-site .course-bottom button,.public-site .faculty-page-grid p,.public-site .faculty-page-grid article>small,.public-site .public-gallery-grid figcaption,.public-site .public-feed small,.public-site .contact-details article p{font-size:14px}
+@media(max-width:600px){.public-site .map-card iframe{height:240px}}
