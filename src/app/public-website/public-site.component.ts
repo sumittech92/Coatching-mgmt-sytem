@@ -3,6 +3,7 @@ import { NavigationEnd, Router, ActivatedRoute } from "@angular/router";
 import { filter } from "rxjs/operators";
 import { WebsiteContentService } from "../core/website-content.service";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
+import { TenantContextService } from "../core/tenant-context.service";
 @Component({
   selector: "app-public-site",
   templateUrl: "./public-site.component.html",
@@ -15,7 +16,7 @@ export class PublicSiteComponent {
   section = "home";
   submitted = false;
   inquiry = { name: "", parent: "", phone: "", course: "", message: "" };
-  readonly nav = [
+  private readonly baseNav = [
     { key: "home", label: "Home" },
     { key: "about", label: "About" },
     { key: "courses", label: "Classes" },
@@ -31,13 +32,15 @@ export class PublicSiteComponent {
     private router: Router,
     route: ActivatedRoute,
     sanitizer: DomSanitizer,
+    tenant: TenantContextService,
   ) {
+    this.slug = route.snapshot.paramMap.get("slug") || this.slug;
+    tenant.setBusinessType(this.slug === 'greenfield-college' ? 'college' : 'coaching');
     const address = content.publicProfile.contact["address"];
     this.mapEmbedUrl = sanitizer.bypassSecurityTrustResourceUrl(
       "https://maps.google.com/maps?q=" + encodeURIComponent(address) + "&output=embed",
     );
     this.mapDirectionsUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(address);
-    this.slug = route.snapshot.paramMap.get("slug") || this.slug;
     this.updateSection(router.url);
     router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
@@ -46,6 +49,9 @@ export class PublicSiteComponent {
   get profile() {
     return this.content.publicProfile;
   }
+  get isCollege(): boolean { return this.slug === 'greenfield-college'; }
+  get nav() { return this.isCollege ? this.baseNav.map(item => item.key === 'courses' ? { ...item, label: 'Programs' } : item.key === 'faculty' ? { ...item, label: 'Faculty' } : item) : this.baseNav; }
+  get learningLabel(): string { return this.isCollege ? 'program' : 'class'; }
   get instituteName(): string {
     return this.profile.settings["name"];
   }
@@ -61,7 +67,7 @@ export class PublicSiteComponent {
     else this.go(section);
   }
   submitInquiry(): void {
-    if (!this.inquiry.name.trim() || !this.inquiry.parent.trim() || !this.inquiry.phone.trim() || !this.inquiry.course)
+    if (!this.inquiry.name.trim() || (!this.isCollege && !this.inquiry.parent.trim()) || !this.inquiry.phone.trim() || !this.inquiry.course)
       return;
     this.submitted = true;
   }
@@ -70,4 +76,4 @@ export class PublicSiteComponent {
     this.section = parts.length > 2 ? parts[2] : "home";
   }
 }
-  
+

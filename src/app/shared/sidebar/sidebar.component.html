@@ -5,7 +5,7 @@
   <div class="tenant-switcher">
     <div class="tenant-mark">
       {{
-        auth.role === "Super Admin"
+        currentPath.startsWith("/super-admin")
           ? "A"
           : currentPath.startsWith("/shop")
             ? "A"
@@ -15,14 +15,14 @@
     <div class="tenant-copy">
       <small>WORKSPACE</small
       ><strong>{{
-        auth.role === "Super Admin"
+        currentPath.startsWith("/super-admin")
           ? "Ageon Platform"
           : currentPath.startsWith("/shop")
             ? "Atelier & Co."
             : tenant.current.businessName
       }}</strong
       ><span>{{
-        auth.role === "Super Admin"
+        currentPath.startsWith("/super-admin")
           ? "Super administrator"
           : auth.role === "Student" || auth.role === "Parent"
             ? auth.role
@@ -30,7 +30,9 @@
               ? "Clothing shop"
               : tenant.current.businessType === "coaching"
                 ? "Coaching institute"
-                : "Clothing shop"
+                : tenant.current.businessType === "college"
+                  ? "College"
+                  : "Clothing shop"
       }}</span>
     </div>
     <mat-icon>unfold_more</mat-icon>

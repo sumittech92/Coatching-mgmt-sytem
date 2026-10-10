@@ -3,7 +3,7 @@
     <div>
       <app-breadcrumbs [items]="['Client', 'Website']"></app-breadcrumbs>
       <h1>Website management</h1>
-      <p>Shape the public website for Northstar Academy.</p>
+      <p>Shape the public website for {{profile.settings['name']}}.</p>
     </div>
     <div class="heading-actions">
       <button mat-stroked-button (click)="preview()"><mat-icon>open_in_new</mat-icon> Preview website</button
@@ -29,7 +29,7 @@
       </button>
       <div class="website-status">
         <span class="live-dot"></span
-        ><span><strong>Website is live</strong><small>northstar-academy.ageon.site</small></span>
+        ><span><strong>Website is live</strong><small>{{isCollege ? 'greenfield-college' : 'northstar-academy'}}.ageon.site</small></span>
       </div>
     </aside>
     <main class="cms-content">

@@ -1,4 +1,4 @@
-export type BusinessType = 'coaching' | 'clothing';
+export type BusinessType = 'coaching' | 'college' | 'clothing';
 
 export interface TenantContext {
   businessType: BusinessType;

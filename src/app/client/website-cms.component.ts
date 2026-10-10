@@ -2,16 +2,19 @@ import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmationDialogService } from '../core/confirmation-dialog.service';
 import { WebsiteContentService } from '../core/website-content.service';
+import { TenantContextService } from '../core/tenant-context.service';
 import { RecordDialogComponent, RecordField } from './management/record-dialog.component';
 
 interface Section { key: string; label: string; icon: string; }
 @Component({ selector: 'app-website-cms', templateUrl: './website-cms.component.html', styleUrls: ['./website-cms.component.scss'] })
 export class WebsiteCmsComponent {
-  readonly sections: Section[] = [
+  private readonly baseSections: Section[] = [
     { key: 'settings', label: 'Website Settings', icon: 'settings' }, { key: 'home', label: 'Home', icon: 'home' }, { key: 'about', label: 'About', icon: 'info_outline' }, { key: 'courses', label: 'Courses', icon: 'menu_book' }, { key: 'faculty', label: 'Faculty', icon: 'school' }, { key: 'results', label: 'Results', icon: 'emoji_events' }, { key: 'gallery', label: 'Gallery', icon: 'photo_library' }, { key: 'updates', label: 'Updates', icon: 'campaign' }, { key: 'contact', label: 'Contact', icon: 'location_on' }, { key: 'social', label: 'Social Links', icon: 'share' }
   ];
   activeSection = 'settings'; saving = false; saved = false;
-  constructor(public content: WebsiteContentService, private dialog: MatDialog, private confirm: ConfirmationDialogService) {}
+  constructor(public content: WebsiteContentService, private dialog: MatDialog, private confirm: ConfirmationDialogService, private tenant: TenantContextService) {}
+  get isCollege(): boolean { return this.tenant.current.businessType === 'college'; }
+  get sections(): Section[] { return this.isCollege ? this.baseSections.map(item => item.key === 'courses' ? { ...item, label: 'Programs' } : item.key === 'faculty' ? { ...item, label: 'Faculty' } : item) : this.baseSections; }
   get profile() { return this.content.profile; }
   get activeLabel(): string { return this.sections.find(item => item.key === this.activeSection)?.label || 'Website Settings'; }
   editCollection(key: 'courses'|'faculty'|'results'|'gallery'|'updates', row?: Record<string, string>): void {
@@ -29,5 +32,5 @@ export class WebsiteCmsComponent {
   toggle(row: Record<string,string>): void { row['status']=row['status']=='Published'?'Draft':'Published'; }
   save(): void { this.saving=true;this.saved=false;window.setTimeout(()=>{this.saving=false;this.saved=true;window.setTimeout(()=>this.saved=false,2500);},450); }
   upload(key: 'logo'|'favicon'|'image',event: Event): void { const file=(event.target as HTMLInputElement).files?.[0];if(!file)return;const url=URL.createObjectURL(file);if(key==='image')this.profile.home['image']=url;else this.profile.settings[key]=url; }
-  preview(): void { window.open('/site/northstar-academy','_blank','noopener'); }
+  preview(): void { window.open(this.isCollege ? '/site/greenfield-college' : '/site/northstar-academy','_blank','noopener'); }
 }

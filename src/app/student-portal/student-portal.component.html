@@ -1,10 +1,353 @@
-<div class="portal-shell"><aside class="portal-sidebar" [class.mobile-open]="menuOpen"><a class="portal-brand" routerLink="/student/dashboard"><span>a</span> ageon</a><div class="student-card"><img [src]="isParent ? 'assets/images/avatars/avatar-4.png' : 'assets/images/avatars/avatar-3.png'" [alt]="displayName"><span><strong>{{displayName}}</strong><small>{{isParent ? 'Parent of Aarav' : 'Student'}} · NS-2401</small></span><mat-icon>expand_more</mat-icon></div><div class="portal-nav-label">{{isParent ? 'YOUR CHILD' : 'MY LEARNING'}}</div><nav><a *ngFor="let item of menu" [routerLink]="['/student',item.key]" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><mat-icon>{{item.icon}}</mat-icon>{{item.label}}<span *ngIf="item.key==='notices'" class="nav-count">2</span></a></nav><div class="portal-help"><mat-icon>support_agent</mat-icon><strong>Need help?</strong><small>Contact your institute</small><a href="tel:+918045678900">Call the office <mat-icon>arrow_forward</mat-icon></a></div><button class="portal-logout" routerLink="/login"><mat-icon>logout</mat-icon>Sign out</button></aside><div class="portal-main"><header class="portal-topbar"><button mat-icon-button class="portal-menu-toggle" (click)="menuOpen=!menuOpen"><mat-icon>menu</mat-icon></button><div><small>{{isParent ? 'PARENT PORTAL' : 'STUDENT PORTAL'}}</small><strong>{{sectionLabel}}</strong></div><div class="portal-top-actions"><button mat-icon-button aria-label="Notifications"><mat-icon matBadge="2" matBadgeColor="warn" matBadgeSize="small">notifications_none</mat-icon></button><button class="top-profile"><img [src]="isParent ? 'assets/images/avatars/avatar-4.png' : 'assets/images/avatars/avatar-3.png'" alt=""><span>{{isParent ? 'Neha' : 'Aarav'}}</span><mat-icon>expand_more</mat-icon></button></div></header><main class="portal-content" [ngSwitch]="section">
-<section *ngSwitchCase="'dashboard'"><div class="welcome-row"><div><div class="welcome-date">MONDAY, SEPTEMBER 28, 2026</div><h1>Good morning, {{isParent ? 'Neha' : 'Aarav'}} <span>☀️</span></h1><p>{{isParent ? 'Here is Aarav’s learning snapshot.' : 'You’re making good progress. Here’s your learning snapshot.'}}</p></div><span class="course-chip"><mat-icon>school</mat-icon> Class 12 Science</span></div><div class="portal-summary"><article class="summary-card attendance-summary"><span class="summary-icon"><mat-icon>event_available</mat-icon></span><small>ATTENDANCE</small><strong>96<span>%</span></strong><div class="summary-meter"><i style="width:96%"></i></div><p>Excellent · 24 of 25 days</p></article><article class="summary-card fee-summary"><span class="summary-icon"><mat-icon>payments</mat-icon></span><small>PENDING FEES</small><strong>₹2,000</strong><p>September balance · due Oct 5</p><button (click)="go('fees')">View payment details <mat-icon>arrow_forward</mat-icon></button></article><article class="summary-card result-summary"><span class="summary-icon"><mat-icon>emoji_events</mat-icon></span><small>LATEST RESULT</small><strong>88<span>%</span></strong><p>Unit Test 3 · Physics</p><button (click)="go('results')">View all results <mat-icon>arrow_forward</mat-icon></button></article></div><div class="portal-dashboard-grid"><div class="portal-panel notice-panel"><div class="panel-heading"><div><h2>Latest notices</h2><p>Updates from Northstar Academy</p></div><button (click)="go('notices')">See all</button></div><article class="notice-item" *ngFor="let item of notices | slice:0:2"><span class="notice-mark" [ngClass]="item.tone"><mat-icon>{{item.type==='Exam'?'assignment':'event'}}</mat-icon></span><span><strong>{{item.title}}</strong><small>{{item.body}}</small><em>{{item.date}} · {{item.type}}</em></span></article></div><div class="portal-panel attendance-mini"><div class="panel-heading"><div><h2>Attendance this month</h2><p>September 2026</p></div><button (click)="go('attendance')">Details</button></div><div class="mini-calendar"><span class="weekday" *ngFor="let d of ['M','T','W','T','F','S','S']">{{d}}</span><span *ngFor="let day of calendar | slice:0:28" [class]="'calendar-day '+day.status">{{day.day}}</span></div><div class="calendar-legend"><span><i class="present"></i>Present</span><span><i class="absent"></i>Absent</span><span><i class="leave"></i>Leave</span></div></div><div class="portal-panel materials-panel"><div class="panel-heading"><div><h2>Study materials</h2><p>Recently shared with your class</p></div><button (click)="go('materials')">All materials</button></div><article class="material-item" *ngFor="let item of materials | slice:0:2"><span class="material-type" [ngClass]="item.type.toLowerCase()"><mat-icon>{{item.type==='Video'?'play_circle':item.type==='Assignment'?'assignment':'picture_as_pdf'}}</mat-icon></span><span><strong>{{item.title}}</strong><small>{{item.subject}} · {{item.date}}</small></span><button mat-icon-button (click)="download(item.file)"><mat-icon>download</mat-icon></button></article></div><div class="portal-panel updates-panel"><div class="panel-heading"><div><h2>Recent updates</h2><p>From your learning community</p></div><button (click)="go('updates')">See all</button></div><article class="update-item" *ngFor="let item of updates"><span class="update-bullet"></span><div><strong>{{item.title}}</strong><p>{{item.body}}</p><small>{{item.date}} · {{item.type}}</small></div></article></div></div></section>
-<section *ngSwitchCase="'profile'"><div class="page-title"><span>MY ACCOUNT</span><h1>My profile</h1><p>Your student information and family contacts.</p></div><div class="profile-layout"><mat-card class="profile-card"><mat-card-content><img class="profile-photo" src="assets/images/avatars/avatar-3.png" alt="Aarav Sharma"><h2>Aarav Sharma</h2><p>Student ID · NS-2401</p><app-status-badge label="Active student" tone="success"></app-status-badge><div class="profile-course"><mat-icon>school</mat-icon><span><strong>Class 12 Science</strong><small>Physics · Morning batch</small></span></div></mat-card-content></mat-card><mat-card class="profile-info"><mat-card-content><h2>Personal information</h2><div class="info-grid"><div><small>Full name</small><strong>Aarav Sharma</strong></div><div><small>Date of birth</small><strong>14 February 2009</strong></div><div><small>Gender</small><strong>Male</strong></div><div><small>Phone</small><strong>+91 98765 10001</strong></div><div><small>Email</small><strong>aarav.s&#64;email.com</strong></div><div><small>Admission date</small><strong>12 June 2026</strong></div><div><small>Father</small><strong>Vikram Sharma</strong></div><div><small>Mother</small><strong>Neha Sharma</strong></div><div><small>Parent contact</small><strong>+91 98765 43210</strong></div><div class="wide"><small>Address</small><strong>12 Lake View Road, Bengaluru, Karnataka 560038</strong></div></div></mat-card-content></mat-card></div></section>
-<section *ngSwitchCase="'attendance'"><div class="page-title"><span>MY LEARNING</span><h1>Attendance</h1><p>Your attendance record for September 2026.</p></div><div class="portal-summary attendance-page-summary"><article class="summary-card"><small>ATTENDANCE RATE</small><strong>96%</strong><p>Excellent consistency this month</p></article><article class="summary-card"><small>PRESENT</small><strong>24 days</strong><p>Of 25 class days</p></article><article class="summary-card"><small>ABSENT</small><strong>1 day</strong><p>September 12</p></article><article class="summary-card"><small>LEAVE</small><strong>0 days</strong><p>No leave recorded</p></article></div><div class="portal-panel calendar-panel"><div class="panel-heading"><div><h2>September 2026</h2><p>Monthly attendance calendar · Class 12 Science</p></div><span class="calendar-rate">96% this month</span></div><div class="full-calendar"><span class="weekday" *ngFor="let d of ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']">{{d}}</span><span class="empty-day" *ngFor="let n of [1] "></span><span *ngFor="let day of calendar" [class]="'calendar-day '+day.status"><span>{{day.day}}</span><small *ngIf="day.status==='present'">Present</small><small *ngIf="day.status==='absent'">Absent</small><small *ngIf="day.status==='leave'">Leave</small><small *ngIf="day.status==='late'">Late</small></span></div><div class="calendar-legend"><span><i class="present"></i>Present</span><span><i class="absent"></i>Absent</span><span><i class="leave"></i>Leave</span><span><i class="late"></i>Late</span></div></div></section>
-<section *ngSwitchCase="'fees'"><div class="page-title"><span>MY LEARNING</span><h1>Fees & receipts</h1><p>View payments, outstanding balances and receipts.</p></div><div class="fee-overview"><mat-card><mat-card-content><small>TOTAL PAID</small><strong>₹10,000</strong><span>July – September 2026</span></mat-card-content></mat-card><mat-card><mat-card-content><small>AMOUNT DUE</small><strong class="due-value">₹2,000</strong><span>September 2026 · Due Oct 5</span></mat-card-content></mat-card></div><div class="portal-panel portal-table"><div class="panel-heading"><div><h2>Payment history</h2><p>Monthly course fee · Class 12 Science</p></div></div><div class="table-responsive"><table class="table align-middle"><thead><tr><th>MONTH</th><th>TOTAL FEE</th><th>PAID</th><th>DUE</th><th>PAYMENT DATE</th><th>MODE</th><th>STATUS</th><th></th></tr></thead><tbody><tr *ngFor="let fee of fees"><td>{{fee.month}}</td><td>₹{{fee.amount | number}}</td><td>₹{{fee.paid | number}}</td><td [class.due-value]="fee.due">₹{{fee.due | number}}</td><td>{{fee.date}}</td><td>{{fee.mode}}</td><td><app-status-badge [label]="fee.status" [tone]="fee.status==='Paid'?'success':fee.status==='Partial'?'warning':'neutral'"></app-status-badge></td><td><button mat-icon-button *ngIf="fee.paid" (click)="printReceipt(fee.month,fee.paid)" aria-label="Print receipt"><mat-icon>receipt_long</mat-icon></button></td></tr></tbody></table></div></div></section>
-<section *ngSwitchCase="'results'"><div class="page-title"><span>MY LEARNING</span><h1>Results</h1><p>Celebrating your progress, one step at a time.</p></div><div class="result-highlight"><span><mat-icon>emoji_events</mat-icon></span><div><small>YOUR LATEST RESULT · UNIT TEST 3</small><strong>88%</strong><p>Physics · September 18, 2026 · Grade A</p></div><span class="result-message">Keep up the<br>great work!</span></div><div class="portal-panel portal-table"><div class="panel-heading"><div><h2>Exam results</h2><p>Class 12 Science · 2026–27</p></div></div><div class="table-responsive"><table class="table align-middle"><thead><tr><th>EXAM</th><th>DATE</th><th>SUBJECT</th><th>MARKS</th><th>PERCENTAGE</th><th>GRADE</th></tr></thead><tbody><tr *ngFor="let row of results"><td><strong>{{row.exam}}</strong></td><td>{{row.date}}</td><td>{{row.subject}}</td><td>{{row.marks}}</td><td>{{row.percentage}}</td><td><span class="grade-chip">{{row.grade}}</span></td></tr></tbody></table></div></div></section>
-<section *ngSwitchCase="'materials'"><div class="page-title"><span>MY LEARNING</span><h1>Study materials</h1><p>Learning resources shared by your teachers.</p></div><div class="portal-material-grid"><mat-card *ngFor="let item of materials"><mat-card-content><span class="material-type large" [ngClass]="item.type.toLowerCase()"><mat-icon>{{item.type==='Video'?'play_circle':item.type==='Assignment'?'assignment':'picture_as_pdf'}}</mat-icon></span><app-status-badge [label]="item.type" tone="info"></app-status-badge><h2>{{item.title}}</h2><p>{{item.subject}}</p><small>Added {{item.date}}</small><button mat-flat-button color="primary" (click)="download(item.file)"><mat-icon>download</mat-icon> Download</button></mat-card-content></mat-card></div></section>
-<section *ngSwitchCase="'notices'"><div class="page-title"><span>MY LEARNING</span><h1>Notices</h1><p>Important information from your institute.</p></div><div class="portal-notices"><article *ngFor="let item of notices"><span class="notice-mark" [ngClass]="item.tone"><mat-icon>{{item.type==='Exam'?'assignment':'event'}}</mat-icon></span><div><div class="notice-meta">{{item.type}} <span>· {{item.date}}</span></div><h2>{{item.title}}</h2><p>{{item.body}}</p></div></article></div></section>
-<section *ngSwitchCase="'updates'"><div class="page-title"><span>MY LEARNING</span><h1>Updates</h1><p>Stories and updates from your learning community.</p></div><div class="portal-updates"><article *ngFor="let item of updates"><div class="feed-top"><span class="feed-brand">N</span><span><strong>Northstar Academy</strong><small>{{item.date}} · {{item.type}}</small></span></div><h2>{{item.title}}</h2><p>{{item.body}}</p><div class="portal-update-art"><mat-icon>{{item.type==='Announcement'?'campaign':'auto_awesome'}}</mat-icon></div><div class="portal-update-foot"><mat-icon>favorite_border</mat-icon> Shared with our community</div></article></div></section>
-</main><footer class="portal-footer">Northstar Academy · {{isParent ? 'Parent portal' : 'Student portal'}} <span>Need help? <a href="mailto:hello@northstar.edu">Contact the office</a></span></footer></div><div class="portal-scrim" [class.visible]="menuOpen" (click)="menuOpen=false"></div></div>
+<div class="portal-shell">
+    <aside class="portal-sidebar" [class.mobile-open]="menuOpen"><a class="portal-brand"
+            routerLink="/student/dashboard"><span>a</span> ageon</a>
+        <div class="student-card"><img
+                [src]="isParent ? 'assets/images/avatars/avatar-4.png' : 'assets/images/avatars/avatar-3.png'"
+                [alt]="displayName"><span><strong>{{displayName}}</strong><small>{{isParent ? 'Parent of ' +
+                    childFirstName : isCollege ? 'College student' : 'Student'}} ·
+                    {{studentId}}</small></span><mat-icon>expand_more</mat-icon></div>
+        <div class="portal-nav-label">{{isParent ? 'YOUR CHILD' : isCollege ? 'CAMPUS LEARNING' : 'MY LEARNING'}}</div>
+        <nav><a *ngFor="let item of menu" [routerLink]="['/student',item.key]" routerLinkActive="active"
+                [routerLinkActiveOptions]="{exact:true}"><mat-icon>{{item.icon}}</mat-icon>{{item.label}}<span
+                    *ngIf="item.key==='notices'" class="nav-count">2</span></a></nav>
+        <div class="portal-help"><mat-icon>support_agent</mat-icon><strong>Need help?</strong><small>Contact your
+                institute</small><a href="tel:+918045678900">Call the office <mat-icon>arrow_forward</mat-icon></a>
+        </div><button class="portal-logout" routerLink="/login"><mat-icon>logout</mat-icon>Sign out</button>
+    </aside>
+    <div class="portal-main">
+        <header class="portal-topbar"><button mat-icon-button class="portal-menu-toggle"
+                (click)="menuOpen=!menuOpen"><mat-icon>menu</mat-icon></button>
+            <div><small>{{isParent ? 'FAMILY PORTAL' : isCollege ? 'COLLEGE PORTAL' : 'STUDENT
+                    PORTAL'}}</small><strong>{{sectionLabel}}</strong></div>
+            <div class="portal-top-actions"><button mat-icon-button aria-label="Notifications"><mat-icon matBadge="2"
+                        matBadgeColor="warn" matBadgeSize="small">notifications_none</mat-icon></button><button
+                    class="top-profile"><img
+                        [src]="isParent ? 'assets/images/avatars/avatar-4.png' : 'assets/images/avatars/avatar-3.png'"
+                        alt=""><span>{{firstName}}</span><mat-icon>expand_more</mat-icon></button></div>
+        </header>
+        <main class="portal-content" [ngSwitch]="section">
+            <section *ngSwitchCase="'dashboard'">
+                <div class="welcome-row">
+                    <div>
+                        <div class="welcome-date">MONDAY, SEPTEMBER 28, 2026</div>
+                        <h1>Good morning, {{firstName}} <span>☀️</span></h1>
+                        <p>{{isParent ? 'Here is ' + childFirstName + '’s learning snapshot.' : 'You’re making good
+                            progress. Here’s your learning snapshot.'}}</p>
+                    </div><span class="course-chip"><mat-icon>school</mat-icon> {{academicPlacement}}</span>
+                </div>
+                <div class="portal-summary">
+                    <article class="summary-card attendance-summary"><span
+                            class="summary-icon"><mat-icon>event_available</mat-icon></span><small>ATTENDANCE</small><strong>{{attendanceRate}}<span>%</span></strong>
+                        <div class="summary-meter"><i [style.width.%]="attendanceRate"></i></div>
+                        <p>Excellent · {{attendanceDays}} of 25 days</p>
+                    </article>
+                    <article class="summary-card fee-summary"><span
+                            class="summary-icon"><mat-icon>payments</mat-icon></span><small>PENDING
+                            FEES</small><strong>₹{{feeDue | number}}</strong>
+                        <p>{{paymentDescription}}</p><button (click)="go('fees')">View payment details
+                            <mat-icon>arrow_forward</mat-icon></button>
+                    </article>
+                    <article class="summary-card result-summary"><span
+                            class="summary-icon"><mat-icon>emoji_events</mat-icon></span><small>LATEST
+                            RESULT</small><strong>88<span>%</span></strong>
+                        <p>{{latestAssessment}} · {{latestSubject}}</p><button (click)="go('results')">View all results
+                            <mat-icon>arrow_forward</mat-icon></button>
+                    </article>
+                </div>
+                <div class="portal-dashboard-grid">
+                    <div class="portal-panel notice-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h2>Latest notices</h2>
+                                <p>Updates from {{instituteName}}</p>
+                            </div><button (click)="go('notices')">See all</button>
+                        </div>
+                        <article class="notice-item" *ngFor="let item of notices | slice:0:2"><span class="notice-mark"
+                                [ngClass]="item.tone"><mat-icon>{{item.type==='Exam'?'assignment':'event'}}</mat-icon></span><span><strong>{{item.title}}</strong><small>{{item.body}}</small><em>{{item.date}}
+                                    · {{item.type}}</em></span></article>
+                    </div>
+                    <div class="portal-panel attendance-mini">
+                        <div class="panel-heading">
+                            <div>
+                                <h2>Attendance this month</h2>
+                                <p>September 2026</p>
+                            </div><button (click)="go('attendance')">Details</button>
+                        </div>
+                        <div class="mini-calendar"><span class="weekday"
+                                *ngFor="let d of ['M','T','W','T','F','S','S']">{{d}}</span><span
+                                *ngFor="let day of calendar | slice:0:28"
+                                [class]="'calendar-day '+day.status">{{day.day}}</span></div>
+                        <div class="calendar-legend"><span><i class="present"></i>Present</span><span><i
+                                    class="absent"></i>Absent</span><span><i class="leave"></i>Leave</span></div>
+                    </div>
+                    <div class="portal-panel materials-panel" *ngIf="!isParent">
+                        <div class="panel-heading">
+                            <div>
+                                <h2>Study materials</h2>
+                                <p>Recently shared with your class</p>
+                            </div><button (click)="go('materials')">All materials</button>
+                        </div>
+                        <article class="material-item" *ngFor="let item of materials | slice:0:2"><span
+                                class="material-type"
+                                [ngClass]="item.type.toLowerCase()"><mat-icon>{{item.type==='Video'?'play_circle':item.type==='Assignment'?'assignment':'picture_as_pdf'}}</mat-icon></span><span><strong>{{item.title}}</strong><small>{{item.subject}}
+                                    · {{item.date}}</small></span><button mat-icon-button
+                                (click)="download(item.file)"><mat-icon>download</mat-icon></button></article>
+                    </div>
+                    <div class="portal-panel updates-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h2>Recent updates</h2>
+                                <p>From your learning community</p>
+                            </div><button (click)="go('updates')">See all</button>
+                        </div>
+                        <article class="update-item" *ngFor="let item of updates"><span class="update-bullet"></span>
+                            <div><strong>{{item.title}}</strong>
+                                <p>{{item.body}}</p><small>{{item.date}} · {{item.type}}</small>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+            <section *ngSwitchCase="'profile'">
+                <div class="page-title"><span>{{isParent ? "YOUR CHILD" : "MY ACCOUNT"}}</span>
+                    <h1>{{isParent ? "Child profile" : "My profile"}}</h1>
+                    <p>{{isParent ? "Review your child’s enrollment and contact details." : "Your student information
+                        and family contacts."}}</p>
+                </div>
+                <div class="profile-layout"><mat-card class="profile-card"><mat-card-content><img class="profile-photo"
+                                src="assets/images/avatars/avatar-3.png" alt="{{childName}}">
+                            <h2>{{childName}}</h2>
+                            <p>Student ID · {{studentId}}</p><app-status-badge label="Active student"
+                                tone="success"></app-status-badge>
+                            <div class="profile-course">
+                                <mat-icon>school</mat-icon><span><strong>{{academicPlacement}}</strong><small>{{groupPlacement}}</small></span>
+                            </div>
+                        </mat-card-content></mat-card><mat-card class="profile-info"><mat-card-content>
+                            <h2>Personal information</h2>
+                            <div class="info-grid">
+                                <div><small>Full name</small><strong>{{childName}}</strong></div>
+                                <div><small>Date of birth</small><strong>{{childDateOfBirth}}</strong></div>
+                                <div><small>Gender</small><strong>{{childGender}}</strong></div>
+                                <div><small>Phone</small><strong>{{childPhone}}</strong></div>
+                                <div><small>Email</small><strong>{{childEmail}}</strong></div>
+                                <div><small>Admission date</small><strong>12 June 2026</strong></div>
+                                <div><small>Father</small><strong>{{otherGuardian}}</strong></div>
+                                <div><small>Mother</small><strong>{{isCollege ? "Meera Rao" : "Neha Sharma"}}</strong>
+                                </div>
+                                <div><small>Parent contact</small><strong>{{isCollege ? "+91 98765 20002" : "+91 98765
+                                        43210"}}</strong></div>
+                                <div class="wide"><small>Address</small><strong>12 Lake View Road, Bengaluru, Karnataka
+                                        560038</strong></div>
+                            </div>
+                        </mat-card-content></mat-card></div>
+            </section>
+            <section *ngSwitchCase="'attendance'">
+                <div class="page-title"><span>MY LEARNING</span>
+                    <h1>Attendance</h1>
+                    <p>Your attendance record for September 2026.</p>
+                </div>
+                <div class="portal-summary attendance-page-summary">
+                    <article class="summary-card"><small>ATTENDANCE RATE</small><strong>{{attendanceRate}}%</strong>
+                        <p>Excellent consistency this month</p>
+                    </article>
+                    <article class="summary-card"><small>PRESENT</small><strong>{{attendanceDays}} days</strong>
+                        <p>Of 25 class days</p>
+                    </article>
+                    <article class="summary-card"><small>ABSENT</small><strong>1 day</strong>
+                        <p>September 12</p>
+                    </article>
+                    <article class="summary-card"><small>LEAVE</small><strong>0 days</strong>
+                        <p>No leave recorded</p>
+                    </article>
+                </div>
+                <div class="portal-panel calendar-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>September 2026</h2>
+                            <p>Monthly attendance calendar · {{academicPlacement}}</p>
+                        </div><span class="calendar-rate">{{attendanceRate}}% this month</span>
+                    </div>
+                    <div class="full-calendar"><span class="weekday"
+                            *ngFor="let d of ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']">{{d}}</span><span
+                            class="empty-day" *ngFor="let n of [1] "></span><span *ngFor="let day of calendar"
+                            [class]="'calendar-day '+day.status"><span>{{day.day}}</span><small
+                                *ngIf="day.status==='present'">Present</small><small
+                                *ngIf="day.status==='absent'">Absent</small><small
+                                *ngIf="day.status==='leave'">Leave</small><small
+                                *ngIf="day.status==='late'">Late</small></span></div>
+                    <div class="calendar-legend"><span><i class="present"></i>Present</span><span><i
+                                class="absent"></i>Absent</span><span><i class="leave"></i>Leave</span><span><i
+                                class="late"></i>Late</span></div>
+                </div>
+            </section>
+            <section *ngSwitchCase="'fees'">
+                <div class="page-title"><span>MY LEARNING</span>
+                    <h1>Fees & receipts</h1>
+                    <p>View payments, outstanding balances and receipts.</p>
+                </div>
+                <div class="fee-overview"><mat-card><mat-card-content><small>TOTAL PAID</small><strong>₹{{paidTotal |
+                                number}}</strong><span>July – September
+                                2026</span></mat-card-content></mat-card><mat-card><mat-card-content><small>AMOUNT
+                                DUE</small><strong class="due-value">₹{{feeDue | number}}</strong><span>September 2026 ·
+                                Due Oct 5</span></mat-card-content></mat-card></div>
+                <div class="portal-panel portal-table">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>Payment history</h2>
+                            <p>Monthly course fee · {{academicPlacement}}</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>MONTH</th>
+                                    <th>TOTAL FEE</th>
+                                    <th>PAID</th>
+                                    <th>DUE</th>
+                                    <th>PAYMENT DATE</th>
+                                    <th>MODE</th>
+                                    <th>STATUS</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let fee of fees">
+                                    <td>{{fee.month}}</td>
+                                    <td>₹{{fee.amount | number}}</td>
+                                    <td>₹{{fee.paid | number}}</td>
+                                    <td [class.due-value]="fee.due">₹{{fee.due | number}}</td>
+                                    <td>{{fee.date}}</td>
+                                    <td>{{fee.mode}}</td>
+                                    <td><app-status-badge [label]="fee.status"
+                                            [tone]="fee.status==='Paid'?'success':fee.status==='Partial'?'warning':'neutral'"></app-status-badge>
+                                    </td>
+                                    <td><button mat-icon-button *ngIf="fee.paid"
+                                            (click)="printReceipt(fee.month,fee.paid)"
+                                            aria-label="Print receipt"><mat-icon>receipt_long</mat-icon></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <section *ngSwitchCase="'results'">
+                <div class="page-title"><span>MY LEARNING</span>
+                    <h1>Results</h1>
+                    <p>Celebrating your progress, one step at a time.</p>
+                </div>
+                <div class="result-highlight"><span><mat-icon>emoji_events</mat-icon></span>
+                    <div><small>YOUR LATEST RESULT · {{latestAssessment | uppercase}}</small><strong>88%</strong>
+                        <p>{{latestSubject}} · September 18, 2026 · Grade A</p>
+                    </div><span class="result-message">Keep up the<br>great work!</span>
+                </div>
+                <div class="portal-panel portal-table">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>Exam results</h2>
+                            <p>{{academicPlacement}} · 2026–27</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>EXAM</th>
+                                    <th>DATE</th>
+                                    <th>SUBJECT</th>
+                                    <th>MARKS</th>
+                                    <th>PERCENTAGE</th>
+                                    <th>GRADE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let row of results">
+                                    <td><strong>{{row.exam}}</strong></td>
+                                    <td>{{row.date}}</td>
+                                    <td>{{row.subject}}</td>
+                                    <td>{{row.marks}}</td>
+                                    <td>{{row.percentage}}</td>
+                                    <td><span class="grade-chip">{{row.grade}}</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <section *ngSwitchCase="'materials'">
+                <div class="page-title"><span>MY LEARNING</span>
+                    <h1>Study materials</h1>
+                    <p>Learning resources shared by your teachers.</p>
+                </div>
+                <div class="portal-material-grid"><mat-card *ngFor="let item of materials"><mat-card-content><span
+                                class="material-type large"
+                                [ngClass]="item.type.toLowerCase()"><mat-icon>{{item.type==='Video'?'play_circle':item.type==='Assignment'?'assignment':'picture_as_pdf'}}</mat-icon></span><app-status-badge
+                                [label]="item.type" tone="info"></app-status-badge>
+                            <h2>{{item.title}}</h2>
+                            <p>{{item.subject}}</p><small>Added {{item.date}}</small><button mat-flat-button
+                                color="primary" (click)="download(item.file)"><mat-icon>download</mat-icon>
+                                Download</button>
+                        </mat-card-content></mat-card></div>
+            </section>
+            <section *ngSwitchCase="'notices'">
+                <div class="page-title"><span>MY LEARNING</span>
+                    <h1>Notices</h1>
+                    <p>Important information from your institute.</p>
+                </div>
+                <div class="portal-notices">
+                    <article *ngFor="let item of notices"><span class="notice-mark"
+                            [ngClass]="item.tone"><mat-icon>{{item.type==='Exam'?'assignment':'event'}}</mat-icon></span>
+                        <div>
+                            <div class="notice-meta">{{item.type}} <span>· {{item.date}}</span></div>
+                            <h2>{{item.title}}</h2>
+                            <p>{{item.body}}</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+            <section *ngSwitchCase="'updates'">
+                <div class="page-title"><span>MY LEARNING</span>
+                    <h1>Updates</h1>
+                    <p>Stories and updates from your learning community.</p>
+                </div>
+                <div class="portal-updates">
+                    <article *ngFor="let item of updates">
+                        <div class="feed-top"><span
+                                class="feed-brand">N</span><span><strong>{{instituteName}}</strong><small>{{item.date}}
+                                    · {{item.type}}</small></span></div>
+                        <h2>{{item.title}}</h2>
+                        <p>{{item.body}}</p>
+                        <div class="portal-update-art">
+                            <mat-icon>{{item.type==='Announcement'?'campaign':'auto_awesome'}}</mat-icon></div>
+                        <div class="portal-update-foot"><mat-icon>favorite_border</mat-icon> Shared with our community
+                        </div>
+                    </article>
+                </div>
+            </section>
+            <section *ngSwitchCase="'family'">
+                <div class="page-title"><span>FAMILY ACCOUNT</span>
+                    <h1>Family contacts</h1>
+                    <p>Check the contact details on file for {{childFirstName}}.</p>
+                </div>
+                <div class="family-contact-grid"><mat-card><mat-card-content><span
+                                class="family-avatar">{{firstName.charAt(0)}}R</span><small>PRIMARY GUARDIAN</small>
+                            <h2>{{firstName}} {{isCollege ? 'Rao' : 'Sharma'}}</h2>
+                            <p>Parent / guardian</p><a href="tel:+919876543210"><mat-icon>call</mat-icon> +91 98765
+                                43210</a><a href="mailto:family&#64;email.com"><mat-icon>mail_outline</mat-icon>
+                                family&#64;email.com</a>
+                        </mat-card-content></mat-card><mat-card><mat-card-content><span
+                                class="family-avatar secondary">{{isCollege ? 'AR' : 'VS'}}</span><small>SECONDARY
+                                CONTACT</small>
+                            <h2>{{isCollege ? 'Arun Rao' : 'Vikram Sharma'}}</h2>
+                            <p>Parent / guardian</p><a href="tel:+919876543211"><mat-icon>call</mat-icon> +91 98765
+                                43211</a><span class="contact-note">Contact the institute to update family
+                                details.</span>
+                        </mat-card-content></mat-card></div>
+            </section>
+        </main>
+        <footer class="portal-footer">{{instituteName}} · {{isParent ? 'Family portal' : isCollege ? 'College student
+            portal' : 'Student portal'}} <span>Need help? <a href="mailto:hello&#64;northstar.edu">Contact the
+                    office</a></span></footer>
+    </div>
+    <div class="portal-scrim" [class.visible]="menuOpen" (click)="menuOpen=false"></div>
+</div>

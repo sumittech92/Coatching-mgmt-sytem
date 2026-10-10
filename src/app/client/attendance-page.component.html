@@ -41,19 +41,16 @@
       ><mat-card-content
         ><div class="toolbar">
           <mat-form-field appearance="outline"
-            ><mat-label>Date</mat-label><input matInput type="date" [(ngModel)]="date" /></mat-form-field
+            ><mat-label>Date</mat-label><input matInput [matDatepicker]="attendanceDate" [(ngModel)]="date" /><mat-datepicker-toggle matSuffix [for]="attendanceDate"></mat-datepicker-toggle><mat-datepicker #attendanceDate></mat-datepicker></mat-form-field
           ><mat-form-field appearance="outline"
-            ><mat-label>Batch</mat-label
+            ><mat-label>{{ isCollege ? 'Year / section' : 'Class / batch' }}</mat-label
             ><mat-select [(ngModel)]="batch"
-              ><mat-option>All batches</mat-option><mat-option>Physics · Morning</mat-option
-              ><mat-option>Chemistry · Evening</mat-option><mat-option>Mathematics · Morning</mat-option
-              ><mat-option>Foundation · Afternoon</mat-option></mat-select
+              ><mat-option [value]="'All batches'">All {{ isCollege ? 'years / sections' : 'classes / batches' }}</mat-option><mat-option *ngFor="let item of batchOptions" [value]="item">{{ item }}</mat-option></mat-select
             ></mat-form-field
           ><mat-form-field appearance="outline"
-            ><mat-label>Teacher</mat-label
+            ><mat-label>{{ isCollege ? 'Faculty' : 'Teacher' }}</mat-label
             ><mat-select [(ngModel)]="teacher"
-              ><mat-option>All teachers</mat-option><mat-option>Priya Nair</mat-option><mat-option>Ankit Rao</mat-option
-              ><mat-option>Nisha Thomas</mat-option></mat-select
+              ><mat-option [value]="'All teachers'">All {{ isCollege ? 'faculty' : 'teachers' }}</mat-option><mat-option *ngFor="let item of teacherOptions" [value]="item">{{ item }}</mat-option></mat-select
             ></mat-form-field
           ><button mat-stroked-button [matMenuTriggerFor]="bulkMenu"><mat-icon>done_all</mat-icon> Mark all</button
           ><mat-menu #bulkMenu="matMenu"
@@ -75,7 +72,7 @@
           <button mat-flat-button color="primary" *ngIf="view === 'daily'" (click)="save()">Save attendance</button>
         </div>
         <div class="attendance-table" *ngIf="view === 'daily'">
-          <div class="table-header"><span>STUDENT</span><span>COURSE & BATCH</span><span>ATTENDANCE</span></div>
+          <div class="table-header"><span>STUDENT</span><span>{{ isCollege ? 'PROGRAM & YEAR' : 'CLASS & BATCH' }}</span><span>ATTENDANCE</span></div>
           <div class="student-row" *ngFor="let item of visible">
             <span class="student-info"
               ><span class="avatar">{{ item.photo }}</span
@@ -163,14 +160,10 @@
           <span><i class="present-key"></i>Present</span><span><i class="absent-key"></i>Absent</span>
         </div>
         <div class="batch-summary">
-          <h3>By batch</h3>
+          <h3>{{ isCollege ? 'By program / year' : 'By batch' }}</h3>
           <div
             *ngFor="
-              let item of [
-                { name: 'Physics · Morning', rate: 94 },
-                { name: 'Chemistry · Evening', rate: 89 },
-                { name: 'Foundation · Afternoon', rate: 97 },
-              ]
+              let item of batchSummary
             "
           >
             <span>{{ item.name }}</span

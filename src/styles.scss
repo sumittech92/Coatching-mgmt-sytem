@@ -138,6 +138,18 @@ body { color:var(--ui-ink); font-size:14px; line-height:1.5; background:var(--ui
 .mat-mdc-form-field { min-width:0; }
 .mat-mdc-text-field-wrapper { border-radius:9px; }
 .mat-mdc-raised-button,.mat-mdc-unelevated-button,.mat-mdc-outlined-button { min-height:40px; border-radius:9px!important; font-weight:600; }
+
+/* Keep dense records legible on laptop and phone screens. */
+.main-content .table tbody td,
+.portal-content .table tbody td { font-size:15px!important; }
+.main-content .table thead th,
+.portal-content .table thead th { font-size:12px!important; }
+.main-content .feature-table tbody td { font-size:14px!important; }
+.main-content .feature-table thead th { font-size:12px!important; }
+.main-content .student-row .student-info strong,
+.main-content .student-row .batch-copy strong,
+.main-content .filter-row .mat-mdc-input-element,
+.main-content .toolbar .mat-mdc-input-element { font-size:14px!important; }
 .mat-mdc-icon-button { border-radius:9px; }
 .table-responsive { max-width:100%; overscroll-behavior-x:contain; }
 .table { --bs-table-bg:transparent; }

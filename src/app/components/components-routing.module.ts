@@ -14,6 +14,7 @@ import { WebsiteCmsComponent } from '../client/website-cms.component';
 import { ShopDashboardComponent } from '../shop/shop-dashboard.component';
 import { ShopManagementComponent } from '../shop/shop-management.component';
 import { ShopBillingComponent } from '../shop/shop-billing.component';
+import { RoleAccessGuard } from '../core/role-access.guard';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -29,42 +30,45 @@ const routes: Routes = [
   { path: 'super-admin/settings', component: SuperAdminPageComponent },
   { path: 'client', redirectTo: 'client/dashboard', pathMatch: 'full' },
   { path: 'client/dashboard', component: ClientDashboardComponent },
-  { path: 'client/students/add', component: StudentsPageComponent },
-  { path: 'client/students/:id/edit', component: StudentsPageComponent },
+  { path: 'client/students/add', component: StudentsPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/students/:id/edit', component: StudentsPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/students/:id', component: StudentsPageComponent },
   { path: 'client/students', component: StudentsPageComponent },
-  { path: 'client/teachers/add', component: ClientManagementComponent },
-  { path: 'client/teachers/:id', component: ClientManagementComponent },
-  { path: 'client/teachers', component: ClientManagementComponent },
-  { path: 'client/courses/add', component: ClientManagementComponent },
+  { path: 'client/teachers/add', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/teachers/:id', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/teachers', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/courses/add', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/courses/:id', component: ClientManagementComponent },
   { path: 'client/courses', component: ClientManagementComponent },
-  { path: 'client/batches/add', component: ClientManagementComponent },
+  { path: 'client/departments', component: ClientManagementComponent },
+  { path: 'client/programs', component: ClientManagementComponent },
+  { path: 'client/timetable', component: ClientManagementComponent },
+  { path: 'client/batches/add', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/batches/:id', component: ClientManagementComponent },
   { path: 'client/batches', component: ClientManagementComponent },
   { path: 'client/attendance', component: AttendancePageComponent },
-  { path: 'client/fees/collect', component: FeesPageComponent },
-  { path: 'client/fees/:studentId', component: FeesPageComponent },
-  { path: 'client/fees', component: FeesPageComponent },
-  { path: 'client/admissions', component: ClientManagementComponent },
-  { path: 'client/posts', component: ClientManagementComponent },
-  { path: 'client/gallery', component: ClientManagementComponent },
+  { path: 'client/fees/collect', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/fees/:studentId', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/fees', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/admissions', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/posts', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/gallery', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/notices', component: ClientManagementComponent },
   { path: 'client/results/add', component: ClientManagementComponent },
   { path: 'client/results/:id', component: ClientManagementComponent },
   { path: 'client/results', component: ClientManagementComponent },
   { path: 'client/materials', component: ClientManagementComponent },
-  { path: 'client/website', component: WebsiteCmsComponent },
-  { path: 'client/settings', component: ClientSectionComponent },
+  { path: 'client/website', component: WebsiteCmsComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/settings', component: ClientSectionComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'student/dashboard', component: WorkspacePageComponent },
   { path: 'company-management', component: CompanyMgtComponent },
-  { path: 'dashboard', component: WorkspacePageComponent },
+  { path: 'dashboard', component: WorkspacePageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
   { path: 'super-admin/overview', redirectTo: 'super-admin/dashboard' },
   { path: 'super-admin/businesses', redirectTo: 'super-admin/clients' },
   { path: 'client/overview', redirectTo: 'client/dashboard' },
   { path: 'client/people', redirectTo: 'client/students' },
   { path: 'client/catalog', redirectTo: 'client/courses' },
-  { path: 'client/reports', component: ClientSectionComponent },
+  { path: 'client/reports', component: ClientSectionComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'shop', redirectTo: 'shop/dashboard', pathMatch: 'full' },
   { path: 'shop/dashboard', component: ShopDashboardComponent },
   { path: 'shop/products/add', component: ShopManagementComponent },
@@ -84,5 +88,9 @@ const routes: Routes = [
   { path: 'public', component: WorkspacePageComponent },
   { path: '**', redirectTo: 'dashboard' }
 ];
+routes.filter(route => !route.redirectTo && (route.path?.startsWith('client/') || route.path?.startsWith('super-admin/'))).forEach(route => {
+  route.canActivate = [RoleAccessGuard];
+  route.data = { ...route.data, roles: route.data?.['roles'] || (route.path?.startsWith('super-admin/') ? ['Super Admin'] : ['Owner', 'Teacher']) };
+});
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })
 export class ComponentsRoutingModule {}
