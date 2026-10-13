@@ -1,0 +1,63 @@
+/* Shared by student-signup and teacher-signup. Layout comes from sign-in.component.scss. */
+.signup-page .auth-form-side{align-items:start;padding-top:34px;padding-bottom:34px}
+.signup-page .auth-form-wrap{max-width:540px}
+.signup-page .auth-subtitle{margin-bottom:22px}
+
+.feature-pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.feature-pill{display:inline-flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:999px;border:1px solid #ffffff2e;background:#ffffff12;backdrop-filter:blur(6px);font-size:12px;font-weight:600;color:#fff;animation:ux-fade-up .6s cubic-bezier(.2,.7,.2,1) both}
+.feature-pill:nth-child(2){animation-delay:.12s}
+.feature-pill:nth-child(3){animation-delay:.24s}
+.feature-pill .pill-icon{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff}
+.feature-pill .pill-icon mat-icon{font-size:17px;width:17px;height:17px}
+.pill-mint{background:linear-gradient(135deg,#2ee6c8,#0ea5a4)}
+.pill-purple{background:linear-gradient(135deg,#a855f7,#6d28d9)}
+.pill-blue{background:linear-gradient(135deg,#3d63f0,#1c34b5)}
+
+.story-stats{display:flex;gap:26px;margin-top:30px;padding-top:22px;border-top:1px solid #ffffff1f}
+.story-stats div{display:flex;flex-direction:column;gap:3px}
+.story-stats strong{font-size:24px;font-weight:800;background:var(--ux-grad-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.story-stats small{font-size:11px;color:#aab3e6}
+
+.role-switch{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:5px;margin-bottom:24px;border-radius:999px;background:#eef2ff}
+.role-switch a{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:7px;height:40px;border-radius:999px;color:#5b6890;font-size:12px;font-weight:650;text-decoration:none;transition:color .2s ease}
+.role-switch a mat-icon{font-size:17px;width:17px;height:17px}
+.role-switch a.active{color:#fff}
+.role-switch .switch-thumb{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:999px;background:linear-gradient(90deg,var(--ux-blue-600),var(--ux-navy-800));box-shadow:var(--ux-glow-blue);transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+.role-switch.teacher .switch-thumb{transform:translateX(100%)}
+
+.form-section{font-size:10px;font-weight:700;letter-spacing:1.4px;color:#e0156f;margin:6px 0 12px;display:flex;align-items:center;gap:10px}
+.form-section::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,#ffd0e5,transparent)}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}
+.field-grid .span-2{grid-column:1/-1}
+.phone-row{display:grid;grid-template-columns:96px 1fr;gap:8px}
+.field-error{display:block;font-size:10px;color:#d23b5a;margin:-4px 0 8px}
+
+.class-chips{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
+.class-chips button{height:38px;border-radius:10px;border:1px solid #dfe5f5;background:#fff;color:#3a4766;font-size:12px;font-weight:650;cursor:pointer;transition:transform .15s ease,background .15s ease,border-color .15s ease,color .15s ease}
+.class-chips button:hover{border-color:#a7bdff;transform:translateY(-1px)}
+.class-chips button.selected{border-color:transparent;background:var(--ux-grad-cta);color:#fff;box-shadow:0 6px 16px -6px #ff2d8aa6}
+
+.strength{display:flex;align-items:center;gap:8px;margin:-4px 0 10px}
+.strength-bar{flex:1;height:5px;border-radius:5px;background:#eceff7;overflow:hidden}
+.strength-bar i{display:block;height:100%;border-radius:5px;transition:width .3s ease,background .3s ease}
+.strength small{font-size:10px;color:#7e8b99;min-width:46px;text-align:right}
+
+.terms-row{margin:4px 0 18px;font-size:11px;color:#536174}
+.terms-row a{color:var(--ux-blue-600);font-weight:600;text-decoration:none}
+.already{text-align:center;margin-top:18px;font-size:11px;color:#7e8b99}
+.already a{color:var(--ux-blue-600);font-weight:650;text-decoration:none}
+
+.signup-success{text-align:center;padding:26px 6px;animation:ux-fade-up .6s cubic-bezier(.2,.7,.2,1) both}
+.success-badge{width:78px;height:78px;margin:0 auto 20px;border-radius:50%;display:grid;place-items:center;background:var(--ux-grad-cta);color:#fff;box-shadow:var(--ux-glow-pink);animation:ux-float 4s ease-in-out infinite}
+.success-badge mat-icon{font-size:38px;width:38px;height:38px}
+.signup-success h2{margin-bottom:10px!important}
+.signup-success p{font-size:13px;color:#7e8b99;line-height:1.7;margin:0 auto 24px;max-width:360px}
+.signup-success .sign-in-button{max-width:300px;margin:0 auto}
+
+@media(max-width:560px){
+  .field-grid{grid-template-columns:1fr}
+  .class-chips{grid-template-columns:repeat(4,1fr)}
+  .story-stats{gap:18px}
+}
+.field-grid>*,.phone-row>*{min-width:0}
+@media(max-width:900px){.signup-page{grid-template-columns:minmax(0,1fr)}.signup-page .auth-form-wrap{min-width:0}}

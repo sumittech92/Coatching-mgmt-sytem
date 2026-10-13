@@ -46,7 +46,7 @@ export class StudentPortalComponent {
   get paymentDescription(): string { return this.isCollege ? 'Tuition balance · due Oct 5' : 'September balance · due Oct 5'; }
   get instituteName(): string { return this.tenant.current.businessName; }
   get attendanceRate(): number { return this.isCollege ? 94 : 96; }
-  get attendanceDays(): number { return this.isCollege ? 22 : 24; }
+  get attendanceDays(): number { return this.isCollege ? 22 : 24; }z
   get paidTotal(): number { return this.isCollege ? 28000 : 10000; }
   get feeDue(): number { return this.isCollege ? 14000 : 2000; }
   get sectionLabel(): string { return this.menu.find(item => item.key === this.section)?.label || 'Overview'; }

@@ -235,7 +235,7 @@ export class DashboardComponent {
           type: "gradient",
           gradient: {
             shade: "dark",
-            gradientToColors: ["#00a294"],
+            gradientToColors: ["#5783fb"],
             shadeIntensity: 1,
             type: "vertical",
             opacityFrom: 1,
@@ -243,7 +243,7 @@ export class DashboardComponent {
             stops: [0, 100, 100, 100]
           }
         },
-        colors: ["#00a294"],
+        colors: ["#5783fb"],
         plotOptions: {
           bar: {
             horizontal: false,

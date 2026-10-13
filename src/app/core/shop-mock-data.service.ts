@@ -210,7 +210,7 @@ export class ShopMockDataService {
       description: "Shirts, tees and everyday layers",
       products: 18,
       status: "Active",
-      color: "#e9f3ed",
+      color: "#ebf0fb",
     },
     {
       id: 2,

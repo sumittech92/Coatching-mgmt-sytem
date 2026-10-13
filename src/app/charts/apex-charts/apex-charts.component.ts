@@ -343,7 +343,7 @@ export class ApexChartsComponent {
         type: "pie"
       },
       labels: ["Team A", "Team B", "Team C", "Team D", "Team E"],
-      colors: ["#ee226e", "#7343be", "#03b3f5", "#fe6225", "#00a294"],
+      colors: ["#ee226e", "#7343be", "#03b3f5", "#fe6225", "#5783fb"],
       responsive: [
         {
           breakpoint: 480,
@@ -367,7 +367,7 @@ export class ApexChartsComponent {
         type: "donut"
       },
       labels: ["Team A", "Team B", "Team C", "Team D", "Team E"],
-      colors: ["#ee226e", "#7343be", "#03b3f5", "#fe6225", "#00a294"],
+      colors: ["#ee226e", "#7343be", "#03b3f5", "#fe6225", "#5783fb"],
       responsive: [
         {
           breakpoint: 480,

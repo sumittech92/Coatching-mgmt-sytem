@@ -1,11 +1,217 @@
+:root {
+    /* UnlockX palette: deep navy, royal blue, pink->orange CTA, cyan highlights. */
+    --ux-navy-950: #060a2b;
+    --ux-navy-900: #0a1046;
+    --ux-navy-800: #111b6b;
+    --ux-blue-700: #1c34b5;
+    --ux-blue-600: #2f52da;
+    --ux-blue-500: #3d63f0;
+    --ux-blue-100: #e7edff;
+    --ux-pink: #ff2d8a;
+    --ux-orange: #ff8a1f;
+    --ux-cyan: #22d3ee;
+    --ux-mint: #2ee6c8;
+    --ux-purple: #8b5cf6;
+    --ux-gold: #ffc83d;
+    --ux-grad-cta: linear-gradient(90deg, #ff1f8e 0%, #ff4a62 52%, #ff8a1f 100%);
+    --ux-grad-hero: radial-gradient(1200px 520px at 78% 18%, #2a4be0 0%, transparent 60%), radial-gradient(800px 420px at 8% 92%, #5b21b6 0%, transparent 55%), linear-gradient(135deg, #060a2b 0%, #0d1660 48%, #1631a8 100%);
+    --ux-grad-text: linear-gradient(90deg, #22d3ee 0%, #2ee6c8 100%);
+    --ux-grad-text-warm: linear-gradient(90deg, #ff2d8a 0%, #ff8a1f 100%);
+    --ux-grad-ribbon: linear-gradient(90deg, #22d3ee, #8b5cf6, #ff2d8a, #ff8a1f, #ffc83d, #22d3ee);
+    --ux-grad-strip: linear-gradient(90deg, #1550c9 0%, #1d64d8 100%);
+    --ux-glow-pink: 0 10px 30px -6px #ff2d8a8c;
+    --ux-glow-blue: 0 10px 30px -8px #3d63f080;
 
-:root{
-    --button:linear-gradient(101.09deg, #00B19D 0.68%, #044C44 108.62%);
-    --delete-btn:#FF383C;
-    --bg-color:linear-gradient(101.09deg, #00B19D 0.68%, #044C44 108.62%);
-    --title-green:#01a996 ;
+    --button: var(--ux-grad-cta);
+    --delete-btn: #FF383C;
+    --bg-color: var(--ux-grad-hero);
+    --title-green: var(--ux-blue-600);
+}
 
+/* ---------- UnlockX motion ---------- */
+@keyframes ux-gradient-pan {
+    0% {
+        background-position: 0% 50%
+    }
 
+    50% {
+        background-position: 100% 50%
+    }
+
+    100% {
+        background-position: 0% 50%
+    }
+}
+
+@keyframes ux-float {
+
+    0%,
+    100% {
+        transform: translateY(0)
+    }
+
+    50% {
+        transform: translateY(-12px)
+    }
+}
+
+@keyframes ux-float-tilt {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(-2deg)
+    }
+
+    50% {
+        transform: translateY(-14px) rotate(2deg)
+    }
+}
+
+@keyframes ux-glow-pulse {
+
+    0%,
+    100% {
+        opacity: .55;
+        transform: scale(1)
+    }
+
+    50% {
+        opacity: .95;
+        transform: scale(1.08)
+    }
+}
+
+@keyframes ux-shine {
+    0% {
+        transform: translateX(-120%) skewX(-20deg)
+    }
+
+    60%,
+    100% {
+        transform: translateX(260%) skewX(-20deg)
+    }
+}
+
+@keyframes ux-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(18px)
+    }
+
+    to {
+        opacity: 1;
+        transform: none
+    }
+}
+
+@keyframes ux-ribbon-spin {
+    to {
+        transform: rotate(360deg)
+    }
+}
+
+@keyframes ux-twinkle {
+
+    0%,
+    100% {
+        opacity: .2
+    }
+
+    50% {
+        opacity: 1
+    }
+}
+
+@keyframes ux-underline {
+    from {
+        transform: scaleX(0)
+    }
+
+    to {
+        transform: scaleX(1)
+    }
+}
+
+.ux-text-gradient {
+    background: var(--ux-grad-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent
+}
+
+.ux-text-warm {
+    background: var(--ux-grad-text-warm);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent
+}
+
+.ux-fade-up {
+    animation: ux-fade-up .7s cubic-bezier(.2, .7, .2, 1) both
+}
+
+.ux-float {
+    animation: ux-float 5s ease-in-out infinite
+}
+
+/* Pink->orange pill CTA with a moving shine, used by primary actions everywhere. */
+.ux-cta,
+.mat-mdc-unelevated-button.mat-primary:not(:disabled),
+.mat-mdc-raised-button.mat-primary:not(:disabled) {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--ux-grad-cta) !important;
+    background-size: 180% 100% !important;
+    color: #fff !important;
+    border: 0;
+    box-shadow: var(--ux-glow-pink);
+    transition: transform .18s ease, box-shadow .18s ease, background-position .5s ease;
+}
+
+.ux-cta::after,
+.mat-mdc-unelevated-button.mat-primary:not(:disabled)::after,
+.mat-mdc-raised-button.mat-primary:not(:disabled)::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 40%;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, #ffffff59, transparent);
+    animation: ux-shine 3.2s ease-in-out infinite;
+}
+
+.ux-cta:hover,
+.mat-mdc-unelevated-button.mat-primary:not(:disabled):hover,
+.mat-mdc-raised-button.mat-primary:not(:disabled):hover {
+    transform: translateY(-1px);
+    background-position: 100% 0 !important;
+    box-shadow: 0 14px 34px -6px #ff2d8aa6
+}
+
+.mat-mdc-outlined-button.mat-primary {
+    border-color: var(--ux-blue-600) !important;
+    color: var(--ux-blue-600) !important
+}
+
+.mat-mdc-card {
+    transition: box-shadow .2s ease, transform .2s ease
+}
+
+.main-content>* {
+    animation: ux-fade-up .5s cubic-bezier(.2, .7, .2, 1) both
+}
+
+@media (prefers-reduced-motion:reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important
+    }
 }
 
 
@@ -14,9 +220,11 @@ body {
     height: auto;
     font-family: "Poppins", sans-serif !important;
 }
-.title-green{
+
+.title-green {
     color: var(--title-green);
 }
+
 .auth-box {
     min-height: 100vh;
     display: flex;
@@ -24,7 +232,7 @@ body {
     justify-content: center;
 }
 
-.btn-login{
+.btn-login {
     background: var(--button) !important;
     border-radius: 8px !important;
     line-height: 2.005 !important;
@@ -32,12 +240,14 @@ body {
     color: #fff !important;
     border: none !important;
 }
+
 .login-bg-left {
     height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
 }
+
 .login-bg-right {
     height: 100vh;
     display: flex;
@@ -50,12 +260,14 @@ body {
     z-index: -1;
     width: 50%;
 }
+
 .login-card {
     max-width: 570px;
     width: 100%;
     margin: auto;
 }
-.login-bg-left img{
+
+.login-bg-left img {
     width: 50%;
 }
 
@@ -68,6 +280,7 @@ mat-label {
 .auth-box {
     min-height: 100vh;
 }
+
 .page-title {
     font-size: 23px;
     font-weight: 400;
@@ -93,6 +306,7 @@ mat-label {
     margin-bottom: 30px;
     margin: auto;
 }
+
 .account {
     font-size: 15px;
 }
@@ -102,7 +316,7 @@ mat-label {
     position: fixed;
     inset: 0;
     z-index: -1;
-    background:var(--bg-color);
+    background: var(--bg-color);
 }
 
 .text {
@@ -123,6 +337,7 @@ mat-label {
     padding-top: 10px;
     padding-bottom: 10px;
 }
+
 .light_mode .mat-mdc-form-field-infix {
     min-height: 45px;
 }
@@ -131,47 +346,220 @@ mat-label {
 
 
 /* Shared visual rhythm for workspace panels. */
-:root { --ui-ink:#263b32; --ui-muted:#75847b; --ui-border:#e5ebe6; --ui-surface:#fff; --ui-canvas:#f7f8f6; --ui-accent:#247653; }
-body { color:var(--ui-ink); font-size:14px; line-height:1.5; background:var(--ui-canvas); }
-.main-content { min-width:0; overflow-x:hidden; }
-.mat-mdc-card { border-color:var(--ui-border); border-radius:14px; box-shadow:0 5px 20px #203b3208; }
-.mat-mdc-form-field { min-width:0; }
-.mat-mdc-text-field-wrapper { border-radius:9px; }
-.mat-mdc-raised-button,.mat-mdc-unelevated-button,.mat-mdc-outlined-button { min-height:40px; border-radius:9px!important; font-weight:600; }
+:root {
+    --ui-ink: #283063;
+    --ui-muted: #788090;
+    --ui-border: #e4e8f5;
+    --ui-surface: #fff;
+    --ui-canvas: #f5f7ff;
+    --ui-accent: #385cc2;
+}
+
+body {
+    color: var(--ui-ink);
+    font-size: 14px;
+    line-height: 1.5;
+    background: var(--ui-canvas);
+}
+
+.main-content {
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+.mat-mdc-card {
+    border-color: var(--ui-border);
+    border-radius: 14px;
+    box-shadow: 0 5px 20px #272f6208;
+}
+
+.mat-mdc-form-field {
+    min-width: 0;
+}
+
+.mat-mdc-text-field-wrapper {
+    border-radius: 9px;
+}
+
+.mat-mdc-raised-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-outlined-button {
+    min-height: 40px;
+    border-radius: 9px !important;
+    font-weight: 600;
+}
 
 /* Keep dense records legible on laptop and phone screens. */
 .main-content .table tbody td,
-.portal-content .table tbody td { font-size:15px!important; }
+.portal-content .table tbody td {
+    font-size: 15px !important;
+}
+
 .main-content .table thead th,
-.portal-content .table thead th { font-size:12px!important; }
-.main-content .feature-table tbody td { font-size:14px!important; }
-.main-content .feature-table thead th { font-size:12px!important; }
+.portal-content .table thead th {
+    font-size: 12px !important;
+}
+
+.main-content .feature-table tbody td {
+    font-size: 14px !important;
+}
+
+.main-content .feature-table thead th {
+    font-size: 12px !important;
+}
+
 .main-content .student-row .student-info strong,
 .main-content .student-row .batch-copy strong,
 .main-content .filter-row .mat-mdc-input-element,
-.main-content .toolbar .mat-mdc-input-element { font-size:14px!important; }
-.mat-mdc-icon-button { border-radius:9px; }
-.table-responsive { max-width:100%; overscroll-behavior-x:contain; }
-.table { --bs-table-bg:transparent; }
-.table thead th { color:#75847b; font-size:11px; font-weight:700; letter-spacing:.04em; }
-.table tbody td { color:#526158; font-size:13px; }
-@media(max-width:600px) {
-  .main-content { padding-left:14px; padding-right:14px; }
-  .mat-mdc-card-content { padding-left:15px; padding-right:15px; }
-  .mat-mdc-raised-button,.mat-mdc-unelevated-button,.mat-mdc-outlined-button { min-height:42px; }
+.main-content .toolbar .mat-mdc-input-element {
+    font-size: 14px !important;
 }
 
-.public-site .login-cta{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 15px;margin-left:auto;border:1px solid #dce5dc;border-radius:8px;color:var(--deep);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}
-.public-site .login-cta:hover{border-color:var(--brand);color:var(--brand)}
-@media(max-width:800px){.public-site .login-cta{margin-left:auto;margin-right:7px;min-height:38px;padding:0 12px;font-size:12px}}
-@media(max-width:520px){.public-site .login-cta{padding:0 10px;min-height:36px}}
+.mat-mdc-icon-button {
+    border-radius: 9px;
+}
 
-.public-site .map-card iframe{display:block;width:100%;height:300px;border:0;border-radius:8px}
-.public-site .map-card>a{display:inline-block;margin:10px 3px 2px;color:var(--brand);font-size:14px;font-weight:600;text-decoration:underline}
-.public-site .contact-details article p a{color:inherit;text-decoration:none}
-.public-site .contact-details article p a:hover{color:var(--brand);text-decoration:underline}
-.public-site .hero-copy>p,.public-site .inner-hero>p,.public-site .intro-grid p,.public-site .about-split p,.public-site .public-course p,.public-site .course-detail-card>p,.public-site .public-feed p{font-size:15px;line-height:1.7}
-.public-site .section-kicker,.public-site .hero-kicker{font-size:12px;letter-spacing:1px}
-.public-site .course-meta,.public-site .course-detail-line small,.public-site .teacher-subject,.public-site .contact-details article small{font-size:11px;letter-spacing:.3px}
-.public-site .course-bottom strong,.public-site .course-bottom button,.public-site .faculty-page-grid p,.public-site .faculty-page-grid article>small,.public-site .public-gallery-grid figcaption,.public-site .public-feed small,.public-site .contact-details article p{font-size:14px}
-@media(max-width:600px){.public-site .map-card iframe{height:240px}}
+.table-responsive {
+    max-width: 100%;
+    overscroll-behavior-x: contain;
+}
+
+.table {
+    --bs-table-bg: transparent;
+}
+
+.table thead th {
+    color: #788090;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.table tbody td {
+    color: #555d6d;
+    font-size: 13px;
+}
+
+@media(max-width:600px) {
+    .main-content {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .mat-mdc-card-content {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .mat-mdc-raised-button,
+    .mat-mdc-unelevated-button,
+    .mat-mdc-outlined-button {
+        min-height: 42px;
+    }
+}
+
+.public-site .login-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 15px;
+    margin-left: auto;
+    border: 1px solid #dce2ef;
+    border-radius: 8px;
+    color: var(--deep);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap
+}
+
+.public-site .login-cta:hover {
+    border-color: var(--brand);
+    color: var(--brand)
+}
+
+@media(max-width:800px) {
+    .public-site .login-cta {
+        margin-left: auto;
+        margin-right: 7px;
+        min-height: 38px;
+        padding: 0 12px;
+        font-size: 12px
+    }
+}
+
+@media(max-width:520px) {
+    .public-site .login-cta {
+        padding: 0 10px;
+        min-height: 36px
+    }
+}
+
+.public-site .map-card iframe {
+    display: block;
+    width: 100%;
+    height: 300px;
+    border: 0;
+    border-radius: 8px
+}
+
+.public-site .map-card>a {
+    display: inline-block;
+    margin: 10px 3px 2px;
+    color: var(--brand);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: underline
+}
+
+.public-site .contact-details article p a {
+    color: inherit;
+    text-decoration: none
+}
+
+.public-site .contact-details article p a:hover {
+    color: var(--brand);
+    text-decoration: underline
+}
+
+.public-site .hero-copy>p,
+.public-site .inner-hero>p,
+.public-site .intro-grid p,
+.public-site .about-split p,
+.public-site .public-course p,
+.public-site .course-detail-card>p,
+.public-site .public-feed p {
+    font-size: 15px;
+    line-height: 1.7
+}
+
+.public-site .section-kicker,
+.public-site .hero-kicker {
+    font-size: 12px;
+    letter-spacing: 1px
+}
+
+.public-site .course-meta,
+.public-site .course-detail-line small,
+.public-site .teacher-subject,
+.public-site .contact-details article small {
+    font-size: 11px;
+    letter-spacing: .3px
+}
+
+.public-site .course-bottom strong,
+.public-site .course-bottom button,
+.public-site .faculty-page-grid p,
+.public-site .faculty-page-grid article>small,
+.public-site .public-gallery-grid figcaption,
+.public-site .public-feed small,
+.public-site .contact-details article p {
+    font-size: 14px
+}
+
+@media(max-width:600px) {
+    .public-site .map-card iframe {
+        height: 240px
+    }
+}

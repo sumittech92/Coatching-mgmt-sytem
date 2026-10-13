@@ -44,7 +44,7 @@ export class ClientManagementComponent implements OnInit {
   ];
   readonly collegeData: Record<string, Row[]> = {
     teachers: [
-      { id: 41, name: 'Dr. Neha Iyer', qualification: 'Ph.D. Computer Science', experience: '12 years', subjects: 'Data Structures, Programming', phone: '+91 98765 31001', email: 'neha.iyer@greenfield.edu', joining: '15 Jun 2018', status: 'Active', photo: 'NI', color: '#e2f2ed' },
+      { id: 41, name: 'Dr. Neha Iyer', qualification: 'Ph.D. Computer Science', experience: '12 years', subjects: 'Data Structures, Programming', phone: '+91 98765 31001', email: 'neha.iyer@greenfield.edu', joining: '15 Jun 2018', status: 'Active', photo: 'NI', color: '#e7eefd' },
       { id: 42, name: 'Prof. Rahul Mehta', qualification: 'M.Com, NET', experience: '10 years', subjects: 'Accounting, Economics', phone: '+91 98765 31002', email: 'rahul.mehta@greenfield.edu', joining: '03 Jan 2020', status: 'Active', photo: 'RM', color: '#f2eafa' },
       { id: 43, name: 'Dr. Ananya Rao', qualification: 'Ph.D. Psychology', experience: '9 years', subjects: 'Psychology, Research Methods', phone: '+91 98765 31003', email: 'ananya.rao@greenfield.edu', joining: '21 Mar 2021', status: 'Active', photo: 'AR', color: '#fff0df' }
     ],
@@ -73,7 +73,7 @@ export class ClientManagementComponent implements OnInit {
   selectedDate = '2026-09-28'; selectedBatch = 'All batches'; selectedTeacher = 'All teachers'; attendanceView: 'daily'|'monthly' = 'daily';
   readonly featureData: Record<string, Row[]> = {
     teachers: [
-      { id: 1, name: 'Priya Nair', qualification: 'M.Sc. Physics, B.Ed.', experience: '8 years', subjects: 'Physics, Mathematics', phone: '+91 98765 12001', email: 'priya.nair@northstar.edu', joining: '15 Jun 2022', status: 'Active', photo: 'PN', color: '#e2f2ed' },
+      { id: 1, name: 'Priya Nair', qualification: 'M.Sc. Physics, B.Ed.', experience: '8 years', subjects: 'Physics, Mathematics', phone: '+91 98765 12001', email: 'priya.nair@northstar.edu', joining: '15 Jun 2022', status: 'Active', photo: 'PN', color: '#e7eefd' },
       { id: 2, name: 'Ankit Rao', qualification: 'M.Sc. Chemistry', experience: '6 years', subjects: 'Chemistry', phone: '+91 98765 12002', email: 'ankit.rao@northstar.edu', joining: '03 Jan 2023', status: 'Active', photo: 'AR', color: '#f2eafa' },
       { id: 3, name: 'Nisha Thomas', qualification: 'M.A. English, B.Ed.', experience: '11 years', subjects: 'English', phone: '+91 98765 12003', email: 'nisha.thomas@northstar.edu', joining: '21 Mar 2020', status: 'Active', photo: 'NT', color: '#fff0df' },
       { id: 4, name: 'Dev Malhotra', qualification: 'M.Com, NET', experience: '5 years', subjects: 'Accounts, Commerce', phone: '+91 98765 12004', email: 'dev.m@northstar.edu', joining: '07 Aug 2024', status: 'Inactive', photo: 'DM', color: '#e7eefb' }
@@ -178,7 +178,7 @@ export class ClientManagementComponent implements OnInit {
       if (!value) { if (this.router.url.endsWith('/add')) this.router.navigate([`${this.isShop ? '/shop' : '/client'}/${this.key}`]); return; }
       const normalized: Row = { ...value, id: row?.id || Date.now() };
       if (this.key === 'results' && normalized.marks !== undefined && normalized.total) { normalized.percentage = `${Math.round(Number(normalized.marks) / Number(normalized.total) * 100)}%`; normalized.resultStatus = normalized.resultStatus || 'Draft'; }
-      if (this.key === 'teachers') { normalized.photo ||= (normalized.name || '?').split(' ').map((word: string) => word[0]).join('').slice(0, 2).toUpperCase(); normalized.color ||= '#e2f2ed'; }
+      if (this.key === 'teachers') { normalized.photo ||= (normalized.name || '?').split(' ').map((word: string) => word[0]).join('').slice(0, 2).toUpperCase(); normalized.color ||= '#e7eefd'; }
       if (row) Object.assign(row, normalized); else this.rows.unshift(normalized);
       if (this.router.url.endsWith('/add')) this.router.navigate([`${this.isShop ? '/shop' : '/client'}/${this.key}`]);
     });

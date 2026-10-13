@@ -16,7 +16,7 @@ export interface WebsiteProfile {
 export class WebsiteContentService {
   constructor(private tenant: TenantContextService) {}
   private readonly coachingProfile: WebsiteProfile = {
-    settings: { name: 'Northstar Academy', logo: 'assets/images/logo.svg', favicon: '', primary: '#128c78', secondary: '#12313c', phone: '+91 522 4567 8900', email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', whatsapp: '+91 98765 43210' },
+    settings: { name: 'Northstar Academy', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: '+91 522 4567 8900', email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', whatsapp: '+91 98765 43210' },
     home: { title: 'Learn well. Do well.', subtitle: 'Classes, kind teachers and help for your child.', image: 'assets/images/coaching/classroom-india.jpg', ctaText: 'See classes', ctaLink: '/courses' },
     about: { description: 'We teach in clear steps. Our teachers help every child learn.', mission: 'Help every child learn well.', vision: 'Help children learn and reach their goals.', experience: 'We have taught for 12 years', statistics: '1,200 students · 24 teachers · 96% happy families' },
     contact: { phone: '+91 522 4567 8900', email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', map: 'https://maps.example.com/northstar', whatsapp: '+91 98765 43210' },
@@ -47,7 +47,7 @@ export class WebsiteContentService {
     ]
   };
   private readonly collegeProfile: WebsiteProfile = {
-    settings: { name: 'Greenfield College', logo: 'assets/images/logo.svg', favicon: '', primary: '#128c78', secondary: '#163c3b', phone: '+91 8045 678 900', email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', whatsapp: '+91 98765 43210' },
+    settings: { name: 'Greenfield College', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: '+91 8045 678 900', email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', whatsapp: '+91 98765 43210' },
     home: { title: 'Curiosity builds the future.', subtitle: 'A welcoming college for bold ideas, meaningful learning and lifelong friendships.', image: 'assets/images/coaching/students-india.jpg', ctaText: 'Explore our programs', ctaLink: '/courses' },
     about: { description: 'Greenfield College brings ambitious students and dedicated educators together.', mission: 'Make high-quality learning personal and practical.', vision: 'Prepare thoughtful graduates to shape a changing world.', experience: 'A vibrant learning community in Bengaluru', statistics: '2,486 students · 148 faculty · 8 departments' },
     contact: { phone: '+91 8045 678 900', email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', map: 'https://maps.example.com/greenfield', whatsapp: '+91 98765 43210' },

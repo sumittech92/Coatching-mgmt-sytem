@@ -1,57 +1,39 @@
-<div class="login-bg position-fixed top-0 start-0 end-0 bottom-0"></div>
-<div class="auth-box my-lg-0">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-lg-6">
-        <div class="login-bg-left">
-          <img src="assets/images/logo.svg" alt="Logo" class="mb-4" />
-        </div>
-      </div>
-
-      <div class="col-lg-6">
-        <div class="login-bg-right">
-          <div class="login-card">
-            <mat-card class="rounded-4 m-2">
-              <mat-card-content class="p-3">
-                <div class="text-start">
-                  <h4 class="mb-2">OTP Verification</h4>
-                  <p class="mb-4 text">
-                    Enter the 6-digit code sent to your registered email /
-                    mobile number.
-                  </p>
-                </div>
-                <div class="row g-2">
-                  <div class="col-12 col-md-12">
-                    <ng-otp-input
-                      class="text-center"
-                      [config]="{ length: 6, allowNumbersOnly: true }"
-                    >
-                    </ng-otp-input>
-                  </div>
-
-                  <div class="col-12 col-md-12">
-                    <div class="d-grid mb-2 mt-3">
-                      <button
-                        type="button"
-                        class="btn btn-login"
-                        routerLink="/reset-password"
-                      >
-                        Verify
-                      </button>
-                    </div>
-                  </div>
-                  <div class="col-12 col-md-12">
-                    <div class="text-center">
-                      <p class="account">Resend OTP in 30 secs</p>
-                    </div>
-                  </div>
-                </div>
-                <!--end row-->
-              </mat-card-content>
-            </mat-card>
-          </div>
-        </div>
-      </div>
+<div class="auth-page">
+  <section class="auth-story">
+    <a class="auth-brand" routerLink="/"><span class="brand-mark">a</span> ageon<span>.</span></a>
+    <div class="story-copy">
+      <div class="eyebrow"><span></span> ACCOUNT RECOVERY</div>
+      <h1>Almost there,<br><em>check your phone.</em></h1>
+      <p>We've sent a one-time code to your mobile. It keeps your account safe.</p>
+      <ol class="recovery-steps">
+        <li class="done"><span><mat-icon>check</mat-icon></span><div>Enter mobile number<small>Code sent</small></div></li>
+        <li class="current"><span>2</span><div>Verify OTP<small>Enter the 4-digit code</small></div></li>
+        <li><span>3</span><div>Set new password<small>Then sign in again</small></div></li>
+      </ol>
     </div>
-  </div>
+    <div class="story-footer"><span>Made for local coaching institutes</span><span>© 2026 Ageon</span></div>
+  </section>
+
+  <section class="auth-form-side"><div class="auth-form-wrap">
+    <div class="mobile-brand auth-brand"><span class="brand-mark">a</span> ageon<span>.</span></div>
+    <div class="recovery-icon"><mat-icon>sms</mat-icon></div>
+    <div class="welcome-tag">STEP 2 OF 3</div>
+    <h2>OTP verification</h2>
+    <p class="auth-subtitle">Enter the {{otpLength}}-digit code sent to <strong>{{phone}}</strong>.</p>
+    <div class="demo-hint"><mat-icon>info</mat-icon>Demo mode: use OTP <strong>1234</strong></div>
+
+    <form (ngSubmit)="verify()" novalidate>
+      <div class="otp-wrap" [class.invalid]="invalid">
+        <ng-otp-input [config]="config" (onInputChange)="onOtpChange($event)"></ng-otp-input>
+      </div>
+      <small class="field-error" *ngIf="invalid">{{wrongCode ? 'That code is not correct. Please try again.' : 'Please enter all ' + otpLength + ' digits.'}}</small>
+      <div class="resend-row">
+        <span *ngIf="secondsLeft > 0">Resend OTP in 0:{{secondsLeft < 10 ? '0' + secondsLeft : secondsLeft}}</span>
+        <span *ngIf="secondsLeft <= 0">Didn't get the code?</span>
+        <button type="button" [disabled]="secondsLeft > 0" (click)="resend()">Resend OTP</button>
+      </div>
+      <button class="sign-in-button" type="submit" [disabled]="loading"><mat-spinner *ngIf="loading" [diameter]="17"></mat-spinner><ng-container *ngIf="!loading">Verify <mat-icon>arrow_forward</mat-icon></ng-container><span *ngIf="loading">Verifying…</span></button>
+    </form>
+    <a class="back-link" routerLink="/forgot-password"><mat-icon>arrow_back</mat-icon>Change mobile number</a>
+  </div></section>
 </div>

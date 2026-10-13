@@ -26,5 +26,6 @@ export class SignInComponent {
       window.location.assign(this.auth.landingPath);
     }).finally(() => this.loading = false);
   }
-  readonly roles: DemoRole[] = ['Super Admin', 'Owner', 'Teacher', 'Student', 'Parent'];
+  // Parents share the student portal, so they sign in through the Student panel.
+  readonly roles: DemoRole[] = ['Super Admin', 'Owner', 'Teacher', 'Student'];
 }

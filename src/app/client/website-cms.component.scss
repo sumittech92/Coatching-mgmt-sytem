@@ -95,8 +95,8 @@
 
 .cms-nav>button.active,
 .cms-nav>button:hover {
-    background: #eaf6f2;
-    color: #0b8d76;
+    background: #eef3fe;
+    color: #466fe2;
     font-weight: 650
 }
 
@@ -119,9 +119,9 @@
 .live-dot {
     height: 7px;
     width: 7px;
-    background: #20a47e;
+    background: #5784fb;
     border-radius: 50%;
-    box-shadow: 0 0 0 3px #def2e9
+    box-shadow: 0 0 0 3px #e4edfe
 }
 
 .website-status strong,
@@ -131,7 +131,7 @@
 
 .website-status strong {
     font-size: 8px;
-    color: #466157
+    color: #4f5a73
 }
 
 .website-status small {
@@ -172,7 +172,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #7f9189;
+    color: #848c9e;
     font-size: 8px
 }
 
@@ -180,7 +180,7 @@
     font-size: 14px;
     width: 14px;
     height: 14px;
-    color: #269577
+    color: #4c77ec
 }
 
 .cms-card {
@@ -204,8 +204,8 @@
     height: 34px;
     width: 34px;
     border-radius: 10px;
-    background: #e8f5ef;
-    color: #0e8e77;
+    background: #ebf1ff;
+    color: #4770e3;
     display: grid;
     place-items: center;
     flex: none
@@ -265,7 +265,7 @@
 
 .upload-preview label {
     display: inline-block;
-    color: #0d8b76;
+    color: #466ede;
     font-size: 8px;
     font-weight: 650;
     cursor: pointer
@@ -278,17 +278,17 @@
 .favicon-preview>span {
     height: 33px;
     width: 33px;
-    border: 1px dashed #bdc9c4;
+    border: 1px dashed #c0c6d2;
     border-radius: 9px;
     display: grid;
     place-items: center;
-    color: #648076;
+    color: #6d7993;
     font-size: 10px
 }
 
 .favicon-preview small {
     font-size: 7px;
-    color: #98a39e
+    color: #9ba0ab
 }
 
 .color-control {
@@ -415,8 +415,8 @@
     width: 29px;
     height: 29px;
     border-radius: 8px;
-    background: #e9f5ef;
-    color: #11866f;
+    background: #ecf2fe;
+    color: #436ad7;
     display: grid;
     place-items: center
 }
@@ -457,7 +457,7 @@
     align-items: center;
     justify-content: center;
     gap: 9px;
-    color: #32836f;
+    color: #4b6dc7;
     margin: 8px 0 14px
 }
 
@@ -473,7 +473,7 @@
 
 .map-placeholder small {
     font-size: 7px;
-    color: #809188
+    color: #848c9e
 }
 
 .map-placeholder>mat-icon {
@@ -491,7 +491,7 @@
     width: 34px;
     border-radius: 10px;
     background: #f0f3f2;
-    color: #4b7467;
+    color: #53699c;
     display: grid;
     place-items: center;
     flex: none
@@ -510,9 +510,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background: #e9f7f0;
-    color: #198267;
-    border: 1px solid #c9ecdc;
+    background: #eef3ff;
+    color: #4067d1;
+    border: 1px solid #d5e3ff;
     border-radius: 8px;
     padding: 9px 12px;
     font-size: 9px;

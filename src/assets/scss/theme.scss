@@ -2,11 +2,24 @@
 
 @include mat.core();
 
+// UnlockX-inspired palettes: royal blue primary, hot-pink accent.
+$ux-blue: (
+  50:#eaf0ff,100:#cbd8ff,200:#a7bdff,300:#7f9eff,400:#5f84fb,500:#3d63f0,600:#2f52da,700:#2442bf,800:#1a32a3,900:#0e1a6e,
+  A100:#c9d6ff,A200:#90a8ff,A400:#4f74ff,A700:#2c55ff,
+  contrast:(50:rgba(0,0,0,.87),100:rgba(0,0,0,.87),200:rgba(0,0,0,.87),300:rgba(0,0,0,.87),400:white,500:white,600:white,700:white,800:white,900:white,A100:rgba(0,0,0,.87),A200:rgba(0,0,0,.87),A400:white,A700:white)
+);
+$ux-pink: (
+  50:#ffe6f2,100:#ffc0dd,200:#ff97c7,300:#ff6daf,400:#ff4c9c,500:#ff2d8a,600:#ec2380,700:#d41a74,800:#bb1268,900:#8e0552,
+  A100:#ffd0e5,A200:#ff8fc2,A400:#ff3d94,A700:#ff1f80,
+  contrast:(50:rgba(0,0,0,.87),100:rgba(0,0,0,.87),200:rgba(0,0,0,.87),300:white,400:white,500:white,600:white,700:white,800:white,900:white,A100:rgba(0,0,0,.87),A200:white,A400:white,A700:white)
+);
+
+
 // Define a dark theme
 $dark-theme: mat.define-dark-theme((
  color: (
-   primary: mat.define-palette(mat.$indigo-palette),
-   accent: mat.define-palette(mat.$pink-palette),
+   primary: mat.define-palette($ux-blue, 600, 300, 800),
+   accent: mat.define-palette($ux-pink, 500, 300, 700),
  ),
 
 ));
@@ -14,8 +27,8 @@ $dark-theme: mat.define-dark-theme((
 // Define a light theme
 $light-theme: mat.define-light-theme((
  color: (
-   primary: mat.define-palette(mat.$indigo-palette),
-   accent: mat.define-palette(mat.$pink-palette),
+   primary: mat.define-palette($ux-blue, 600, 300, 800),
+   accent: mat.define-palette($ux-pink, 500, 300, 700),
  ),
 ));
 
