@@ -8,16 +8,19 @@ import { MockStudent } from '../core/mock-data/management-data';
 import { ConfirmationDialogService } from '../core/confirmation-dialog.service';
 import { TenantContextService } from '../core/tenant-context.service';
 import { MockAuthService } from '../core/mock-auth.service';
+import { ADMISSION_QUOTAS, COACHING_BOARDS, COLLEGE_SEMESTERS } from '../core/workspace-terms';
 
 @Component({ selector: 'app-students-page', templateUrl: './students-page.component.html', styleUrls: ['./students-page.component.scss'] })
 export class StudentsPageComponent implements OnInit {
   search = ''; batch = ''; status = ''; feeStatus = ''; pageIndex = 0; pageSize = 5; photo = ''; selected?: MockStudent; mode: 'list'|'add'|'edit'|'view' = 'list';
-  readonly form = this.fb.group({ name: ['', Validators.required], dob: [''], gender: [''], phone: ['', [Validators.required, Validators.minLength(8)]], email: ['', Validators.email], father: ['', Validators.required], mother: [''], parentPhone: [''], course: ['', Validators.required], batch: ['', Validators.required], admission: ['', Validators.required], address: [''], city: [''], state: [''], pincode: [''], monthlyFee: [0, Validators.required], discount: [0] });
+  readonly form = this.fb.group({ name: ['', Validators.required], dob: [''], gender: [''], phone: ['', [Validators.required, Validators.minLength(8)]], email: ['', Validators.email], father: ['', Validators.required], mother: [''], parentPhone: [''], course: ['', Validators.required], batch: ['', Validators.required], admission: ['', Validators.required], address: [''], city: [''], state: [''], pincode: [''], monthlyFee: [0, Validators.required], discount: [0], school: [''], board: [''], rollNo: [''], semester: [''], quota: [''] });
+  readonly boards = COACHING_BOARDS; readonly semesters = COLLEGE_SEMESTERS; readonly quotas = ADMISSION_QUOTAS;
   constructor(public data: MockDataService, private fb: FormBuilder, private router: Router, private route: ActivatedRoute, private confirm: ConfirmationDialogService, private tenant: TenantContextService, public auth: MockAuthService) {}
   get isTeacher(): boolean { return this.auth.role === 'Teacher'; }
-  get isCollege(): boolean { return this.tenant.current.businessType === 'college'; }
-  get courseOptions(): string[] { return this.isCollege ? ['BA Psychology', 'B.Com', 'B.Sc Computer Science', 'B.Sc Life Sciences', 'BBA', 'BCA', 'B.Tech'] : [...Array.from({ length: 12 }, (_, index) => `Class ${index + 1}`), 'Class 10 Foundation', 'Class 11 Science', 'Class 12 Science', 'Class 12 Commerce', 'JEE Foundation', 'JEE Preparation', 'NEET Preparation', 'Commerce Entrance']; }
-  get batchOptions(): string[] { return this.isCollege ? ['Year 1 · Section A', 'Year 1 · Section B', 'Year 2 · Section A', 'Year 2 · Section B', 'Year 2 · Section C', 'Year 3 · Section A', 'Year 3 · Section B'] : ['Morning · 7:00 am', 'Morning · 9:00 am', 'Afternoon · 2:00 pm', 'Evening · 4:00 pm', 'Weekend · Saturday', 'Weekend · Sunday']; }
+  get isCollege(): boolean { return this.tenant.isCollege; }
+  get terms() { return this.tenant.terms; }
+  get courseOptions(): string[] { return this.terms.courseOptions; }
+  get batchOptions(): string[] { return this.terms.groupOptions; }
   ngOnInit(): void { this.route.paramMap.subscribe(params => { const id = Number(params.get('id')); const path = this.router.url; this.mode = path.endsWith('/add') ? 'add' : id ? (path.includes('/edit') ? 'edit' : 'view') : 'list'; this.selected = id ? this.data.students.find(student => student.id === id) : undefined; if (this.selected && this.mode !== 'list') this.form.patchValue({ ...this.selected, parentPhone: this.selected.phone }); }); }
   get activeCount(): number { return this.data.students.filter(student => student.status === 'Active').length; }
   get pendingCount(): number { return this.data.students.filter(student => student.feeStatus !== 'Paid').length; }

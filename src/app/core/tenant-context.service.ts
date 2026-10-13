@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
 import { MOCK_TENANT_CONTEXT } from './mock-data/tenant-context';
 import { BusinessType, TenantContext } from './models/business-type';
+import { WorkspaceTerms, termsFor } from './workspace-terms';
 
 @Injectable({ providedIn: 'root' })
 export class TenantContextService {
   private context: TenantContext = this.readStoredContext();
   get current(): TenantContext { return this.context; }
+  get isCollege(): boolean { return this.context.businessType === 'college'; }
+  get terms(): WorkspaceTerms { return termsFor(this.context.businessType); }
   setBusinessType(businessType: BusinessType, remember = false): void {
     this.context = { ...this.context, businessType };
     this.context.businessName = businessType === 'coaching' ? 'Northstar Academy' : businessType === 'college' ? 'Greenfield College' : 'Atelier & Co.';

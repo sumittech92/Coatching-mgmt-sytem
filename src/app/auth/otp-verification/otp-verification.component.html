@@ -1,5 +1,5 @@
 <div class="auth-page">
-  <section class="auth-story">
+  <section class="auth-story ux-ring ux-glow">
     <a class="auth-brand" routerLink="/"><span class="brand-mark">a</span> ageon<span>.</span></a>
     <div class="story-copy">
       <div class="eyebrow"><span></span> ACCOUNT RECOVERY</div>
@@ -20,17 +20,17 @@
     <div class="welcome-tag">STEP 2 OF 3</div>
     <h2>OTP verification</h2>
     <p class="auth-subtitle">Enter the {{otpLength}}-digit code sent to <strong>{{phone}}</strong>.</p>
-    <div class="demo-hint"><mat-icon>info</mat-icon>Demo mode: use OTP <strong>1234</strong></div>
+    <div class="demo-hint"><mat-icon>info</mat-icon>SMS sending is not connected yet. Use OTP <strong>1234</strong></div>
 
     <form (ngSubmit)="verify()" novalidate>
       <div class="otp-wrap" [class.invalid]="invalid">
         <ng-otp-input [config]="config" (onInputChange)="onOtpChange($event)"></ng-otp-input>
       </div>
-      <small class="field-error" *ngIf="invalid">{{wrongCode ? 'That code is not correct. Please try again.' : 'Please enter all ' + otpLength + ' digits.'}}</small>
+      <small class="field-error" *ngIf="invalid">{{serverError || 'Please enter all ' + otpLength + ' digits.'}}</small>
       <div class="resend-row">
         <span *ngIf="secondsLeft > 0">Resend OTP in 0:{{secondsLeft < 10 ? '0' + secondsLeft : secondsLeft}}</span>
         <span *ngIf="secondsLeft <= 0">Didn't get the code?</span>
-        <button type="button" [disabled]="secondsLeft > 0" (click)="resend()">Resend OTP</button>
+        <button type="button" [disabled]="secondsLeft > 0 || resending" (click)="resend()">{{ resending ? "Sending…" : "Resend OTP" }}</button>
       </div>
       <button class="sign-in-button" type="submit" [disabled]="loading"><mat-spinner *ngIf="loading" [diameter]="17"></mat-spinner><ng-container *ngIf="!loading">Verify <mat-icon>arrow_forward</mat-icon></ng-container><span *ngIf="loading">Verifying…</span></button>
     </form>

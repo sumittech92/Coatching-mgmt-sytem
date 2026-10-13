@@ -29,7 +29,7 @@ export class StudentPortalComponent {
   get menu(): PortalMenu[] { return this.isParent ? this.parentMenu : this.studentMenu; }
   get isParent(): boolean { return this.auth.role === 'Parent'; }
   get isCollege(): boolean { return this.tenant.current.businessType === 'college'; }
-  get displayName(): string { return this.isParent ? (this.isCollege ? 'Meera Rao' : 'Neha Sharma') : (this.isCollege ? 'Ishita Rao' : 'Aarav Sharma'); }
+  get displayName(): string { if (this.auth.user?.full_Name) return this.auth.user.full_Name; return this.isParent ? (this.isCollege ? 'Meera Rao' : 'Neha Sharma') : (this.isCollege ? 'Ishita Rao' : 'Aarav Sharma'); }
   get childName(): string { return this.isCollege ? 'Ishita Rao' : 'Aarav Sharma'; }
   get firstName(): string { return (this.isParent ? (this.isCollege ? 'Meera Rao' : 'Neha Sharma') : this.displayName).split(' ')[0]; }
   get childFirstName(): string { return this.childName.split(' ')[0]; }
@@ -46,7 +46,7 @@ export class StudentPortalComponent {
   get paymentDescription(): string { return this.isCollege ? 'Tuition balance · due Oct 5' : 'September balance · due Oct 5'; }
   get instituteName(): string { return this.tenant.current.businessName; }
   get attendanceRate(): number { return this.isCollege ? 94 : 96; }
-  get attendanceDays(): number { return this.isCollege ? 22 : 24; }z
+  get attendanceDays(): number { return this.isCollege ? 22 : 24; }
   get paidTotal(): number { return this.isCollege ? 28000 : 10000; }
   get feeDue(): number { return this.isCollege ? 14000 : 2000; }
   get sectionLabel(): string { return this.menu.find(item => item.key === this.section)?.label || 'Overview'; }

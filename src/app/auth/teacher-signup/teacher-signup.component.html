@@ -1,7 +1,7 @@
 <div class="auth-page signup-page">
-  <section class="auth-story">
+  <section class="auth-story ux-ring ux-glow">
     <a class="auth-brand" routerLink="/"><span class="brand-mark">a</span> ageon<span>.</span></a>
-    <div class="story-copy">
+    <div class="story-copy" *ngIf="!isCollege; else collegeStory">
       <div class="eyebrow"><span></span> TEACHER REGISTRATION · CLASSES 1–12</div>
       <h1>Teach with heart,<br><em>lead with ease.</em></h1>
       <p>Take attendance, share homework, track results and talk to parents, all from one simple dashboard.</p>
@@ -16,37 +16,58 @@
         <div><strong>1 app</strong><small>For every batch</small></div>
       </div>
     </div>
-    <div class="story-footer"><span>Made for local coaching institutes</span><span>© 2026 Ageon</span></div>
+    <ng-template #collegeStory>
+      <div class="story-copy">
+        <div class="eyebrow"><span></span> FACULTY REGISTRATION · COLLEGE</div>
+        <h1>Lecture, assess,<br><em>mentor with ease.</em></h1>
+        <p>Your timetable, lecture attendance, internal assessments and department notices in one faculty workspace.</p>
+        <div class="feature-pills">
+          <span class="feature-pill"><span class="pill-icon pill-mint"><mat-icon>calendar_month</mat-icon></span>Lecture timetable</span>
+          <span class="feature-pill"><span class="pill-icon pill-purple"><mat-icon>grading</mat-icon></span>Internal marks</span>
+          <span class="feature-pill"><span class="pill-icon pill-blue"><mat-icon>account_tree</mat-icon></span>Department tools</span>
+        </div>
+        <div class="story-stats">
+          <div><strong>8</strong><small>Semesters supported</small></div>
+          <div><strong>1 click</strong><small>Lecture attendance</small></div>
+          <div><strong>All</strong><small>Sections you teach</small></div>
+        </div>
+      </div>
+    </ng-template>
+    <div class="story-footer"><span>Made for coaching centres &amp; colleges</span><span>© 2026 Ageon</span></div>
   </section>
 
   <section class="auth-form-side"><div class="auth-form-wrap">
     <div class="mobile-brand auth-brand"><span class="brand-mark">a</span> ageon<span>.</span></div>
     <nav class="role-switch teacher" aria-label="Choose account type">
       <span class="switch-thumb"></span>
-      <a routerLink="/signup/student"><mat-icon>school</mat-icon>Student</a>
-      <a routerLink="/signup/teacher" class="active" aria-current="page"><mat-icon>co_present</mat-icon>Teacher</a>
+      <a routerLink="/signup/student" queryParamsHandling="preserve"><mat-icon>school</mat-icon>Student</a>
+      <a routerLink="/signup/teacher" queryParamsHandling="preserve" class="active" aria-current="page"><mat-icon>co_present</mat-icon>{{ isCollege ? 'Faculty' : 'Teacher' }}</a>
     </nav>
 
     <ng-container *ngIf="!submitted; else success">
-      <div class="welcome-tag">CREATE TEACHER ACCOUNT</div>
-      <h2>Join our teaching team</h2>
-      <p class="auth-subtitle">Tell us what you teach. All fields are required.</p>
+      <div class="workspace-toggle" role="radiogroup" aria-label="Institute type">
+        <button type="button" role="radio" [attr.aria-checked]="!isCollege" [class.on]="!isCollege" (click)="setWorkspace('coaching')"><mat-icon>auto_stories</mat-icon>Coaching</button>
+        <button type="button" role="radio" [attr.aria-checked]="isCollege" [class.on]="isCollege" (click)="setWorkspace('college')"><mat-icon>account_balance</mat-icon>College</button>
+      </div>
+      <div class="welcome-tag">{{ isCollege ? 'CREATE FACULTY ACCOUNT' : 'CREATE TEACHER ACCOUNT' }}</div>
+      <h2>{{ isCollege ? 'Join the faculty' : 'Join our teaching team' }}</h2>
+      <p class="auth-subtitle">{{ isCollege ? 'Tell us about your department and role.' : 'Tell us what you teach.' }} Fields marked * are required.</p>
 
       <form [formGroup]="form" (ngSubmit)="register()" novalidate>
         <div class="form-section">PERSONAL DETAILS</div>
         <div class="field-grid">
           <div class="span-2">
-            <label class="auth-label" for="t-name">Full name</label>
-            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>person_outline</mat-icon><input id="t-name" matInput formControlName="fullName" placeholder="e.g. Priya Verma" autocomplete="name" /></mat-form-field>
+            <label class="auth-label" for="t-name">Full name *</label>
+            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>person_outline</mat-icon><input id="t-name" matInput formControlName="fullName" [placeholder]="isCollege ? 'e.g. Dr. Neha Iyer' : 'e.g. Priya Verma'" autocomplete="name" /></mat-form-field>
             <small class="field-error" *ngIf="showError('fullName')">Please enter your name.</small>
           </div>
           <div>
-            <label class="auth-label" for="t-email">Email</label>
-            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>mail_outline</mat-icon><input id="t-email" matInput type="email" formControlName="email" placeholder="you@example.com" autocomplete="email" /></mat-form-field>
+            <label class="auth-label" for="t-email">{{ isCollege ? 'Official email *' : 'Email *' }}</label>
+            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>mail_outline</mat-icon><input id="t-email" matInput type="email" formControlName="email" [placeholder]="isCollege ? 'name@college.edu' : 'you@example.com'" autocomplete="email" /></mat-form-field>
             <small class="field-error" *ngIf="showError('email')">Enter a valid email.</small>
           </div>
           <div>
-            <label class="auth-label" for="t-phone">Mobile number</label>
+            <label class="auth-label" for="t-phone">Mobile number *</label>
             <div class="phone-row">
               <mat-form-field appearance="outline" class="auth-field"><mat-select formControlName="countryCode" aria-label="Country code"><mat-option *ngFor="let code of countryCodes" [value]="code">{{code}}</mat-option></mat-select></mat-form-field>
               <mat-form-field appearance="outline" class="auth-field"><input id="t-phone" matInput formControlName="phoneNumber" inputmode="numeric" placeholder="9876543210" autocomplete="tel-national" /></mat-form-field>
@@ -55,30 +76,57 @@
           </div>
         </div>
 
-        <div class="form-section">WHAT YOU TEACH</div>
-        <label class="auth-label" for="t-subjects">Subjects</label>
-        <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>menu_book</mat-icon><mat-select id="t-subjects" formControlName="subjects" multiple placeholder="Choose one or more subjects"><mat-option *ngFor="let s of subjects" [value]="s">{{s}}</mat-option></mat-select></mat-form-field>
-        <small class="field-error" *ngIf="showError('subjects')">Choose at least one subject.</small>
+        <ng-container *ngIf="!isCollege">
+          <div class="form-section">WHAT YOU TEACH</div>
+          <label class="auth-label" for="t-subjects">Subjects *</label>
+          <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>menu_book</mat-icon><mat-select id="t-subjects" formControlName="subjects" multiple placeholder="Choose one or more subjects"><mat-option *ngFor="let s of subjects" [value]="s">{{s}}</mat-option></mat-select></mat-form-field>
+          <small class="field-error" *ngIf="showError('subjects')">Choose at least one subject.</small>
 
-        <label class="auth-label">Classes you teach <span *ngIf="classSummary" class="title-green">· {{classSummary}}</span></label>
-        <div class="class-chips" role="group" aria-label="Choose classes">
-          <button type="button" *ngFor="let c of classes" [attr.aria-pressed]="isClassSelected(c)" [class.selected]="isClassSelected(c)" (click)="toggleClass(c)">{{c}}</button>
-        </div>
-        <small class="field-error" *ngIf="showError('classes')">Choose at least one class.</small>
+          <label class="auth-label">Classes you teach * <span *ngIf="classSummary" class="title-green">· {{classSummary}}</span></label>
+          <div class="class-chips" role="group" aria-label="Choose classes">
+            <button type="button" *ngFor="let c of classes" [attr.aria-pressed]="isClassSelected(c)" [class.selected]="isClassSelected(c)" (click)="toggleClass(c)">{{c}}</button>
+          </div>
+          <small class="field-error" *ngIf="showError('classes')">Choose at least one class.</small>
+        </ng-container>
+
+        <ng-container *ngIf="isCollege">
+          <div class="form-section">DEPARTMENT &amp; ROLE</div>
+          <div class="field-grid">
+            <div>
+              <label class="auth-label" for="t-department">Department *</label>
+              <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>account_tree</mat-icon><mat-select id="t-department" formControlName="department" placeholder="Select"><mat-option *ngFor="let d of departments" [value]="d">{{d}}</mat-option></mat-select></mat-form-field>
+              <small class="field-error" *ngIf="showError('department')">Please choose a department.</small>
+            </div>
+            <div>
+              <label class="auth-label" for="t-designation">Designation *</label>
+              <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>badge</mat-icon><mat-select id="t-designation" formControlName="designation" placeholder="Select"><mat-option *ngFor="let d of designations" [value]="d">{{d}}</mat-option></mat-select></mat-form-field>
+              <small class="field-error" *ngIf="showError('designation')">Please choose a designation.</small>
+            </div>
+            <div>
+              <label class="auth-label" for="t-specialization">Specialization *</label>
+              <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>psychology</mat-icon><input id="t-specialization" matInput formControlName="specialization" placeholder="e.g. Data Structures" /></mat-form-field>
+              <small class="field-error" *ngIf="showError('specialization')">Please enter your specialization.</small>
+            </div>
+            <div>
+              <label class="auth-label" for="t-employee">Employee ID <span class="optional">(if issued)</span></label>
+              <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>pin</mat-icon><input id="t-employee" matInput formControlName="employeeId" placeholder="e.g. GFC-FAC-042" /></mat-form-field>
+            </div>
+          </div>
+        </ng-container>
 
         <div class="field-grid">
           <div>
-            <label class="auth-label" for="t-qualification">Qualification</label>
-            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>workspace_premium</mat-icon><mat-select id="t-qualification" formControlName="qualification" placeholder="Select"><mat-option *ngFor="let q of qualifications" [value]="q">{{q}}</mat-option></mat-select></mat-form-field>
+            <label class="auth-label" for="t-qualification">{{ isCollege ? 'Highest qualification *' : 'Qualification *' }}</label>
+            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>workspace_premium</mat-icon><mat-select id="t-qualification" formControlName="qualification" placeholder="Select"><mat-option *ngFor="let q of terms.qualificationOptions" [value]="q">{{q}}</mat-option></mat-select></mat-form-field>
             <small class="field-error" *ngIf="showError('qualification')">Please choose one.</small>
           </div>
           <div>
-            <label class="auth-label" for="t-experience">Experience</label>
-            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>timeline</mat-icon><mat-select id="t-experience" formControlName="experience" placeholder="Select"><mat-option *ngFor="let e of experienceLevels" [value]="e">{{e}}</mat-option></mat-select></mat-form-field>
+            <label class="auth-label" for="t-experience">{{ isCollege ? 'Teaching experience *' : 'Experience *' }}</label>
+            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>timeline</mat-icon><mat-select id="t-experience" formControlName="experience" placeholder="Select"><mat-option *ngFor="let e of terms.experienceOptions" [value]="e">{{e}}</mat-option></mat-select></mat-form-field>
             <small class="field-error" *ngIf="showError('experience')">Please choose one.</small>
           </div>
           <div class="span-2">
-            <label class="auth-label" for="t-city">City</label>
+            <label class="auth-label" for="t-city">City *</label>
             <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>location_on</mat-icon><input id="t-city" matInput formControlName="city" placeholder="e.g. Lucknow" autocomplete="address-level2" /></mat-form-field>
             <small class="field-error" *ngIf="showError('city')">Please enter your city.</small>
           </div>
@@ -87,11 +135,11 @@
         <div class="form-section">SECURE YOUR ACCOUNT</div>
         <div class="field-grid">
           <div>
-            <label class="auth-label" for="t-password">Password</label>
+            <label class="auth-label" for="t-password">Password *</label>
             <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>lock_outline</mat-icon><input id="t-password" matInput [type]="hide ? 'password' : 'text'" formControlName="password" placeholder="Min. 8 characters" autocomplete="new-password" /><button mat-icon-button matSuffix type="button" (click)="hide = !hide" [attr.aria-label]="hide ? 'Show password' : 'Hide password'"><mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon></button></mat-form-field>
           </div>
           <div>
-            <label class="auth-label" for="t-confirm">Confirm password</label>
+            <label class="auth-label" for="t-confirm">Confirm password *</label>
             <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>lock_reset</mat-icon><input id="t-confirm" matInput [type]="hide ? 'password' : 'text'" formControlName="confirmPassword" placeholder="Re-enter password" autocomplete="new-password" /></mat-form-field>
           </div>
         </div>
@@ -105,6 +153,7 @@
         <div class="terms-row"><mat-checkbox formControlName="acceptTerms">I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a></mat-checkbox></div>
         <small class="field-error" *ngIf="showError('acceptTerms')">Please accept the terms to continue.</small>
 
+        <div class="login-error" *ngIf="errorMessage" role="alert"><mat-icon>error_outline</mat-icon>{{ errorMessage }}</div>
         <button class="sign-in-button" type="submit" [disabled]="loading"><mat-spinner *ngIf="loading" [diameter]="17"></mat-spinner><ng-container *ngIf="!loading">Register now <mat-icon>arrow_forward</mat-icon></ng-container><span *ngIf="loading">Creating account…</span></button>
       </form>
       <div class="already">Already have an account? <a routerLink="/login">Sign in</a></div>
@@ -114,8 +163,8 @@
       <div class="signup-success" role="status">
         <div class="success-badge"><mat-icon>celebration</mat-icon></div>
         <h2>Welcome, {{form.controls.fullName.value.split(' ')[0]}}!</h2>
-        <p>Your teacher account for {{form.controls.subjects.value.join(', ')}} ({{classSummary}}) is ready.</p>
-        <button class="sign-in-button" type="button" (click)="continue()">Go to my dashboard <mat-icon>arrow_forward</mat-icon></button>
+        <p>Your {{ isCollege ? 'faculty' : 'teacher' }} account for {{ successDetail }} is ready.</p>
+        <button class="sign-in-button" type="button" (click)="continue()">{{ signedIn ? "Go to my dashboard" : "Go to sign in" }} <mat-icon>arrow_forward</mat-icon></button>
       </div>
     </ng-template>
   </div></section>

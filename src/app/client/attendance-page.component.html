@@ -13,7 +13,7 @@
   <app-stat-card
     label="Students in view"
     [value]="visible.length.toString()"
-    change="Across selected batches"
+    [change]="isCollege ? 'Across selected sections' : 'Across selected batches'"
     icon="groups"
   ></app-stat-card
   ><app-stat-card

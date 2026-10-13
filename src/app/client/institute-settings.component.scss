@@ -1,0 +1,5 @@
+.form-actions{align-items:center}
+.saved-note,.error-note{display:inline-flex;align-items:center;gap:6px;margin-right:auto;font-size:14px;font-weight:600}
+.saved-note{color:#15803d}
+.error-note{color:#d23b5a}
+.saved-note mat-icon,.error-note mat-icon{font-size:18px;width:18px;height:18px}

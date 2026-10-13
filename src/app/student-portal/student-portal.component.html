@@ -12,7 +12,7 @@
                     *ngIf="item.key==='notices'" class="nav-count">2</span></a></nav>
         <div class="portal-help"><mat-icon>support_agent</mat-icon><strong>Need help?</strong><small>Contact your
                 institute</small><a href="tel:+918045678900">Call the office <mat-icon>arrow_forward</mat-icon></a>
-        </div><button class="portal-logout" routerLink="/login"><mat-icon>logout</mat-icon>Sign out</button>
+        </div><button class="portal-logout" routerLink="/login" (click)="auth.logout()"><mat-icon>logout</mat-icon>Sign out</button>
     </aside>
     <div class="portal-main">
         <header class="portal-topbar"><button mat-icon-button class="portal-menu-toggle"
@@ -117,7 +117,7 @@
                 <div class="profile-layout"><mat-card class="profile-card"><mat-card-content><img class="profile-photo"
                                 src="assets/images/avatars/avatar-3.png" alt="{{childName}}">
                             <h2>{{childName}}</h2>
-                            <p>Student ID · {{studentId}}</p><app-status-badge label="Active student"
+                            <p>{{isCollege ? 'Enrollment no.' : 'Admission no.'}} · {{studentId}}</p><app-status-badge label="Active student"
                                 tone="success"></app-status-badge>
                             <div class="profile-course">
                                 <mat-icon>school</mat-icon><span><strong>{{academicPlacement}}</strong><small>{{groupPlacement}}</small></span>
@@ -134,7 +134,7 @@
                                 <div><small>Father</small><strong>{{otherGuardian}}</strong></div>
                                 <div><small>Mother</small><strong>{{isCollege ? "Meera Rao" : "Neha Sharma"}}</strong>
                                 </div>
-                                <div><small>Parent contact</small><strong>{{isCollege ? "+91 98765 20002" : "+91 98765
+                                <div><small>{{isCollege ? 'Guardian contact' : 'Parent contact'}}</small><strong>{{isCollege ? "+91 98765 20002" : "+91 98765
                                         43210"}}</strong></div>
                                 <div class="wide"><small>Address</small><strong>12 Lake View Road, Bengaluru, Karnataka
                                         560038</strong></div>
@@ -277,7 +277,7 @@
             <section *ngSwitchCase="'materials'">
                 <div class="page-title"><span>MY LEARNING</span>
                     <h1>Study materials</h1>
-                    <p>Learning resources shared by your teachers.</p>
+                    <p>{{isCollege ? 'Lecture notes and assignments shared by your faculty.' : 'Learning resources shared by your teachers.'}}</p>
                 </div>
                 <div class="portal-material-grid"><mat-card *ngFor="let item of materials"><mat-card-content><span
                                 class="material-type large"
@@ -332,14 +332,14 @@
                 <div class="family-contact-grid"><mat-card><mat-card-content><span
                                 class="family-avatar">{{firstName.charAt(0)}}R</span><small>PRIMARY GUARDIAN</small>
                             <h2>{{firstName}} {{isCollege ? 'Rao' : 'Sharma'}}</h2>
-                            <p>Parent / guardian</p><a href="tel:+919876543210"><mat-icon>call</mat-icon> +91 98765
+                            <p>{{isCollege ? 'Guardian' : 'Parent / guardian'}}</p><a href="tel:+919876543210"><mat-icon>call</mat-icon> +91 98765
                                 43210</a><a href="mailto:family&#64;email.com"><mat-icon>mail_outline</mat-icon>
                                 family&#64;email.com</a>
                         </mat-card-content></mat-card><mat-card><mat-card-content><span
                                 class="family-avatar secondary">{{isCollege ? 'AR' : 'VS'}}</span><small>SECONDARY
                                 CONTACT</small>
                             <h2>{{isCollege ? 'Arun Rao' : 'Vikram Sharma'}}</h2>
-                            <p>Parent / guardian</p><a href="tel:+919876543211"><mat-icon>call</mat-icon> +91 98765
+                            <p>{{isCollege ? 'Guardian' : 'Parent / guardian'}}</p><a href="tel:+919876543211"><mat-icon>call</mat-icon> +91 98765
                                 43211</a><span class="contact-note">Contact the institute to update family
                                 details.</span>
                         </mat-card-content></mat-card></div>

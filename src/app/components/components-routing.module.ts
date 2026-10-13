@@ -6,6 +6,7 @@ import { SuperAdminPageComponent } from '../super-admin/super-admin-page.compone
 import { StudentsPageComponent } from '../client/students-page.component';
 import { ClientDashboardComponent } from '../client/client-dashboard.component';
 import { ClientSectionComponent } from '../client/client-section.component';
+import { InstituteSettingsComponent } from '../client/institute-settings.component';
 import { ClientManagementComponent } from '../client/management/client-management.component';
 import { RecordDialogComponent } from '../client/management/record-dialog.component';
 import { AttendancePageComponent } from '../client/attendance-page.component';
@@ -59,7 +60,7 @@ const routes: Routes = [
   { path: 'client/results', component: ClientManagementComponent },
   { path: 'client/materials', component: ClientManagementComponent },
   { path: 'client/website', component: WebsiteCmsComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
-  { path: 'client/settings', component: ClientSectionComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/settings', component: InstituteSettingsComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'student/dashboard', component: WorkspacePageComponent },
   { path: 'company-management', component: CompanyMgtComponent },
   { path: 'dashboard', component: WorkspacePageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
