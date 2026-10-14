@@ -95,48 +95,8 @@ a {
 }
 
 
-/* responsive */
+/* Responsive layout (sidebar, header, main offset) lives in the shared sidebar/header and full-layout component styles. */
 
-@media only screen and (max-width: 1024px) {
-
-    .searchbar,
-    .top-header {
-        left: 0px !important;
-    }
-
-    .searchVisible {
-        width: calc(100% - 0px) !important;
-    }
-
-    .sidebar-wrapper {
-        left: -300px !important;
-    }
-
-    .main-content {
-        margin-left: 0px !important;
-    }
-
-    
-.overlay {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: #000;
-    opacity: .6;
-    z-index: 10;
-    display: none;
-    cursor: move;
-    transition: all 0.2s ease-out;
-    z-index: 9;
-}
-
-.overlay.show {
-    display: block !important;
-}
-
-}
 
 
 

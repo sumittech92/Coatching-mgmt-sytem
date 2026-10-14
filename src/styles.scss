@@ -216,6 +216,38 @@
 
 
 
+/* The prebuilt Material theme sets Roboto (which is not loaded) on every component; use the app font instead. */
+$material-font-tokens: (
+    mat-badge-text-font, mat-bottom-sheet-container-text-font, mat-card-subtitle-text-font,
+    mat-card-title-text-font, mat-datepicker-calendar-text-font, mat-expansion-container-text-font,
+    mat-expansion-header-text-font, mat-form-field-container-text-font, mat-form-field-subscript-text-font,
+    mat-legacy-button-toggle-label-text-font, mat-menu-item-label-text-font, mat-optgroup-label-text-font,
+    mat-option-label-text-font, mat-paginator-container-text-font, mat-select-trigger-text-font,
+    mat-standard-button-toggle-label-text-font, mat-stepper-container-text-font,
+    mat-stepper-header-label-text-font, mat-tab-header-label-text-font,
+    mat-table-footer-supporting-text-font, mat-table-header-headline-font,
+    mat-table-row-item-label-text-font, mat-toolbar-title-text-font, mat-tree-node-text-font,
+    mdc-chip-label-text-font, mdc-dialog-subhead-font, mdc-dialog-supporting-text-font,
+    mdc-extended-fab-label-text-font, mdc-filled-button-label-text-font,
+    mdc-filled-text-field-label-text-font, mdc-form-field-label-text-font,
+    mdc-list-list-item-label-text-font, mdc-list-list-item-supporting-text-font,
+    mdc-list-list-item-trailing-supporting-text-font, mdc-outlined-button-label-text-font,
+    mdc-outlined-text-field-label-text-font, mdc-plain-tooltip-supporting-text-font,
+    mdc-protected-button-label-text-font, mdc-slider-label-label-text-font,
+    mdc-snackbar-supporting-text-font, mdc-text-button-label-text-font
+);
+
+html,
+html .mat-mdc-checkbox,
+html .mat-mdc-radio-button,
+html .mat-mdc-slide-toggle,
+html .mat-mdc-standard-chip,
+html .mat-mdc-tab-header {
+    @each $token in $material-font-tokens {
+        --#{$token}: "Poppins", sans-serif;
+    }
+}
+
 body {
     height: auto;
     font-family: "Poppins", sans-serif !important;
