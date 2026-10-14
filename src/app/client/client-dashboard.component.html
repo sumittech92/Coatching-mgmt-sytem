@@ -1,30 +1,15 @@
 <ng-container *ngIf="isTeacher; else ownerWorkspace">
   <div class="teacher-home">
     <header class="teacher-welcome">
-      <span class="teacher-eyebrow"><i></i> YOUR TEACHING WORKSPACE</span>
-      <h1>Good morning, {{isCollege ? 'Dr. Neha' : 'Priya'}}.</h1>
-      <p>Here are your classes and the work you can take care of today.</p>
+      <span class="teacher-eyebrow"><i></i> MY DASHBOARD</span>
+      <h1>Good morning, {{teacherGreeting}}.</h1>
+      <p>{{isSchool ? 'Here is your timetable, your classes and the homework due today.' : 'Here are your classes, your batches and the assignments waiting for you.'}}</p>
     </header>
 
     <nav class="teacher-shortcuts" aria-label="Teaching shortcuts">
-      <a routerLink="/client/attendance">
-        <span class="teacher-shortcut-icon"><mat-icon>event_available</mat-icon></span>
-        <span class="teacher-shortcut-copy"><strong>Mark attendance</strong><small>Take today’s class register</small></span>
-        <mat-icon class="shortcut-arrow">arrow_forward</mat-icon>
-      </a>
-      <a routerLink="/client/results">
-        <span class="teacher-shortcut-icon shortcut-violet"><mat-icon>fact_check</mat-icon></span>
-        <span class="teacher-shortcut-copy"><strong>Record results</strong><small>Review class assessments</small></span>
-        <mat-icon class="shortcut-arrow">arrow_forward</mat-icon>
-      </a>
-      <a [routerLink]="isCollege ? '/client/timetable' : '/client/batches'">
-        <span class="teacher-shortcut-icon shortcut-amber"><mat-icon>calendar_month</mat-icon></span>
-        <span class="teacher-shortcut-copy"><strong>My classes</strong><small>{{isCollege ? 'Open today’s timetable' : 'See your assigned batches'}}</small></span>
-        <mat-icon class="shortcut-arrow">arrow_forward</mat-icon>
-      </a>
-      <a *ngIf="!isCollege" routerLink="/client/materials">
-        <span class="teacher-shortcut-icon shortcut-blue"><mat-icon>folder_open</mat-icon></span>
-        <span class="teacher-shortcut-copy"><strong>Study materials</strong><small>Share learning resources</small></span>
+      <a *ngFor="let item of teacherLinks" [routerLink]="item.link">
+        <span class="teacher-shortcut-icon" [ngClass]="item.tone"><mat-icon>{{item.icon}}</mat-icon></span>
+        <span class="teacher-shortcut-copy"><strong>{{item.label}}</strong><small>{{item.hint}}</small></span>
         <mat-icon class="shortcut-arrow">arrow_forward</mat-icon>
       </a>
     </nav>
@@ -32,36 +17,65 @@
     <section class="teacher-schedule" aria-labelledby="teacher-schedule-title">
       <div class="teacher-schedule-heading">
         <div>
-          <span class="teacher-section-label">TODAY’S CLASSES</span>
-          <h2 id="teacher-schedule-title">{{isCollege ? 'On campus today' : 'Your teaching schedule'}}</h2>
-          <p>{{isCollege ? 'Three classes are assigned to you.' : 'Your assigned batches are ready.'}}</p>
+          <span class="teacher-section-label">{{isSchool ? 'TODAY’S TIMETABLE' : 'TODAY’S CLASSES'}}</span>
+          <h2 id="teacher-schedule-title">{{isSchool ? 'Your periods today' : 'Your teaching schedule'}}</h2>
+          <p>{{teacherToday.length}} {{isSchool ? 'periods are' : 'classes are'}} assigned to you today.</p>
         </div>
-        <a [routerLink]="isCollege ? '/client/timetable' : '/client/batches'">Open schedule <mat-icon>arrow_forward</mat-icon></a>
+        <a routerLink="/client/today">Open today <mat-icon>arrow_forward</mat-icon></a>
       </div>
-
       <div class="teacher-class-list">
-        <article>
-          <time datetime="09:00">09:00</time>
-          <span class="teacher-class-copy"><strong>{{isCollege ? 'Introduction to Psychology' : 'Physics · Morning'}}</strong><small>{{isCollege ? 'BA Psychology · Room A-204' : 'Class 12 Science · Room 204'}}</small></span>
-          <app-status-badge label="In progress" tone="success"></app-status-badge>
-        </article>
-        <article>
-          <time datetime="11:00">11:00</time>
-          <span class="teacher-class-copy"><strong>{{isCollege ? 'Research Methods' : 'Chemistry · Evening'}}</strong><small>{{isCollege ? 'BA Psychology · Room A-208' : 'Class 11 Science · Lab 1'}}</small></span>
-          <app-status-badge label="Up next" tone="info"></app-status-badge>
+        <article *ngFor="let item of teacherToday">
+          <time [attr.datetime]="item.time">{{item.time}}</time>
+          <span class="teacher-class-copy"><strong>{{item.title}}</strong><small>{{item.detail}}</small></span>
+          <app-status-badge [label]="item.status" [tone]="item.tone"></app-status-badge>
         </article>
       </div>
     </section>
+
+    <div class="teacher-panels">
+      <section class="teacher-schedule" aria-labelledby="teacher-groups-title">
+        <div class="teacher-schedule-heading">
+          <div>
+            <span class="teacher-section-label">{{isSchool ? 'MY CLASSES' : 'MY BATCHES'}}</span>
+            <h2 id="teacher-groups-title">{{isSchool ? 'Classes you teach' : 'Batches you teach'}}</h2>
+          </div>
+          <a [routerLink]="isSchool ? '/client/my-classes' : '/client/my-batches'">View all <mat-icon>arrow_forward</mat-icon></a>
+        </div>
+        <div class="teacher-class-list">
+          <article *ngFor="let item of teacherGroups">
+            <span class="teacher-count">{{item.time}}<small>students</small></span>
+            <span class="teacher-class-copy"><strong>{{item.title}}</strong><small>{{item.detail}}</small></span>
+            <app-status-badge [label]="item.status" [tone]="item.tone"></app-status-badge>
+          </article>
+        </div>
+      </section>
+      <section class="teacher-schedule" aria-labelledby="teacher-work-title">
+        <div class="teacher-schedule-heading">
+          <div>
+            <span class="teacher-section-label">{{isSchool ? 'HOMEWORK DUE' : 'PENDING ASSIGNMENTS'}}</span>
+            <h2 id="teacher-work-title">{{isSchool ? 'Homework to review' : 'Assignments to check'}}</h2>
+          </div>
+          <a [routerLink]="isSchool ? '/client/homework' : '/client/assignments'">View all <mat-icon>arrow_forward</mat-icon></a>
+        </div>
+        <div class="teacher-class-list">
+          <article *ngFor="let item of teacherWork">
+            <span class="teacher-count">{{item.time}}<small>{{isSchool ? 'submitted' : 'to check'}}</small></span>
+            <span class="teacher-class-copy"><strong>{{item.title}}</strong><small>{{item.detail}}</small></span>
+            <app-status-badge [label]="item.status" [tone]="item.tone"></app-status-badge>
+          </article>
+        </div>
+      </section>
+    </div>
   </div>
 </ng-container>
-<ng-template #ownerWorkspace><ng-container *ngIf="isCollege; else coachingHome">
-  <div class="college-home">
-    <section class="college-hero"><div class="college-hero-copy"><span class="college-kicker"><i></i> GREENFIELD COLLEGE · CAMPUS OVERVIEW</span><h1>A campus full<br>of <em>possibility.</em></h1><p>Your people, programs and campus day — all in one place.</p><div class="college-hero-actions"><a routerLink="/client/admissions"><mat-icon>person_add_alt</mat-icon>Review admissions</a><a class="college-quiet-action" routerLink="/client/timetable"><mat-icon>calendar_month</mat-icon>View timetable</a></div><div class="college-live"><span></span> Campus is active <b>·</b> 12 classes in progress</div></div><div class="college-hero-photos"><img class="college-photo-main" src="assets/images/coaching/classroom-india.jpg" alt="College students learning in a classroom"><img class="college-photo-small" src="assets/images/coaching/students-india.jpg" alt="Students collaborating on their studies"><div class="college-photo-note"><mat-icon>auto_awesome</mat-icon><span><strong>Learn. Lead. Belong.</strong><small>Building brighter futures together</small></span></div></div></section>
-    <div class="college-stats"><a routerLink="/client/students"><span class="college-stat-icon mint"><mat-icon>groups</mat-icon></span><small>Enrolled students</small><strong>2,486</strong><em>↑ 6.4% this year</em></a><a routerLink="/client/teachers"><span class="college-stat-icon lilac"><mat-icon>school</mat-icon></span><small>Faculty members</small><strong>148</strong><em>Across 8 departments</em></a><a routerLink="/client/attendance"><span class="college-stat-icon peach"><mat-icon>event_available</mat-icon></span><small>Today's attendance</small><strong>94.2%</strong><em>2,341 present today</em></a><a routerLink="/client/fees"><span class="college-stat-icon gold"><mat-icon>payments</mat-icon></span><small>Fee collection</small><strong>₹18.6L</strong><em>↑ 9.8% this month</em></a></div>
-    <div class="college-content-grid"><mat-card class="college-panel schedule-panel"><mat-card-content><div class="college-panel-head"><div><span class="college-overline">MONDAY · 28 SEPTEMBER</span><h2>Today on campus</h2><p>A quick look at classes and campus activity.</p></div><a routerLink="/client/timetable">Full timetable <mat-icon>arrow_forward</mat-icon></a></div><div class="class-schedule"><div class="schedule-row"><time>09:00</time><span class="schedule-marker aqua"></span><div><strong>Introduction to Psychology</strong><small>BA Psychology · Room A-204 · Dr. Ananya Rao</small></div><span class="class-status live">In progress</span></div><div class="schedule-row"><time>10:30</time><span class="schedule-marker violet"></span><div><strong>Principles of Microeconomics</strong><small>B.Com · Room B-108 · Prof. Rahul Mehta</small></div><span class="class-status next">Up next</span></div><div class="schedule-row"><time>12:00</time><span class="schedule-marker orange"></span><div><strong>Data Structures & Algorithms</strong><small>B.Sc Computer Science · Lab 3 · Prof. Neha Iyer</small></div><span class="class-status later">Later</span></div><div class="schedule-row"><time>14:00</time><span class="schedule-marker blue"></span><div><strong>Business Communication</strong><small>BBA · Room C-302 · Dr. Karan Shah</small></div><span class="class-status later">Later</span></div></div></mat-card-content></mat-card>
-      <mat-card class="college-panel department-panel"><mat-card-content><div class="college-panel-head"><div><span class="college-overline">ACADEMIC COMMUNITY</span><h2>Departments</h2><p>Students across your schools.</p></div><a routerLink="/client/departments">See all <mat-icon>arrow_forward</mat-icon></a></div><a class="department-row" routerLink="/client/departments"><span class="department-symbol dept-aqua"><mat-icon>computer</mat-icon></span><span><strong>Computer Science</strong><small>642 students · 32 faculty</small></span><mat-icon class="department-arrow">chevron_right</mat-icon></a><a class="department-row" routerLink="/client/departments"><span class="department-symbol dept-violet"><mat-icon>insights</mat-icon></span><span><strong>Commerce & Management</strong><small>518 students · 28 faculty</small></span><mat-icon class="department-arrow">chevron_right</mat-icon></a><a class="department-row" routerLink="/client/departments"><span class="department-symbol dept-orange"><mat-icon>biotech</mat-icon></span><span><strong>Life Sciences</strong><small>394 students · 24 faculty</small></span><mat-icon class="department-arrow">chevron_right</mat-icon></a><a class="department-row" routerLink="/client/departments"><span class="department-symbol dept-blue"><mat-icon>psychology</mat-icon></span><span><strong>Arts & Humanities</strong><small>361 students · 22 faculty</small></span><mat-icon class="department-arrow">chevron_right</mat-icon></a><a class="department-all" routerLink="/client/departments">Explore all departments <mat-icon>arrow_forward</mat-icon></a></mat-card-content></mat-card>
-      <mat-card class="college-panel campus-updates"><mat-card-content><div class="college-panel-head"><div><span class="college-overline">STAY IN THE LOOP</span><h2>Campus notices</h2><p>What your community needs to know.</p></div><a routerLink="/client/notices">All notices <mat-icon>arrow_forward</mat-icon></a></div><a class="campus-notice" routerLink="/client/notices"><span class="notice-date"><strong>30</strong><small>SEP</small></span><span><strong>Mid-term examination schedule</strong><small>Examinations · Updated 2 hours ago</small></span><mat-icon>chevron_right</mat-icon></a><a class="campus-notice" routerLink="/client/notices"><span class="notice-date event-date"><strong>04</strong><small>OCT</small></span><span><strong>Annual cultural festival registrations</strong><small>Campus life · Ends 4 October</small></span><mat-icon>chevron_right</mat-icon></a></mat-card-content></mat-card>
-      <mat-card class="college-panel quick-panel"><mat-card-content><div class="college-panel-head"><div><span class="college-overline">QUICK ACCESS</span><h2>Make today easier</h2><p>Jump straight into the work at hand.</p></div></div><div class="college-quick-links"><a routerLink="/client/programs"><mat-icon>menu_book</mat-icon><span><strong>Programs & subjects</strong><small>Manage curriculum</small></span><mat-icon class="quick-arrow">arrow_forward</mat-icon></a><a routerLink="/client/results"><mat-icon>fact_check</mat-icon><span><strong>Exams & results</strong><small>Review assessments</small></span><mat-icon class="quick-arrow">arrow_forward</mat-icon></a><a routerLink="/client/fees"><mat-icon>account_balance_wallet</mat-icon><span><strong>Fee overview</strong><small>Track payments</small></span><mat-icon class="quick-arrow">arrow_forward</mat-icon></a></div></mat-card-content></mat-card>
+<ng-template #ownerWorkspace><ng-container *ngIf="isSchool; else coachingHome">
+  <div class="school-home">
+    <section class="school-hero"><div class="school-hero-copy"><span class="school-kicker"><i></i> GREENFIELD PUBLIC SCHOOL · SESSION 2026–27</span><h1>Every child,<br>every <em>day.</em></h1><p>Students, classes, exams and the school day — all in one place.</p><div class="school-hero-actions"><a routerLink="/client/exams"><mat-icon>quiz</mat-icon>Plan exams</a><a class="school-quiet-action" routerLink="/client/timetable"><mat-icon>calendar_month</mat-icon>View timetable</a></div><div class="school-live"><span></span> School is in session <b>·</b> 46 sections in class</div></div><div class="school-hero-photos"><img class="school-photo-main" src="assets/images/coaching/classroom-india.jpg" alt="School students learning in a classroom"><img class="school-photo-small" src="assets/images/coaching/students-india.jpg" alt="Students working together on their studies"><div class="school-photo-note"><mat-icon>auto_awesome</mat-icon><span><strong>Learn. Grow. Belong.</strong><small>Building brighter futures together</small></span></div></div></section>
+    <div class="school-stats"><a routerLink="/client/students"><span class="school-stat-icon mint"><mat-icon>groups</mat-icon></span><small>Students</small><strong>1,486</strong><em>↑ 4.2% vs. last session</em></a><a routerLink="/client/classes"><span class="school-stat-icon lilac"><mat-icon>class</mat-icon></span><small>Classes</small><strong>15</strong><em>Nursery – Class 12 · 46 sections</em></a><a routerLink="/client/attendance"><span class="school-stat-icon peach"><mat-icon>event_available</mat-icon></span><small>Attendance today</small><strong>95.1%</strong><em>1,413 present today</em></a><a routerLink="/client/fees"><span class="school-stat-icon gold"><mat-icon>payments</mat-icon></span><small>Fee collection</small><strong>₹62.4L</strong><em>Term 1 · 91% collected</em></a></div>
+    <div class="school-content-grid"><mat-card class="school-panel schedule-panel"><mat-card-content><div class="school-panel-head"><div><span class="school-overline">ASSESSMENT CALENDAR</span><h2>Upcoming exams</h2><p>Term exams, unit tests and results this session.</p></div><a routerLink="/client/exams">All exams <mat-icon>arrow_forward</mat-icon></a></div><div class="class-schedule"><div class="schedule-row" *ngFor="let exam of schoolExams"><time>{{exam.date}}</time><span class="schedule-marker" [ngClass]="exam.marker"></span><div><strong>{{exam.title}}</strong><small>{{exam.detail}}</small></div><span class="class-status" [ngClass]="exam.state">{{exam.status}}</span></div></div></mat-card-content></mat-card>
+      <mat-card class="school-panel department-panel"><mat-card-content><div class="school-panel-head"><div><span class="school-overline">CLASSES &amp; SECTIONS</span><h2>Classes</h2><p>Students across every stage of school.</p></div><a routerLink="/client/classes">See all <mat-icon>arrow_forward</mat-icon></a></div><a class="department-row" routerLink="/client/classes" *ngFor="let stage of schoolStages"><span class="department-symbol" [ngClass]="stage.tone"><mat-icon>{{stage.icon}}</mat-icon></span><span><strong>{{stage.name}}</strong><small>{{stage.detail}}</small></span><mat-icon class="department-arrow">chevron_right</mat-icon></a><a class="department-all" routerLink="/client/sections">Manage sections <mat-icon>arrow_forward</mat-icon></a></mat-card-content></mat-card>
+      <mat-card class="school-panel school-updates"><mat-card-content><div class="school-panel-head"><div><span class="school-overline">SCHOOL CALENDAR</span><h2>Upcoming events</h2><p>Holidays, PTMs and school events.</p></div><a routerLink="/client/events">All events <mat-icon>arrow_forward</mat-icon></a></div><a class="school-notice" routerLink="/client/events" *ngFor="let event of schoolEvents"><span class="notice-date" [ngClass]="event.tone"><strong>{{event.day}}</strong><small>{{event.month}}</small></span><span><strong>{{event.title}}</strong><small>{{event.detail}}</small></span><mat-icon>chevron_right</mat-icon></a></mat-card-content></mat-card>
+      <mat-card class="school-panel quick-panel"><mat-card-content><div class="school-panel-head"><div><span class="school-overline">QUICK ACCESS</span><h2>Make today easier</h2><p>Jump straight into the work at hand.</p></div></div><div class="school-quick-links"><a routerLink="/client/sessions"><mat-icon>date_range</mat-icon><span><strong>Sessions</strong><small>Academic year &amp; terms</small></span><mat-icon class="quick-arrow">arrow_forward</mat-icon></a><a routerLink="/client/classes"><mat-icon>class</mat-icon><span><strong>Classes</strong><small>Classes, sections &amp; class teachers</small></span><mat-icon class="quick-arrow">arrow_forward</mat-icon></a><a routerLink="/client/exams"><mat-icon>quiz</mat-icon><span><strong>Exams</strong><small>Term 1, Term 2 &amp; unit tests</small></span><mat-icon class="quick-arrow">arrow_forward</mat-icon></a><a routerLink="/client/events"><mat-icon>celebration</mat-icon><span><strong>Events</strong><small>Holidays, PTMs &amp; functions</small></span><mat-icon class="quick-arrow">arrow_forward</mat-icon></a></div></mat-card-content></mat-card>
     </div>
   </div>
 </ng-container>

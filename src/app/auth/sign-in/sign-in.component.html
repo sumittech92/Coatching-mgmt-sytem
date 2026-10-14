@@ -1,6 +1,6 @@
 <div class="auth-page">
   <section class="auth-story ux-ring ux-glow">
-    <a class="auth-brand" routerLink="/"><span class="brand-mark">a</span> ageon<span>.</span></a>
+    <div class="auth-brand" (click)="brandTap()"><span class="brand-mark">a</span> ageon<span>.</span></div>
     <div class="story-copy">
       <div class="eyebrow"><span></span> A BETTER WAY TO RUN YOUR INSTITUTE.</div>
       <h1>More time for<br /><em>every student.</em></h1>
@@ -27,60 +27,54 @@
         <div class="visual-dot dot-b"></div>
       </div>
     </div>
-    <div class="story-footer"><span>Made for coaching centres &amp; colleges</span><span>© 2026 Ageon</span></div>
+    <div class="story-footer"><span>Made for coaching centres &amp; schools</span><span>© 2026 Ageon</span></div>
   </section>
   <section class="auth-form-side">
     <div class="auth-form-wrap">
-      <div class="mobile-brand auth-brand"><span class="brand-mark">a</span> ageon<span>.</span></div>
+      <div class="mobile-brand auth-brand" (click)="brandTap()"><span class="brand-mark">a</span> ageon<span>.</span></div>
       <div class="welcome-tag">WELCOME BACK</div>
       <h2>Sign in to your account</h2>
       <p class="auth-subtitle">Your classes and records are ready.</p>
 
       <form (ngSubmit)="signIn()" novalidate>
-        <div class="login-with" role="tablist" aria-label="Sign in with">
-          <button type="button" role="tab" [attr.aria-selected]="loginWith === 'phone'" [class.on]="loginWith === 'phone'" (click)="loginWith = 'phone'; errorMessage = ''"><mat-icon>smartphone</mat-icon>Mobile number</button>
-          <button type="button" role="tab" [attr.aria-selected]="loginWith === 'email'" [class.on]="loginWith === 'email'" (click)="loginWith = 'email'; errorMessage = ''"><mat-icon>mail_outline</mat-icon>Email ID</button>
-        </div>
-
-        <ng-container *ngIf="loginWith === 'phone'">
-          <label class="auth-label" for="phone">Mobile number</label>
-          <div class="phone-row">
-            <mat-form-field appearance="outline" class="auth-field"><mat-select name="countryCode" [(ngModel)]="countryCode" aria-label="Country code"><mat-option *ngFor="let code of countryCodes" [value]="code">{{ code }}</mat-option></mat-select></mat-form-field>
-            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>smartphone</mat-icon><input id="phone" matInput name="phoneNumber" [(ngModel)]="phoneNumber" inputmode="numeric" placeholder="Enter mobile number" autocomplete="tel-national" /></mat-form-field>
+        <ng-container *ngIf="!platformAccess; else platformNote">
+          <span class="auth-label choice-label" id="panel-label">Sign in as</span>
+          <div class="panel-choice" role="radiogroup" aria-labelledby="panel-label">
+            <button type="button" *ngFor="let item of panels" role="radio" [attr.aria-checked]="panel === item.role" [class.on]="panel === item.role" (click)="selectPanel(item.role)">
+              <mat-icon>{{ item.icon }}</mat-icon><span>{{ item.label }}</span>
+            </button>
           </div>
         </ng-container>
-        <ng-container *ngIf="loginWith === 'email'">
-          <label class="auth-label" for="email">Email ID</label>
-          <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>mail_outline</mat-icon><input id="email" matInput type="email" name="email" [(ngModel)]="email" placeholder="you@example.com" autocomplete="username" /></mat-form-field>
-        </ng-container>
+        <ng-template #platformNote><p class="platform-note">Platform access · <a href="#" (click)="$event.preventDefault(); leavePlatformAccess()">back</a></p></ng-template>
+
+        <label class="auth-label" for="identifier">Email ID or mobile number</label>
+        <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>{{ identifierIcon }}</mat-icon><input id="identifier" matInput name="identifier" [(ngModel)]="identifier" (ngModelChange)="clearError('identifier')" placeholder="you@example.com or 9876543210" autocomplete="username" maxlength="80" [attr.aria-invalid]="!!fieldErrors.identifier" aria-describedby="identifier-error" /></mat-form-field>
+        <small class="field-error" id="identifier-error" *ngIf="fieldErrors.identifier">{{ fieldErrors.identifier }}</small>
 
         <label class="auth-label" for="password">Password</label>
-        <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>lock_outline</mat-icon><input id="password" matInput [type]="hide ? 'password' : 'text'" placeholder="Enter your password" autocomplete="current-password" name="password" [(ngModel)]="password" /><button mat-icon-button matSuffix type="button" (click)="hide = !hide" [attr.aria-label]="hide ? 'Show password' : 'Hide password'"><mat-icon>{{ hide ? "visibility_off" : "visibility" }}</mat-icon></button></mat-form-field>
+        <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>lock_outline</mat-icon><input id="password" matInput [type]="hide ? 'password' : 'text'" placeholder="Enter your password" autocomplete="current-password" name="password" [(ngModel)]="password" (ngModelChange)="clearError('password')" [attr.aria-invalid]="!!fieldErrors.password" aria-describedby="password-error" /><button mat-icon-button matSuffix type="button" (click)="hide = !hide" [attr.aria-label]="hide ? 'Show password' : 'Hide password'"><mat-icon>{{ hide ? "visibility_off" : "visibility" }}</mat-icon></button></mat-form-field>
+        <small class="field-error" id="password-error" *ngIf="fieldErrors.password">{{ fieldErrors.password }}</small>
 
-        <label class="auth-label role-label">Workspace type</label>
-        <mat-radio-group class="workspace-choice" name="businessType" [(ngModel)]="businessType" aria-label="Choose workspace type">
-          <mat-radio-button value="coaching"><mat-icon>auto_stories</mat-icon><span><strong>Coaching</strong><small>Classes, courses &amp; batches</small></span></mat-radio-button>
-          <mat-radio-button value="college"><mat-icon>account_balance</mat-icon><span><strong>College</strong><small>Departments &amp; programs</small></span></mat-radio-button>
-        </mat-radio-group>
+        <ng-container *ngIf="panel !== 'Super Admin'">
+          <span class="auth-label choice-label" id="workspace-label">Workspace type</span>
+          <div class="workspace-choice" role="radiogroup" aria-labelledby="workspace-label">
+            <button type="button" *ngFor="let item of workspaces" role="radio" [attr.aria-checked]="businessType === item.value" [class.on]="businessType === item.value" (click)="businessType = item.value">
+              <span class="ws-icon"><mat-icon>{{ item.icon }}</mat-icon></span>
+              <span class="ws-text"><strong>{{ item.title }}</strong><small>{{ item.hint }}</small></span>
+              <mat-icon class="ws-check">{{ businessType === item.value ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+            </button>
+          </div>
+        </ng-container>
 
         <div class="remember-row"><mat-checkbox name="rememberMe" [(ngModel)]="rememberMe">Keep me signed in</mat-checkbox></div>
         <div class="login-error" *ngIf="errorMessage" role="alert"><mat-icon>error_outline</mat-icon>{{ errorMessage }}</div>
-        <button class="sign-in-button" type="submit" [disabled]="loading"><mat-spinner *ngIf="loading" [diameter]="17"></mat-spinner><ng-container *ngIf="!loading">Sign in <mat-icon>arrow_forward</mat-icon></ng-container><span *ngIf="loading">Signing in…</span></button>
+        <button class="sign-in-button" type="submit">Sign in <mat-icon>arrow_forward</mat-icon></button>
         <div class="password-label forgot-row"><a routerLink="/forgot-password">Forgot password?</a></div>
       </form>
 
-      <div class="demo-box">
-        <button type="button" class="demo-toggle" (click)="showDemo = !showDemo" [attr.aria-expanded]="showDemo"><mat-icon>science</mat-icon>Try a demo panel without an account<mat-icon class="chevron">{{ showDemo ? 'expand_less' : 'expand_more' }}</mat-icon></button>
-        <div class="demo-body" *ngIf="showDemo">
-          <mat-form-field appearance="outline" class="auth-field role-field"><mat-icon matPrefix>badge</mat-icon><mat-select name="role" [(ngModel)]="role" aria-label="Demo panel"><mat-option *ngFor="let item of roles" [value]="item">{{ item }}</mat-option></mat-select></mat-form-field>
-          <button type="button" class="demo-enter" (click)="enterDemo()">Open demo <mat-icon>arrow_forward</mat-icon></button>
-        </div>
-      </div>
+      <div class="demo-box demo-note-box"><div class="demo-toggle"><mat-icon>science</mat-icon>Testing mode: any valid email ID or mobile number with an 8+ character password opens the selected panel.</div></div>
 
-      <div class="register-links">
-        New to ageon? <a routerLink="/signup/student"><mat-icon>school</mat-icon>Join as student</a><a routerLink="/signup/teacher"><mat-icon>co_present</mat-icon>Join as teacher</a>
-      </div>
-      <div class="auth-help">Having trouble signing in? <a href="mailto:support@ageon.app">Contact support</a></div>
+      <div class="auth-help">Having trouble signing in? <a [href]="'tel:' + supportPhone"><mat-icon>call</mat-icon>Call support: {{ supportPhone }}</a></div>
       <div class="auth-policy">By signing in, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</div>
     </div>
   </section>

@@ -8,3 +8,5 @@
 .nav-item:hover{background:#eef2ff;color:var(--ux-blue-600);transform:translateX(2px)}
 .nav-item.active{background:linear-gradient(90deg,var(--ux-blue-600),var(--ux-navy-800));color:#fff;box-shadow:var(--ux-glow-blue)}
 .nav-item.active::before{content:"";position:absolute;left:-14px;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:var(--ux-grad-cta)}
+
+.sidebar-logout{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:10px 12px;border:1px solid #f1d5da;border-radius:10px;background:#fff;color:#b84242;font-size:13px;font-weight:650;cursor:pointer;transition:.18s ease}.sidebar-logout:hover{background:#fff4f5;border-color:#e8b4bd}.sidebar-logout:focus-visible{outline:2px solid #3d63f0;outline-offset:2px}.sidebar-logout mat-icon{font-size:19px;width:19px;height:19px}

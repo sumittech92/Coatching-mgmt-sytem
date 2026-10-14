@@ -1,0 +1,28 @@
+<div class="page-header">
+  <app-breadcrumbs [items]="['Account', 'My profile']"></app-breadcrumbs>
+  <h1>My profile</h1>
+  <p>Your sign-in details and password.</p>
+</div>
+
+<mat-card class="form-card">
+  <mat-card-content>
+    <div class="form-section-title">
+      <span class="section-icon"><mat-icon>person_outline</mat-icon></span>
+      <div>
+        <h2>Account details</h2>
+        <p>Contact your administrator to change your name, email or mobile number.</p>
+      </div>
+    </div>
+    <div class="account-grid">
+      <div *ngFor="let item of details">
+        <small>{{ item.label }}</small
+        ><strong>{{ item.value }}</strong>
+      </div>
+    </div>
+    <div class="demo-note" *ngIf="auth.isDemo">
+      <mat-icon>science</mat-icon>You are in a demo session. Sign in with a real account to change its password.
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<app-change-password></app-change-password>

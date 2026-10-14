@@ -38,9 +38,9 @@ export class MockAuthService {
     this.save({ role: MockAuthService.roleFromApi(user.role), token, user }, remember);
   }
 
-  /** Demo session: no backend account, any panel. */
-  login(role: DemoRole, remember: boolean): void {
-    this.save({ role, token: null, user: null }, remember);
+  /** Demo session: no backend account, any panel. `user` carries what was typed on the sign-in form. */
+  login(role: DemoRole, remember: boolean, user: ApiUser | null = null): void {
+    this.save({ role, token: null, user }, remember);
   }
 
   /** Tells the backend to drop the token (best effort), then clears the local session. */

@@ -29,7 +29,7 @@
       </button>
       <div class="website-status">
         <span class="live-dot"></span
-        ><span><strong>Website is live</strong><small>{{isCollege ? 'greenfield-college' : 'northstar-academy'}}.ageon.site</small></span>
+        ><span><strong>Website is live</strong><small>{{isSchool ? 'greenfield-school' : 'northstar-academy'}}.ageon.site</small></span>
       </div>
     </aside>
     <main class="cms-content">
@@ -54,45 +54,45 @@
               <div class="brand-uploads">
                 <div class="upload-preview logo-preview">
                   <img [src]="profile.settings['logo']" alt="Institute logo preview" /><label
-                    >Change logo<input type="file" accept="image/*" (change)="upload('logo', $event)"
+                    >Change logo<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" (change)="upload('logo', $event)"
                   /></label>
                 </div>
                 <div class="upload-preview favicon-preview">
                   <span>F</span
                   ><label>Favicon<input type="file" accept="image/*" (change)="upload('favicon', $event)" /></label
-                  ><small>Square image, at least 32 × 32 px</small>
+                  ><small>Square image, at least 32 × 32 px, up to 2 MB</small>
                 </div>
               </div>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="field-label">Institute name</label
+                  <label class="field-label">Institute name *</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="instituteName" [(ngModel)]="profile.settings['name']" required
-                  /></mat-form-field>
+                    ><input placeholder="Name shown on the website" matInput name="instituteName" [(ngModel)]="profile.settings['name']" maxlength="100"
+                  /><mat-error>{{ errorFor('instituteName') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
-                  <label class="field-label">Phone</label
+                  <label class="field-label">Phone *</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="phone" [(ngModel)]="profile.settings['phone']"
-                  /></mat-form-field>
+                    ><input matInput name="phone" type="tel" maxlength="14" placeholder="0522 4567 8900" [(ngModel)]="profile.settings['phone']"
+                  /><mat-error>{{ errorFor('phone') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
-                  <label class="field-label">Email</label
+                  <label class="field-label">Email *</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="email" type="email" [(ngModel)]="profile.settings['email']"
-                  /></mat-form-field>
+                    ><input matInput name="email" type="email" maxlength="120" placeholder="hello@institute.in" [(ngModel)]="profile.settings['email']"
+                  /><mat-error>{{ errorFor('email') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
                   <label class="field-label">WhatsApp number</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="whatsapp" [(ngModel)]="profile.settings['whatsapp']"
-                  /></mat-form-field>
+                    ><input matInput name="whatsapp" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" [(ngModel)]="profile.settings['whatsapp']"
+                  /><mat-error>{{ errorFor('whatsapp') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-12">
-                  <label class="field-label">Address</label
+                  <label class="field-label">Address *</label
                   ><mat-form-field appearance="outline" class="w-100">
-                    <textarea matInput name="address" rows="2" [(ngModel)]="profile.settings['address']"></textarea>
-                  </mat-form-field>
+                    <textarea placeholder="Building, street, area and city" matInput name="address" rows="2" maxlength="300" [(ngModel)]="profile.settings['address']"></textarea>
+                  <mat-error>{{ errorFor('address') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
                   <label class="field-label">Primary color</label>
@@ -132,28 +132,28 @@
             <form (ngSubmit)="save()">
               <div class="row g-3">
                 <div class="col-12">
-                  <label class="field-label">Hero title</label
+                  <label class="field-label">Hero title *</label
                   ><mat-form-field appearance="outline" class="w-100">
-                    <textarea matInput rows="2" name="heroTitle" [(ngModel)]="profile.home['title']"></textarea>
-                  </mat-form-field>
+                    <textarea placeholder="Main headline on the home page" matInput rows="2" name="heroTitle" maxlength="120" [(ngModel)]="profile.home['title']"></textarea>
+                  <mat-error>{{ errorFor('heroTitle') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-12">
                   <label class="field-label">Hero subtitle</label
                   ><mat-form-field appearance="outline" class="w-100">
-                    <textarea matInput rows="3" name="heroSubtitle" [(ngModel)]="profile.home['subtitle']"></textarea>
-                  </mat-form-field>
+                    <textarea placeholder="One or two lines under the headline" matInput rows="3" name="heroSubtitle" maxlength="300" [(ngModel)]="profile.home['subtitle']"></textarea>
+                  <mat-error>{{ errorFor('heroSubtitle') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
-                  <label class="field-label">CTA text</label
+                  <label class="field-label">CTA text *</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="ctaText" [(ngModel)]="profile.home['ctaText']"
-                  /></mat-form-field>
+                    ><input placeholder="e.g. Enquire now" matInput name="ctaText" maxlength="30" [(ngModel)]="profile.home['ctaText']"
+                  /><mat-error>{{ errorFor('ctaText') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
-                  <label class="field-label">CTA link</label
+                  <label class="field-label">CTA link *</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="ctaLink" [(ngModel)]="profile.home['ctaLink']"
-                  /></mat-form-field>
+                    ><input matInput name="ctaLink" placeholder="/courses or https://…" [(ngModel)]="profile.home['ctaLink']"
+                  /><mat-error>{{ errorFor('ctaLink') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-12">
                   <label class="field-label">Hero image</label>
@@ -185,39 +185,40 @@
             <form (ngSubmit)="save()">
               <div class="row g-3">
                 <div class="col-12">
-                  <label class="field-label">Description</label
+                  <label class="field-label">Description *</label
                   ><mat-form-field appearance="outline" class="w-100">
                     <textarea
-                      matInput
+ placeholder="Tell families who you are and what you offer"                      matInput
                       rows="4"
                       name="description"
+                      maxlength="1000"
                       [(ngModel)]="profile.about['description']"
                     ></textarea>
-                  </mat-form-field>
+                  <mat-error>{{ errorFor('description') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
                   <label class="field-label">Mission</label
                   ><mat-form-field appearance="outline" class="w-100">
-                    <textarea matInput rows="3" name="mission" [(ngModel)]="profile.about['mission']"></textarea>
-                  </mat-form-field>
+                    <textarea placeholder="What you aim to do for every student" matInput rows="3" name="mission" maxlength="500" [(ngModel)]="profile.about['mission']"></textarea>
+                  <mat-error>{{ errorFor('mission') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
                   <label class="field-label">Vision</label
                   ><mat-form-field appearance="outline" class="w-100">
-                    <textarea matInput rows="3" name="vision" [(ngModel)]="profile.about['vision']"></textarea>
-                  </mat-form-field>
+                    <textarea placeholder="Where you want to be in the future" matInput rows="3" name="vision" maxlength="500" [(ngModel)]="profile.about['vision']"></textarea>
+                  <mat-error>{{ errorFor('vision') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
                   <label class="field-label">Experience</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="experience" [(ngModel)]="profile.about['experience']"
-                  /></mat-form-field>
+                    ><input placeholder="e.g. 12+ years of teaching" matInput name="experience" maxlength="120" [(ngModel)]="profile.about['experience']"
+                  /><mat-error>{{ errorFor('experience') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
                   <label class="field-label">Statistics</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="statistics" [(ngModel)]="profile.about['statistics']"
-                  /></mat-form-field>
+                    ><input placeholder="e.g. 1,200+ students · 96% results" matInput name="statistics" maxlength="160" [(ngModel)]="profile.about['statistics']"
+                  /><mat-error>{{ errorFor('statistics') }}</mat-error></mat-form-field>
                 </div>
               </div>
               <div class="form-footer">
@@ -231,11 +232,11 @@
       <section *ngIf="['courses', 'faculty', 'results', 'gallery', 'updates'].includes(activeSection)">
         <div class="collection-toolbar">
           <div>
-            <span class="collection-count">{{ profile[activeSection].length }} {{ activeSection }}</span>
+            <span class="collection-count">{{ profile[activeSection].length }} {{ collectionPlural }}</span>
             <p>Choose what visitors can see on your website.</p>
           </div>
           <button mat-flat-button color="primary" (click)="editCollection($any(activeSection))">
-            <mat-icon>add</mat-icon>Add {{ activeSection === "faculty" ? "faculty" : activeSection.slice(0, -1) }}
+            <mat-icon>add</mat-icon>Add {{ collectionNoun }}
           </button>
         </div>
         <div class="cms-collection-grid">
@@ -293,39 +294,40 @@
             <form (ngSubmit)="save()">
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="field-label">Phone</label
+                  <label class="field-label">Phone *</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="contactPhone" [(ngModel)]="profile.contact['phone']"
-                  /></mat-form-field>
+                    ><input matInput name="contactPhone" type="tel" maxlength="14" placeholder="0522 4567 8900" [(ngModel)]="profile.contact['phone']"
+                  /><mat-error>{{ errorFor('contactPhone') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
-                  <label class="field-label">Email</label
+                  <label class="field-label">Email *</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="contactEmail" [(ngModel)]="profile.contact['email']"
-                  /></mat-form-field>
+                    ><input matInput name="contactEmail" type="email" maxlength="120" placeholder="hello@institute.in" [(ngModel)]="profile.contact['email']"
+                  /><mat-error>{{ errorFor('contactEmail') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-12">
-                  <label class="field-label">Address</label
+                  <label class="field-label">Address *</label
                   ><mat-form-field appearance="outline" class="w-100">
                     <textarea
-                      matInput
+ placeholder="Full address for visitors"                      matInput
                       rows="2"
                       name="contactAddress"
+                      maxlength="300"
                       [(ngModel)]="profile.contact['address']"
                     ></textarea>
-                  </mat-form-field>
+                  <mat-error>{{ errorFor('contactAddress') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
                   <label class="field-label">WhatsApp number</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="contactWhatsapp" [(ngModel)]="profile.contact['whatsapp']"
-                  /></mat-form-field>
+                    ><input matInput name="contactWhatsapp" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" [(ngModel)]="profile.contact['whatsapp']"
+                  /><mat-error>{{ errorFor('contactWhatsapp') }}</mat-error></mat-form-field>
                 </div>
                 <div class="col-md-6">
                   <label class="field-label">Google Map link</label
                   ><mat-form-field appearance="outline" class="w-100"
-                    ><input matInput name="mapLink" [(ngModel)]="profile.contact['map']"
-                  /></mat-form-field>
+                    ><input matInput name="mapLink" placeholder="https://maps.google.com/…" [(ngModel)]="profile.contact['map']"
+                  /><mat-error>{{ errorFor('mapLink') }}</mat-error></mat-form-field>
                 </div>
               </div>
               <div class="map-placeholder">
@@ -376,7 +378,7 @@
                       [name]="item.key"
                       [(ngModel)]="profile.social[item.key]"
                       [placeholder]="'https://' + item.key + '.com/your-page'"
-                  /></mat-form-field>
+                  /><mat-error>{{ errorFor(item.key) }}</mat-error></mat-form-field>
                 </div>
               </div>
               <div class="form-footer">

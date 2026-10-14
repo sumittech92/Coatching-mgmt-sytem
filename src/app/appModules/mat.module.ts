@@ -30,7 +30,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
-const material = [NgChartsModule, MatButtonModule, MatDividerModule, MatIconModule, MatTooltipModule, MatInputModule, MatSelectModule, MatToolbarModule, MatCardModule, MatFormFieldModule, MatMenuModule, MatGridListModule, MatBadgeModule, MatListModule, MatDialogModule, MatSidenavModule, MatExpansionModule, MatDatepickerModule, MatChipsModule, MatTabsModule, MatRippleModule, MatNativeDateModule, MatCheckboxModule, MatRadioModule, MatSlideToggleModule, MatTableModule, NgApexchartsModule, MatProgressBarModule, MatProgressSpinnerModule, MatPaginatorModule];
+const material = [NgChartsModule, MatButtonModule, MatDividerModule, MatIconModule, MatTooltipModule, MatInputModule, MatSelectModule, MatToolbarModule, MatCardModule, MatFormFieldModule, MatMenuModule, MatGridListModule, MatBadgeModule, MatListModule, MatDialogModule, MatSidenavModule, MatExpansionModule, MatDatepickerModule, MatChipsModule, MatTabsModule, MatRippleModule, MatNativeDateModule, MatCheckboxModule, MatRadioModule, MatSlideToggleModule, MatTableModule, NgApexchartsModule, MatProgressBarModule, MatProgressSpinnerModule, MatPaginatorModule, MatSnackBarModule];
 @NgModule({ imports: [CommonModule, ...material], exports: [...material] })
 export class MatModule {}

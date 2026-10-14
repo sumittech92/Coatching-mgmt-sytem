@@ -30,8 +30,8 @@
               ? "Clothing shop"
               : tenant.current.businessType === "coaching"
                 ? "Coaching institute"
-                : tenant.current.businessType === "college"
-                  ? "College"
+                : tenant.current.businessType === "school"
+                  ? "School"
                   : "Clothing shop"
       }}</span>
     </div>
@@ -60,4 +60,5 @@
     <div><strong>Need a hand?</strong><small>Visit our help center</small></div>
     <mat-icon class="footer-arrow">arrow_forward</mat-icon>
   </div>
+  <button type="button" class="sidebar-logout" (click)="logout()"><mat-icon>logout</mat-icon><span>Log out</span></button>
 </aside>

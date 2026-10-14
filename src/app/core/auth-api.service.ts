@@ -21,6 +21,7 @@ export interface ApiUser {
 interface ApiResponse<T> { success: boolean; message: string; data: T; }
 
 export interface RegisterPayload { fullName: string; email: string; password: string; countryCode: string; phoneNumber: string; role: 'student' | 'teacher'; }
+// Mobile sign-in: the UI no longer shows a country code, so callers send the default (+91).
 export type LoginPayload = { password: string } & ({ email: string } | { countryCode: string; phoneNumber: string });
 
 /** Thin client for crm-backend /auth routes. Errors are rethrown as plain Error with the API's message. */
@@ -53,6 +54,11 @@ export class AuthApiService {
     return this.post('reset-password', { newPassword, confirmPassword }, verifiedToken);
   }
 
+  /** Signed-in password change. Needs POST /auth/change-password on crm-backend (not added yet). */
+  changePassword(accessToken: string, currentPassword: string, newPassword: string, confirmPassword: string): Observable<unknown> {
+    return this.post('change-password', { currentPassword, newPassword, confirmPassword }, accessToken);
+  }
+
   logout(accessToken: string): Observable<unknown> {
     return this.post('logout', {}, accessToken);
   }
@@ -67,6 +73,7 @@ export class AuthApiService {
 
   private static messageFor(error: HttpErrorResponse): string {
     if (error.status === 0) return 'Cannot reach the server. Check that the backend is running and try again.';
+    if (error.status === 404) return 'This action is not available on the server yet.';
     return error.error?.message || 'Something went wrong. Please try again.';
   }
 }

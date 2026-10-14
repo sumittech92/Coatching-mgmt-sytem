@@ -4,8 +4,6 @@ import { SignInComponent } from './sign-in/sign-in.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { OtpVerificationComponent } from './otp-verification/otp-verification.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
-import { StudentSignupComponent } from './student-signup/student-signup.component';
-import { TeacherSignupComponent } from './teacher-signup/teacher-signup.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -15,10 +13,11 @@ const routes: Routes = [
   { path: 'forgot', redirectTo: 'forgot-password', pathMatch: 'full' },
   { path: 'otp-verification', component: OtpVerificationComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'signup', redirectTo: 'signup/student', pathMatch: 'full' },
-  { path: 'register', redirectTo: 'signup/student', pathMatch: 'full' },
-  { path: 'signup/student', component: StudentSignupComponent },
-  { path: 'signup/teacher', component: TeacherSignupComponent }
+  // No self sign-up: Super Admin creates Owners, Owners create Teachers and Students.
+  { path: 'signup', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'register', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'signup/student', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'signup/teacher', redirectTo: 'login', pathMatch: 'full' }
 ];
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })
 export class AuthRoutingModule {}

@@ -625,6 +625,8 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .remember-row mat-checkbox{font-size:12px;color:#536174}
   .sign-in-button{width:100%;border:0;color:#fff;font-weight:650;display:flex;align-items:center;justify-content:center;gap:8px}
   .sign-in-button mat-icon{font-size:17px;height:17px;width:17px}
+  .auth-help a{display:inline-flex;align-items:center;gap:4px;vertical-align:middle}
+  .auth-help a mat-icon{font-size:15px;width:15px;height:15px}
   .auth-help{text-align:center;border-top:1px solid #edf0f3;margin-top:27px;padding-top:20px;color:#7e8b99;font-size:12px}
   .auth-policy{text-align:center;color:#a4aeb8;font-size:12px;margin-top:38px}
   .auth-policy a{font-size:12px}
@@ -640,22 +642,32 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
     .remember-row{align-items:flex-start;flex-direction:column}
     .auth-policy{margin-top:28px}
   }
-  .role-label{display:block;margin-top:6px}
-  .role-field{margin-bottom:3px}
+  .choice-label{display:block}
+  .panel-choice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:4px;margin:0 0 18px;border:1px solid #e4e8f7;border-radius:13px;background:#f7f8fd}
+  .panel-choice button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:58px;padding:7px 4px;border:0;border-radius:10px;background:transparent;color:#5b6890;font-size:12px;font-weight:650;line-height:1.2;text-align:center;cursor:pointer;transition:.18s ease}
+  .panel-choice button mat-icon{font-size:20px;width:20px;height:20px}
+  .panel-choice button:hover{color:var(--ux-blue-600);background:#fff}
+  .panel-choice button.on{background:#fff;color:var(--ux-blue-600);box-shadow:0 2px 8px -2px #2f52da40,inset 0 0 0 1.5px var(--ux-blue-600)}
+  .panel-choice button:focus-visible,.workspace-choice button:focus-visible{outline:2px solid var(--ux-blue-500);outline-offset:2px}
+  .workspace-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+  .workspace-choice button{position:relative;display:flex;align-items:center;gap:10px;padding:12px 30px 12px 12px;border:1.5px solid #e4e8f0;border-radius:12px;background:#fff;text-align:left;cursor:pointer;transition:.18s ease}
+  .workspace-choice button:hover{border-color:#a7bdff;background:#f8f9ff}
+  .workspace-choice button.on{border-color:var(--ux-blue-600);background:#f3f6ff;box-shadow:0 6px 18px -10px #2f52da99}
+  .ws-icon{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#eef2ff;color:var(--ux-blue-600);transition:.18s ease}
+  .ws-icon mat-icon{font-size:19px;width:19px;height:19px}
+  .workspace-choice button.on .ws-icon{background:var(--ux-blue-600);color:#fff}
+  .ws-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .ws-text strong{font-size:13px;color:#29394a}
+  .ws-text small{font-size:11.5px;color:#8693a0;line-height:1.3}
+  .ws-check{position:absolute;top:8px;right:8px;font-size:17px;width:17px;height:17px;color:#c5cddb}
+  .workspace-choice button.on .ws-check{color:var(--ux-blue-600)}
+  @media(max-width:420px){
+    .workspace-choice{grid-template-columns:1fr}
+  }
   .login-error{display:flex;align-items:flex-start;gap:7px;background:#fff0ef;color:#b34844;border:1px solid #f5d0ce;padding:10px 12px;border-radius:8px;font-size:12px;margin:-5px 0 13px}
   .login-error mat-icon{font-size:15px;width:15px;height:15px}
   .sign-in-button:disabled{opacity:.75;cursor:wait}
   .sign-in-button mat-spinner{--mdc-circular-progress-active-indicator-color:#fff}
-  .workspace-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
-  .workspace-choice mat-radio-button{border:1px solid #e8edf0;border-radius:11px;padding:12px 10px;background:#fff;transition:.18s ease}
-  .workspace-choice mat-radio-button mat-icon{font-size:19px;width:20px;height:20px;vertical-align:middle;margin-right:7px}
-  .workspace-choice mat-radio-button span{display:inline-flex;vertical-align:middle;flex-direction:column;gap:3px}
-  .workspace-choice strong{font-size:12px;color:#29394a}
-  .workspace-choice small{font-size:12px;color:#8693a0}
-  @media(max-width:420px){
-    .workspace-choice{gap:7px}
-    .workspace-choice mat-radio-button{padding:10px 7px}
-  }
   .auth-story{background:var(--ux-grad-hero);--ring-size:820px;--ring-inset:auto -330px -360px auto;--ring-width:30px;--ring-opacity:.55;--ring-filter:drop-shadow(0 0 18px #8b5cf6);--ring-speed:38s;--glow-inset:-140px auto auto -160px}
   .auth-brand>span:last-child,.brand-dot{color:var(--ux-pink)}
   .brand-mark{background:var(--ux-grad-cta);background-size:200% 100%;animation:ux-gradient-pan 6s ease infinite;box-shadow:0 6px 18px -4px #ff2d8a99}
@@ -683,25 +695,14 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .sign-in-button:hover{background:var(--ux-grad-cta);background-size:180% 100%;background-position:100% 0;transform:translateY(-2px);box-shadow:0 16px 36px -8px #ff2d8ab3}
   .sign-in-button mat-icon{transition:transform .2s ease}
   .sign-in-button:hover mat-icon{transform:translateX(4px)}
-  .workspace-choice mat-radio-button:hover{border-color:#a7bdff;background:#f5f7ff}
-  .workspace-choice mat-radio-button mat-icon{color:var(--ux-blue-600)}
   .mobile-brand{color:var(--ux-navy-900)}
-  .register-links{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:18px;font-size:12px;color:#7e8b99}
-  .register-links a{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:999px;border:1px solid #dbe3ff;color:var(--ux-blue-600);font-weight:650;text-decoration:none;transition:.18s ease}
-  .register-links a:hover{border-color:transparent;background:var(--ux-grad-cta);color:#fff;box-shadow:var(--ux-glow-pink)}
-  .register-links mat-icon{font-size:15px;width:15px;height:15px}
-  .login-with{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;margin:0 0 18px;border:1px solid #e4e8f7;border-radius:12px;background:#fff}
-  .login-with button{display:flex;align-items:center;justify-content:center;gap:6px;height:38px;border:0;border-radius:9px;background:transparent;color:#5b6890;font-size:13px;font-weight:650;cursor:pointer;transition:background .2s ease,color .2s ease}
-  .login-with button mat-icon{font-size:18px;width:18px;height:18px}
-  .login-with button.on{background:#fff0f7;color:#e0156f;box-shadow:inset 0 0 0 1px #ffc0dd}
   .forgot-row{justify-content:center;margin-top:14px}
   .forgot-row a{font-size:13px}
   .demo-box{margin-top:20px;border:1px dashed #cdd6f5;border-radius:12px;background:#f8f9ff}
-  .demo-toggle{width:100%;display:flex;align-items:center;gap:8px;padding:11px 14px;border:0;background:none;color:#4a5785;font-size:13px;font-weight:600;cursor:pointer}
+  .demo-toggle{width:100%;display:flex;align-items:center;gap:8px;padding:11px 14px 8px;color:#4a5785;font-size:13px;font-weight:600}
+  .demo-panels{display:grid;padding:0 14px 12px}
   .demo-toggle mat-icon{font-size:18px;width:18px;height:18px;color:var(--ux-blue-600)}
-  .demo-toggle .chevron{margin-left:auto;color:#8a96a3}
-  .demo-body{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:0 14px 12px}
-  .demo-enter{display:inline-flex;align-items:center;gap:6px;height:46px;padding:0 16px;border:1.5px solid var(--ux-blue-600);border-radius:10px;background:#fff;color:var(--ux-blue-600);font-size:13px;font-weight:700;cursor:pointer}
+  .demo-enter{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:42px;padding:0 12px;border:1.5px solid var(--ux-blue-600);border-radius:10px;background:#fff;color:var(--ux-blue-600);font-size:13px;font-weight:700;cursor:pointer}
   .demo-enter:hover{background:var(--ux-blue-600);color:#fff}
   .demo-enter mat-icon{font-size:17px;width:17px;height:17px}
   &.signup-page .auth-form-side{align-items: start;padding-top: 34px;padding-bottom: 34px}
@@ -795,3 +796,16 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .strength-bar i{display:block;height:100%;border-radius:5px;transition:width .3s ease,background .3s ease}
   .strength small{font-size:12px;color:#7e8b99;min-width:46px;text-align:right}
 }
+
+/* Toasts (ToastService) */
+.mat-mdc-snack-bar-container.app-toast{--mdc-snackbar-container-shape:12px;--mdc-snackbar-supporting-text-size:13px;--mdc-snackbar-supporting-text-weight:600;margin:16px !important;max-width:min(420px,calc(100vw - 32px))}
+.mat-mdc-snack-bar-container.app-toast .mdc-snackbar__surface{border-left:4px solid currentColor;box-shadow:0 12px 30px -10px #0a104666}
+.mat-mdc-snack-bar-container.app-toast-success{--mdc-snackbar-container-color:#ecfdf3;--mdc-snackbar-supporting-text-color:#166534;--mat-snack-bar-button-color:#166534;color:#16a34a}
+.mat-mdc-snack-bar-container.app-toast-error{--mdc-snackbar-container-color:#fff1f2;--mdc-snackbar-supporting-text-color:#9f1239;--mat-snack-bar-button-color:#9f1239;color:#e11d48}
+.mat-mdc-snack-bar-container.app-toast-info{--mdc-snackbar-container-color:#eef2ff;--mdc-snackbar-supporting-text-color:#1c34b5;--mat-snack-bar-button-color:#1c34b5;color:#2f52da}
+.mat-mdc-snack-bar-container.app-toast-warning{--mdc-snackbar-container-color:#fffbeb;--mdc-snackbar-supporting-text-color:#92400e;--mat-snack-bar-button-color:#92400e;color:#d97706}
+.demo-note-box .demo-toggle{padding:11px 14px;font-size:12px;font-weight:500;align-items:flex-start;line-height:1.45}
+
+.auth-page .auth-brand{cursor:default;user-select:none;-webkit-tap-highlight-color:transparent}
+.auth-page .platform-note{margin:0 0 14px;font-size:12px;color:#9aa5b1}
+.auth-page .platform-note a{color:#9aa5b1;text-decoration:underline}

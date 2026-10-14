@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { TenantContextService } from '../core/tenant-context.service';
 import { BusinessType } from '../core/models/business-type';
+import { ToastService } from '../core/toast.service';
 
 @Component({ selector: 'app-workspace-page', templateUrl: './workspace-page.component.html', styleUrls: ['./workspace-page.component.scss'] })
 export class WorkspacePageComponent {
@@ -9,8 +10,8 @@ export class WorkspacePageComponent {
     { name: 'Meera Kapoor', detail: 'Class 11 · Chemistry batch', date: 'Today, 9:18 am', amount: '₹3,200', status: 'Pending', tone: 'warning' as const, initials: 'MK', color: 'peach' },
     { name: 'Rohan Verma', detail: 'Class 12 · Mathematics', date: 'Yesterday', amount: '₹2,500', status: 'Paid', tone: 'success' as const, initials: 'RV', color: 'blue' }
   ];
-  constructor(public tenant: TenantContextService) {}
-  switchBusiness(type: BusinessType): void { this.tenant.setBusinessType(type); }
+  constructor(public tenant: TenantContextService, private toast: ToastService) {}
+  switchBusiness(type: BusinessType): void { if (this.tenant.current.businessType === type) return; this.tenant.setBusinessType(type); this.toast.info(`Switched to the ${type === 'coaching' ? 'coaching' : 'clothing'} workspace.`); }
   get heading(): string {
     if (location.pathname.startsWith('/super-admin')) return 'Platform overview';
     if (location.pathname.startsWith('/student')) return 'My learning';

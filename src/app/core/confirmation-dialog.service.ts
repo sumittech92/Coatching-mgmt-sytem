@@ -12,7 +12,7 @@ export class ConfirmationDialogService {
       .open(ConfirmationDialogComponent, {
         data,
         width: "420px",
-        maxWidth: "calc(100vw - 32px)",
+        maxWidth: "calc(100vw - 24px)",
         panelClass: "app-confirmation-dialog",
       })
       .afterClosed();

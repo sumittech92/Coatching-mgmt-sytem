@@ -1,6 +1,6 @@
 import { BusinessType } from './models/business-type';
 
-/** Labels and option lists that differ between a coaching centre and a college. */
+/** Labels and option lists that differ between a coaching centre and a school. */
 export interface WorkspaceTerms {
   institute: string;
   ownerTitle: string;
@@ -23,13 +23,13 @@ export interface WorkspaceTerms {
 export const STUDENT_CLASSES = Array.from({ length: 12 }, (_, i) => i + 1);
 export const COACHING_BOARDS = ['CBSE', 'ICSE', 'State Board', 'IB / IGCSE', 'Other'];
 export const COACHING_SUBJECTS = ['Mathematics', 'Science', 'English', 'Hindi', 'Social Science', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Sanskrit', 'EVS', 'Accountancy', 'Economics'];
-export const COLLEGE_PROGRAMS = ['B.Sc Computer Science', 'B.Sc Life Sciences', 'B.Com', 'BBA', 'BCA', 'BA Psychology', 'B.Tech', 'M.Sc', 'M.Com', 'MBA'];
-export const COLLEGE_DEPARTMENTS = ['Computer Science', 'Commerce', 'Management', 'Life Sciences', 'Psychology', 'Engineering', 'Humanities', 'Mathematics'];
-export const COLLEGE_DESIGNATIONS = ['Professor', 'Associate Professor', 'Assistant Professor', 'Head of Department', 'Lecturer', 'Guest Faculty', 'Lab Instructor'];
-export const COLLEGE_YEARS = ['1st year', '2nd year', '3rd year', '4th year'];
-export const COLLEGE_SEMESTERS = Array.from({ length: 8 }, (_, i) => `Semester ${i + 1}`);
-export const COLLEGE_SECTIONS = ['Section A', 'Section B', 'Section C'];
-export const ADMISSION_QUOTAS = ['General merit', 'Management', 'Sports', 'NRI', 'Lateral entry'];
+export const SCHOOL_CLASSES = ['Nursery', 'LKG', 'UKG', ...STUDENT_CLASSES.map(c => `Class ${c}`)];
+export const SCHOOL_SECTIONS = ['Section A', 'Section B', 'Section C', 'Section D'];
+export const SCHOOL_SUBJECTS = ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'EVS', 'Computer Science', 'Sanskrit', 'Physics', 'Chemistry', 'Biology', 'Accountancy', 'Economics', 'Physical Education', 'Art & Craft'];
+export const SCHOOL_DEPARTMENTS = ['Pre-primary', 'Primary', 'Middle school', 'Secondary', 'Senior secondary', 'Administration', 'Sports & activities'];
+export const SCHOOL_DESIGNATIONS = ['PRT', 'TGT', 'PGT', 'Class teacher', 'Head of Department', 'Vice Principal', 'Coordinator', 'Librarian', 'Lab assistant', 'Office staff'];
+export const SCHOOL_TERMS = ['Term 1', 'Term 2', 'Annual'];
+export const ADMISSION_QUOTAS = ['General', 'RTE', 'Sibling', 'Staff ward', 'Transfer'];
 export const EXPERIENCE_LEVELS = ['Fresher', '1–3 years', '3–5 years', '5–10 years', '10+ years'];
 
 const COACHING: WorkspaceTerms = {
@@ -51,25 +51,25 @@ const COACHING: WorkspaceTerms = {
   experienceOptions: EXPERIENCE_LEVELS
 };
 
-const COLLEGE: WorkspaceTerms = {
-  institute: 'College',
+const SCHOOL: WorkspaceTerms = {
+  institute: 'School',
   ownerTitle: 'Principal',
-  teacher: 'Faculty member',
-  teachers: 'Faculty',
-  studentId: 'Enrollment no.',
-  rollNo: 'University roll no.',
-  course: 'Program',
-  courses: 'Programs',
-  group: 'Year & section',
-  guardian: 'Guardian name',
-  feeLabel: 'Semester fee',
-  assessment: 'Internal assessment',
-  courseOptions: COLLEGE_PROGRAMS,
-  groupOptions: COLLEGE_YEARS.flatMap(year => COLLEGE_SECTIONS.map(section => `${year.replace(/(\d)\w+ year/, 'Year $1')} · ${section}`)),
-  qualificationOptions: ['Ph.D', 'M.Phil', 'M.Tech / M.E.', 'M.Sc / M.A. / M.Com', 'MBA', 'NET / SET qualified', 'Other'],
+  teacher: 'Teacher',
+  teachers: 'Teachers & Staff',
+  studentId: 'Admission no.',
+  rollNo: 'Roll no.',
+  course: 'Class',
+  courses: 'Classes',
+  group: 'Section',
+  guardian: 'Father name',
+  feeLabel: 'Term fee',
+  assessment: 'Exam',
+  courseOptions: SCHOOL_CLASSES,
+  groupOptions: SCHOOL_SECTIONS,
+  qualificationOptions: ['D.El.Ed', 'B.Ed', 'M.Ed', 'B.Sc / B.A. / B.Com', 'M.Sc / M.A. / M.Com', 'Ph.D', 'Other'],
   experienceOptions: EXPERIENCE_LEVELS
 };
 
 export function termsFor(type: BusinessType): WorkspaceTerms {
-  return type === 'college' ? COLLEGE : COACHING;
+  return type === 'school' ? SCHOOL : COACHING;
 }

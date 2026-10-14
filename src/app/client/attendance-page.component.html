@@ -13,7 +13,7 @@
   <app-stat-card
     label="Students in view"
     [value]="visible.length.toString()"
-    [change]="isCollege ? 'Across selected sections' : 'Across selected batches'"
+    [change]="isSchool ? 'Across selected sections' : 'Across selected batches'"
     icon="groups"
   ></app-stat-card
   ><app-stat-card
@@ -41,16 +41,16 @@
       ><mat-card-content
         ><div class="toolbar">
           <mat-form-field appearance="outline"
-            ><mat-label>Date</mat-label><input matInput [matDatepicker]="attendanceDate" [(ngModel)]="date" /><mat-datepicker-toggle matSuffix [for]="attendanceDate"></mat-datepicker-toggle><mat-datepicker #attendanceDate></mat-datepicker></mat-form-field
+            ><mat-label>Date</mat-label><input matInput [matDatepicker]="attendanceDate" [max]="today" [(ngModel)]="date" /><mat-datepicker-toggle matSuffix [for]="attendanceDate"></mat-datepicker-toggle><mat-datepicker #attendanceDate></mat-datepicker></mat-form-field
           ><mat-form-field appearance="outline"
-            ><mat-label>{{ isCollege ? 'Year / section' : 'Class / batch' }}</mat-label
+            ><mat-label>{{ isSchool ? 'Class / section' : 'Class / batch' }}</mat-label
             ><mat-select [(ngModel)]="batch"
-              ><mat-option [value]="'All batches'">All {{ isCollege ? 'years / sections' : 'classes / batches' }}</mat-option><mat-option *ngFor="let item of batchOptions" [value]="item">{{ item }}</mat-option></mat-select
+              ><mat-option [value]="'All batches'">All {{ isSchool ? 'classes / sections' : 'classes / batches' }}</mat-option><mat-option *ngFor="let item of batchOptions" [value]="item">{{ item }}</mat-option></mat-select
             ></mat-form-field
-          ><mat-form-field appearance="outline"
-            ><mat-label>{{ isCollege ? 'Faculty' : 'Teacher' }}</mat-label
+          ><mat-form-field appearance="outline" *ngIf="!isTeacher"
+            ><mat-label>{{ isSchool ? 'Class teacher' : 'Teacher' }}</mat-label
             ><mat-select [(ngModel)]="teacher"
-              ><mat-option [value]="'All teachers'">All {{ isCollege ? 'faculty' : 'teachers' }}</mat-option><mat-option *ngFor="let item of teacherOptions" [value]="item">{{ item }}</mat-option></mat-select
+              ><mat-option [value]="'All teachers'">All {{ isSchool ? 'class teachers' : 'teachers' }}</mat-option><mat-option *ngFor="let item of teacherOptions" [value]="item">{{ item }}</mat-option></mat-select
             ></mat-form-field
           ><button mat-stroked-button [matMenuTriggerFor]="bulkMenu"><mat-icon>done_all</mat-icon> Mark all</button
           ><mat-menu #bulkMenu="matMenu"
@@ -72,7 +72,7 @@
           <button mat-flat-button color="primary" *ngIf="view === 'daily'" (click)="save()">Save attendance</button>
         </div>
         <div class="attendance-table" *ngIf="view === 'daily'">
-          <div class="table-header"><span>STUDENT</span><span>{{ isCollege ? 'PROGRAM & YEAR' : 'CLASS & BATCH' }}</span><span>ATTENDANCE</span></div>
+          <div class="table-header"><span>STUDENT</span><span>{{ isSchool ? 'CLASS & SECTION' : 'CLASS & BATCH' }}</span><span>ATTENDANCE</span></div>
           <div class="student-row" *ngFor="let item of visible">
             <span class="student-info"
               ><span class="avatar">{{ item.photo }}</span
@@ -160,7 +160,7 @@
           <span><i class="present-key"></i>Present</span><span><i class="absent-key"></i>Absent</span>
         </div>
         <div class="batch-summary">
-          <h3>{{ isCollege ? 'By program / year' : 'By batch' }}</h3>
+          <h3>{{ isSchool ? 'By class / section' : 'By batch' }}</h3>
           <div
             *ngFor="
               let item of batchSummary

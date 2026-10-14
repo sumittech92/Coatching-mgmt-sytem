@@ -28,7 +28,7 @@ export class ShopMockDataService {
   store = {
     name: "Atelier & Co.",
     type: "Clothing & accessories",
-    phone: "+91 98450 12345",
+    phone: "98450 12345",
     email: "studio@atelier.co",
     address: "Koregaon Park, Pune",
     currency: "INR · Indian Rupee",
@@ -173,21 +173,21 @@ export class ShopMockDataService {
     },
   ];
   customers = [
-    { id: 1, name: "Mira Shah", phone: "+91 98200 11001", orders: 8, spent: 28450, due: 0, lastPurchase: "Today" },
+    { id: 1, name: "Mira Shah", phone: "98200 11001", orders: 8, spent: 28450, due: 0, lastPurchase: "Today" },
     {
       id: 2,
       name: "Ishaan Mehta",
-      phone: "+91 98200 11002",
+      phone: "98200 11002",
       orders: 5,
       spent: 16980,
       due: 1250,
       lastPurchase: "Today",
     },
-    { id: 3, name: "Rhea Kapoor", phone: "+91 98200 11003", orders: 12, spent: 45200, due: 0, lastPurchase: "Today" },
+    { id: 3, name: "Rhea Kapoor", phone: "98200 11003", orders: 12, spent: 45200, due: 0, lastPurchase: "Today" },
     {
       id: 4,
       name: "Dev Malhotra",
-      phone: "+91 98200 11004",
+      phone: "98200 11004",
       orders: 3,
       spent: 11240,
       due: 0,
@@ -196,7 +196,7 @@ export class ShopMockDataService {
     {
       id: 5,
       name: "Tara Nair",
-      phone: "+91 98200 11005",
+      phone: "98200 11005",
       orders: 6,
       spent: 20700,
       due: 850,

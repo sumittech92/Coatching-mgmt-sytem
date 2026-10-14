@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgOtpInputComponent } from 'ng-otp-input';
-import { finalize } from 'rxjs';
-import { AuthApiService } from '../../core/auth-api.service';
 import { PasswordResetState } from '../password-reset-state';
+import { ToastService } from '../../core/toast.service';
 
 // The backend issues a fixed 4-digit code until SMS sending is connected.
 const OTP_LENGTH = 4;
 const RESEND_SECONDS = 30;
+const DEMO_OTP = '1234';
 
 @Component({ selector: 'app-otp-verification', templateUrl: './otp-verification.component.html' })
 export class OtpVerificationComponent implements OnInit, OnDestroy {
@@ -24,7 +24,7 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
   secondsLeft = RESEND_SECONDS;
   private timer?: ReturnType<typeof setInterval>;
 
-  constructor(private router: Router, private api: AuthApiService, private resetState: PasswordResetState) {}
+  constructor(private router: Router, private resetState: PasswordResetState, private toast: ToastService) {}
 
   ngOnInit(): void {
     const state = this.resetState.value;
@@ -44,22 +44,20 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
 
   verify(): void {
     const state = this.resetState.value;
-    if (this.otp.length < this.otpLength) { this.invalid = true; this.serverError = ''; return; }
+    if (this.otp.length < this.otpLength) { this.invalid = true; this.serverError = ''; this.toast.error(`Please enter all ${this.otpLength} digits.`); return; }
     if (!state?.resetToken) { this.router.navigateByUrl('/forgot-password'); return; }
-    this.loading = true;
-    this.api.verifyOtp(state.resetToken, this.otp).pipe(finalize(() => this.loading = false)).subscribe({
-      next: ({ accessToken }) => {
-        this.resetState.set({ ...state, verifiedToken: accessToken });
-        this.router.navigateByUrl('/reset-password');
-      },
-      error: (error: Error) => {
-        // Clearing the boxes fires onInputChange, so flag the error afterwards.
-        this.otpInput?.setValue('');
-        this.otp = '';
-        this.invalid = true;
-        this.serverError = OtpVerificationComponent.friendly(error.message);
-      }
-    });
+    // UI-testing mode: the auth API is disconnected; the demo OTP is 1234.
+    if (this.otp !== DEMO_OTP) {
+      this.otpInput?.setValue('');
+      this.otp = '';
+      this.invalid = true;
+      this.serverError = 'That code is not correct. Please try again.';
+      this.toast.error(this.serverError);
+      return;
+    }
+    this.resetState.set({ ...state, verifiedToken: 'demo-verified' });
+    this.toast.success('OTP verified. Set your new password.');
+    this.router.navigateByUrl('/reset-password');
   }
 
   resend(): void {
@@ -69,17 +67,9 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
     this.otp = '';
     this.invalid = false;
     this.serverError = '';
-    this.resending = true;
-    this.api.forgotPassword(state.phoneNumber).pipe(finalize(() => this.resending = false)).subscribe({
-      next: ({ accessToken }) => { this.resetState.set({ ...state, resetToken: accessToken, verifiedToken: undefined }); this.startTimer(); },
-      error: (error: Error) => { this.invalid = true; this.serverError = error.message; }
-    });
-  }
-
-  private static friendly(message: string): string {
-    if (message.startsWith('Cannot reach')) return message;
-    if (/expired/i.test(message)) return 'This code has expired. Tap “Resend OTP” to get a new one.';
-    return 'That code is not correct. Please try again.';
+    this.resetState.set({ ...state, resetToken: 'demo-reset', verifiedToken: undefined });
+    this.startTimer();
+    this.toast.success('A new OTP has been sent. Demo code: 1234');
   }
 
   private startTimer(): void {

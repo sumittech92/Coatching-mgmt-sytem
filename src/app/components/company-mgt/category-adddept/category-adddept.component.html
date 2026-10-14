@@ -1,47 +1,7 @@
-<div class="dialog">
-    <h5 class="mb-0">Add Department</h5>
-
-    <button mat-icon-button mat-dialog-close>
-        <mat-icon>close</mat-icon>
-    </button>
-
-    <!-- <button class="bg-transparent text-white border-0">X</button> -->
-</div>
-<mat-dialog-content>
-    <div class="p-3">
-
-        <h5 class="text-center mb-4 
-        ">
-            Add New department
-        </h5>
-
-        <!-- Name -->
-        <mat-label>
-            Name
-        </mat-label>
-        <div class="form-group">
-
-
-            <mat-form-field appearance="outline" class="w-100 mb-3">
-
-                <input matInput placeholder="Enter department name">
-            </mat-form-field>
-        </div>
-         <mat-label>
-            Name
-        </mat-label>
-         <div class="form-group">
-        <!-- Code -->
-        <mat-form-field appearance="outline" class="w-100 mb-4">
-            <input matInput placeholder="Enter department code">
-        </mat-form-field>
-</div>
-        <!-- Actions -->
-        <div class="d-flex justify-content-between mt-4">
-            <button type="button" class="btn btn-danger">Cancel</button>
-            <button type="button" class="btn btn-primary">Save Item</button>
-        </div>
-
-    </div>
-
-</mat-dialog-content>
+<h2 mat-dialog-title class="dialog-title">{{isEdit ? 'Edit department' : 'Add department'}}</h2><p class="dialog-subtitle">Departments group your categories and brands.</p>
+<mat-dialog-content class="dialog-content"><form [formGroup]="form" class="row g-2" (ngSubmit)="save()">
+  <div class="col-md-6"><label class="field-label">Department name *</label><mat-form-field appearance="outline" class="w-100"><input matInput formControlName="name" placeholder="e.g. Apparel" maxlength="60"><mat-error>{{errorFor('name', 'Department name')}}</mat-error></mat-form-field></div>
+  <div class="col-md-6"><label class="field-label">Department code *</label><mat-form-field appearance="outline" class="w-100"><input matInput formControlName="code" placeholder="e.g. APP-01" maxlength="10"><mat-hint>2–10 letters, numbers or hyphens</mat-hint><mat-error>{{errorFor('code', 'Department code')}}</mat-error></mat-form-field></div>
+  <button type="submit" hidden></button>
+</form></mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end"><button mat-button mat-dialog-close>Cancel</button><button mat-flat-button color="primary" (click)="save()">{{isEdit ? 'Save changes' : 'Add department'}}</button></mat-dialog-actions>

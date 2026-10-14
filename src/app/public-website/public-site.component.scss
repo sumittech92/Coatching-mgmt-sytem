@@ -183,3 +183,6 @@
 }
 
 @media(max-width:800px){.promo-strip{font-size:12px;gap:8px;flex-wrap:wrap}.promo-strip .promo-tag{display:none}}
+a.contact-mini{text-decoration:none;color:inherit}
+a.footer-enquire{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+a.footer-enquire mat-icon{font-size:18px;width:18px;height:18px}

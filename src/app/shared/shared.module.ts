@@ -14,7 +14,8 @@ import { SearchToolbarComponent } from './ui/search-toolbar/search-toolbar.compo
 import { DataTableComponent } from './ui/data-table/data-table.component';
 import { FormFieldComponent } from './ui/form-field/form-field.component';
 import { ConfirmationDialogComponent } from './ui/confirmation-dialog/confirmation-dialog.component';
+import { ChangePasswordComponent } from './ui/change-password/change-password.component';
 
-const components = [HeaderComponent, SidebarComponent, BreadcrumbsComponent, StatCardComponent, StatusBadgeComponent, EmptyStateComponent, LoadingStateComponent, SearchToolbarComponent, DataTableComponent, FormFieldComponent, ConfirmationDialogComponent];
+const components = [HeaderComponent, SidebarComponent, BreadcrumbsComponent, StatCardComponent, StatusBadgeComponent, EmptyStateComponent, LoadingStateComponent, SearchToolbarComponent, DataTableComponent, FormFieldComponent, ConfirmationDialogComponent, ChangePasswordComponent];
 @NgModule({ declarations: components, imports: [CommonModule, RouterModule, MatModule, FormsModule, ReactiveFormsModule], exports: [CommonModule, RouterModule, MatModule, FormsModule, ReactiveFormsModule, ...components] })
 export class SharedModule {}

@@ -1,0 +1,23 @@
+:host{display:block}
+.module-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:18px}
+.module-head h1{margin:9px 0 4px}
+.add-btn{height:39px;border-radius:8px;font-size:12px}
+.summary-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.summary-chip{display:flex;align-items:baseline;gap:7px;padding:10px 14px;border:1px solid #e8edf3;border-radius:12px;background:#fff}
+.summary-chip strong{font-size:18px;color:#263447}
+.summary-chip span{font-size:12px;color:#7d8a99}
+.list-card mat-card-content{padding:15px 17px}
+.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:6px}
+.search-field{flex:1;min-width:220px;font-size:12px}
+.filter-field{width:190px;font-size:12px}
+.result-count{font-size:12px;color:#8d99a6;margin-left:auto}
+.module-table{min-width:720px;font-size:12px}
+.module-table th{font-size:12px;letter-spacing:.6px;color:#98a3af;border-bottom-color:#edf0f3;padding:11px 9px;white-space:nowrap}
+.module-table td{font-size:12px;color:#697688;border-bottom-color:#f0f2f4;padding:10px 9px}
+.module-table td.main-cell{color:#364458;font-weight:650}
+.module-table ::ng-deep .badge{font-size:12px}
+.actions-col{text-align:right;white-space:nowrap;width:1%}
+.row-link{font-size:12px;height:32px;margin-right:4px}
+.row-link mat-icon{font-size:16px;width:16px;height:16px}
+.delete-action{color:#b84242}
+@media(max-width:650px){.module-head h1{font-size:22px}.filter-field{width:100%}.result-count{margin-left:0}}

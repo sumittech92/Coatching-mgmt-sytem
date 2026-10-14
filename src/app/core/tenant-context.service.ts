@@ -7,11 +7,13 @@ import { WorkspaceTerms, termsFor } from './workspace-terms';
 export class TenantContextService {
   private context: TenantContext = this.readStoredContext();
   get current(): TenantContext { return this.context; }
-  get isCollege(): boolean { return this.context.businessType === 'college'; }
+  get isSchool(): boolean { return this.context.businessType === 'school'; }
   get terms(): WorkspaceTerms { return termsFor(this.context.businessType); }
+  /** Name of the signed-in demo teacher; their attendance and classes are filtered by it. */
+  get demoTeacherName(): string { return this.isSchool ? 'Mrs. Neha Iyer' : 'Priya Nair'; }
   setBusinessType(businessType: BusinessType, remember = false): void {
     this.context = { ...this.context, businessType };
-    this.context.businessName = businessType === 'coaching' ? 'Northstar Academy' : businessType === 'college' ? 'Greenfield College' : 'Atelier & Co.';
+    this.context.businessName = businessType === 'coaching' ? 'Northstar Academy' : businessType === 'school' ? 'Greenfield Public School' : 'Atelier & Co.';
     try {
       localStorage.removeItem('demo-workspace');
       sessionStorage.removeItem('demo-workspace');
@@ -24,12 +26,12 @@ export class TenantContextService {
     try {
       businessType = localStorage.getItem('demo-workspace') || sessionStorage.getItem('demo-workspace');
     } catch { /* Fall back to the default demo workspace. */ }
-    if (businessType !== 'coaching' && businessType !== 'college' && businessType !== 'clothing') {
+    if (businessType !== 'coaching' && businessType !== 'school' && businessType !== 'clothing') {
       return { ...MOCK_TENANT_CONTEXT };
     }
     return {
       businessType,
-      businessName: businessType === 'coaching' ? 'Northstar Academy' : businessType === 'college' ? 'Greenfield College' : 'Atelier & Co.'
+      businessName: businessType === 'coaching' ? 'Northstar Academy' : businessType === 'school' ? 'Greenfield Public School' : 'Atelier & Co.'
     };
   }
 }

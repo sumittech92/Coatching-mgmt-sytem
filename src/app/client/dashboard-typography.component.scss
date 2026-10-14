@@ -16,33 +16,33 @@
 .avatar { font-size: 14px; }
 .due-amount, .attendance-percent { font-size: 14px; }
 
-/* College dashboard */
-.college-kicker, .college-overline { font-size: 13px; letter-spacing: .08em; }
-.college-hero h1 { font-size: clamp(36px, 4vw, 54px); }
-.college-hero-copy > p { font-size: 15px; line-height: 1.65; }
-.college-hero-actions a { font-size: 14px; }
-.college-live { font-size: 14px; }
-.college-photo-note strong { font-size: 15px; }
-.college-photo-note small { font-size: 13px; }
-.college-stats small { font-size: 14px; }
-.college-stats strong { font-size: clamp(20px, 2vw, 24px); }
-.college-stats em { font-size: 13px; }
-.college-panel-head h2 { font-size: 18px; }
-.college-panel-head p { font-size: 14px; line-height: 1.5; }
-.college-panel-head > a, .department-all { font-size: 14px; }
+/* School (owner) dashboard */
+.school-kicker, .school-overline { font-size: 13px; letter-spacing: .08em; }
+.school-hero h1 { font-size: clamp(36px, 4vw, 54px); }
+.school-hero-copy > p { font-size: 15px; line-height: 1.65; }
+.school-hero-actions a { font-size: 14px; }
+.school-live { font-size: 14px; }
+.school-photo-note strong { font-size: 15px; }
+.school-photo-note small { font-size: 13px; }
+.school-stats small { font-size: 14px; }
+.school-stats strong { font-size: clamp(20px, 2vw, 24px); }
+.school-stats em { font-size: 13px; }
+.school-panel-head h2 { font-size: 18px; }
+.school-panel-head p { font-size: 14px; line-height: 1.5; }
+.school-panel-head > a, .department-all { font-size: 14px; }
 .notice-date small { font-size: 12px; }
 .class-status { font-size: 13px; }
 .schedule-row time { font-size: 14px; }
-.schedule-row > div strong, .department-row strong, .campus-notice > span:nth-child(2) strong, .college-quick-links strong { font-size: 15px; line-height: 1.35; }
-.schedule-row > div small, .department-row small, .campus-notice > span:nth-child(2) small, .college-quick-links small { font-size: 14px; line-height: 1.4; }
+.schedule-row > div strong, .department-row strong, .school-notice > span:nth-child(2) strong, .school-quick-links strong { font-size: 15px; line-height: 1.35; }
+.schedule-row > div small, .department-row small, .school-notice > span:nth-child(2) small, .school-quick-links small { font-size: 14px; line-height: 1.4; }
 
 @media (max-width: 700px) {
   .dashboard-head { align-items: flex-start; }
   .dashboard-head h1 { font-size: clamp(26px, 7vw, 32px); }
   .academy-banner h2 { font-size: clamp(29px, 8vw, 36px); }
-  .college-hero h1 { font-size: clamp(34px, 9vw, 42px); }
-  .college-stats small { font-size: 13px; }
-  .college-panel-head { align-items: flex-start; }
-  .college-panel-head > a, .department-all { font-size: 14px; }
-  .campus-notice > span:nth-child(2) strong { font-size: 14px; }
+  .school-hero h1 { font-size: clamp(34px, 9vw, 42px); }
+  .school-stats small { font-size: 13px; }
+  .school-panel-head { align-items: flex-start; }
+  .school-panel-head > a, .department-all { font-size: 14px; }
+  .school-notice > span:nth-child(2) strong { font-size: 14px; }
 }

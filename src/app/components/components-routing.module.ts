@@ -16,6 +16,8 @@ import { ShopDashboardComponent } from '../shop/shop-dashboard.component';
 import { ShopManagementComponent } from '../shop/shop-management.component';
 import { ShopBillingComponent } from '../shop/shop-billing.component';
 import { RoleAccessGuard } from '../core/role-access.guard';
+import { AccountSettingsComponent } from './account-settings/account-settings.component';
+import { ModulePageComponent } from '../client/modules/module-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -41,9 +43,13 @@ const routes: Routes = [
   { path: 'client/courses/add', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/courses/:id', component: ClientManagementComponent },
   { path: 'client/courses', component: ClientManagementComponent },
-  { path: 'client/departments', component: ClientManagementComponent },
-  { path: 'client/programs', component: ClientManagementComponent },
-  { path: 'client/timetable', component: ClientManagementComponent },
+  { path: 'client/departments', redirectTo: 'client/classes' },
+  { path: 'client/programs', redirectTo: 'client/subjects' },
+  // Academic pages from module-registry (School and Coaching).
+  ...([['sessions', ['Owner']], ['classes', ['Owner']], ['sections', ['Owner']], ['subjects', ['Owner']], ['events', ['Owner']], ['timetable', ['Owner']],
+    ['exams', ['Owner', 'Teacher']], ['tests', ['Owner', 'Teacher']], ['assignments', ['Teacher']], ['homework', ['Teacher']], ['marks', ['Teacher']],
+    ['today', ['Teacher']], ['my-batches', ['Teacher']], ['my-classes', ['Teacher']], ['my-subjects', ['Teacher']]] as [string, string[]][])
+    .map(([key, roles]) => ({ path: `client/${key}`, component: ModulePageComponent, canActivate: [RoleAccessGuard], data: { roles } })),
   { path: 'client/batches/add', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/batches/:id', component: ClientManagementComponent },
   { path: 'client/batches', component: ClientManagementComponent },
@@ -61,6 +67,7 @@ const routes: Routes = [
   { path: 'client/materials', component: ClientManagementComponent },
   { path: 'client/website', component: WebsiteCmsComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/settings', component: InstituteSettingsComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'account/profile', component: AccountSettingsComponent },
   { path: 'student/dashboard', component: WorkspacePageComponent },
   { path: 'company-management', component: CompanyMgtComponent },
   { path: 'dashboard', component: WorkspacePageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },

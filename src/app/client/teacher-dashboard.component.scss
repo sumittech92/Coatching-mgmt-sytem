@@ -45,7 +45,7 @@
 
 .teacher-shortcuts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -142,7 +142,35 @@
 .teacher-class-copy strong { color: #353a4d; font-size: 15px; font-weight: 650; line-height: 1.35; }
 .teacher-class-copy small { color: #757c8c; font-size: 14px; line-height: 1.4; }
 
+/* My batches / my classes and assignments / homework, side by side */
+.teacher-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 24px);
+}
+
+.teacher-count {
+  display: grid;
+  color: #3f64c7;
+  font-size: 18px;
+  font-weight: 750;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+
+  small {
+    color: #8b92a4;
+    font-size: 11px;
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 1300px) {
+  .teacher-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 @media (max-width: 1100px) {
+  .teacher-panels { grid-template-columns: 1fr; }
+
   .teacher-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 

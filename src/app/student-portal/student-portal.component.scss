@@ -6,3 +6,18 @@
 .portal-sidebar nav a{transition:background .18s ease,color .18s ease,transform .18s ease}
 .portal-sidebar nav a:hover{background:#eef2ff;color:var(--ux-blue-600);transform:translateX(2px)}
 .portal-sidebar nav a.active{background:linear-gradient(90deg,var(--ux-blue-600),var(--ux-navy-800));color:#fff;box-shadow:var(--ux-glow-blue)}
+
+/* Student sections: batch, class, timetable, homework, assignments, tests, exams */
+.summary-card>strong.small-value{font-size:14px;line-height:1.35;padding-right:34px}
+.teacher-avatar{height:32px;width:32px;flex:none;border-radius:50%;background:#e7eeff;color:#436ad4;display:grid;place-items:center;font-size:12px;font-weight:700}
+.material-item>button[mat-stroked-button]{font-size:12px}
+.portal-material-grid .summary-meter{margin:10px 0 6px}
+.section-gap{margin-top:14px}
+.cell-note{display:block;font-size:12px;color:#98a3af;margin-top:3px}
+.portal-table td button mat-icon{font-size:16px;width:16px;height:16px;vertical-align:middle}
+.portal-table td button{font-size:12px;white-space:nowrap}
+.compact-table{min-width:0!important}
+.timetable-table{min-width:980px!important}
+.timetable-table th small{display:block;font-weight:400;letter-spacing:0;margin-top:2px}
+.timetable-table td{white-space:nowrap}
+.timetable-table td.break-cell{background:#f6f8fa;color:#a1abb5;font-style:italic}

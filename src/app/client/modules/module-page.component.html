@@ -1,0 +1,57 @@
+<div class="page-header module-head">
+  <div>
+    <app-breadcrumbs [items]="[workspaceLabel, config.title]"></app-breadcrumbs>
+    <h1>{{ config.title }}</h1>
+    <p>{{ config.description }}</p>
+  </div>
+  <button mat-flat-button color="primary" class="add-btn" *ngIf="canEdit && config.action" (click)="open()"><mat-icon>add</mat-icon>{{ config.action }}</button>
+</div>
+
+<div class="summary-row">
+  <div class="summary-chip" *ngFor="let chip of summary"><strong>{{ chip.value }}</strong><span>{{ chip.label }}</span></div>
+</div>
+
+<mat-card class="list-card">
+  <mat-card-content>
+    <div class="toolbar">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [(ngModel)]="search" [placeholder]="'Search ' + config.title.toLowerCase()" [attr.aria-label]="'Search ' + config.title.toLowerCase()">
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="filter-field" *ngIf="filterOptions.length > 1">
+        <mat-select [(ngModel)]="filter" [attr.aria-label]="filterLabel">
+          <mat-option value="">All {{ filterLabel.toLowerCase() }}</mat-option>
+          <mat-option *ngFor="let option of filterOptions" [value]="option">{{ option }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <span class="result-count">{{ filtered.length }} of {{ config.rows.length }}</span>
+    </div>
+
+    <div class="table-responsive" *ngIf="filtered.length">
+      <table class="table align-middle mb-0 module-table">
+        <thead><tr><th *ngFor="let column of config.columns">{{ column.label | uppercase }}</th><th class="actions-col"><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let row of filtered; trackBy: trackById">
+            <td *ngFor="let column of config.columns; let first = first" [class.main-cell]="first">
+              <app-status-badge *ngIf="column.badge; else plain" [label]="row[column.key]" [tone]="tone(row[column.key])"></app-status-badge>
+              <ng-template #plain>{{ row[column.key] ?? '—' }}</ng-template>
+            </td>
+            <td class="actions-col">
+              <button mat-stroked-button class="row-link" *ngIf="config.rowLink" (click)="go(config.rowLink.route)"><mat-icon>{{ config.rowLink.icon }}</mat-icon>{{ config.rowLink.label }}</button>
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'Actions for ' + (row['name'] || row['title'] || row['student'] || config.singular)"><mat-icon>more_vert</mat-icon></button>
+              <mat-menu #rowMenu="matMenu">
+                <button mat-menu-item (click)="view(row)"><mat-icon>visibility</mat-icon>View details</button>
+                <ng-container *ngIf="canEdit">
+                  <button mat-menu-item (click)="open(row)"><mat-icon>edit</mat-icon>Edit</button>
+                  <button mat-menu-item class="delete-action" (click)="remove(row)"><mat-icon>delete_outline</mat-icon>Delete</button>
+                </ng-container>
+              </mat-menu>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-empty-state *ngIf="!filtered.length" [icon]="config.icon" [title]="config.rows.length ? 'No matches' : 'Nothing here yet'" [description]="config.rows.length ? 'Try a different search or filter.' : (canEdit ? 'Use “' + config.action + '” to add the first one.' : 'Items will appear here once they are added.')"></app-empty-state>
+  </mat-card-content>
+</mat-card>

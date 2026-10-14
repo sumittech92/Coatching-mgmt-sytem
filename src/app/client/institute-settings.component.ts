@@ -1,70 +1,80 @@
 import { Component } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { TenantContextService } from '../core/tenant-context.service';
-import { COACHING_BOARDS } from '../core/workspace-terms';
+import { COACHING_BOARDS, SCHOOL_CLASSES } from '../core/workspace-terms';
+import { AppValidators, normalizeMobile, validationMessage } from '../core/app-validators';
+import { ToastService } from '../core/toast.service';
 
-/** Owner-only profile of the institute and its head; labels and fields follow the coaching / college workspace. */
+const THIS_YEAR = new Date().getFullYear();
+const req = AppValidators.required;
+const text = (max: number) => [req, Validators.maxLength(max)];
+const year = [Validators.pattern(/^\d{4}$/), Validators.min(1850), Validators.max(THIS_YEAR)];
+/** Office numbers may be a landline with STD code (e.g. 080 4567 8900) or a 10-digit mobile. */
+const officePhone = (control: AbstractControl): ValidationErrors | null => { const v = String(control.value ?? '').replace(/[\s-]/g, ''); return !v || /^(0\d{9,11}|[6-9]\d{9})$/.test(v) ? null : { pattern: true }; };
+
+/** Owner-only profile of the institute and its head; labels and fields follow the coaching / school workspace. */
 @Component({ selector: 'app-institute-settings', templateUrl: './institute-settings.component.html', styleUrls: ['./students-page.component.scss', './institute-settings.component.scss'] })
 export class InstituteSettingsComponent {
   readonly boards = COACHING_BOARDS;
   readonly coachingHeadTitles = ['Director', 'Founder & Director', 'Centre Head', 'Managing Partner'];
-  readonly collegeHeadTitles = ['Principal', 'Director', 'Dean', 'Registrar'];
-  readonly approvals = ['UGC', 'AICTE', 'State Government', 'NCTE', 'Autonomous'];
-  readonly naacGrades = ['A++', 'A+', 'A', 'B++', 'B+', 'B', 'Not accredited'];
+  readonly schoolBoards = ['CBSE', 'ICSE', 'State Board'];
+  readonly schoolClasses = SCHOOL_CLASSES;
   readonly states = ['Delhi', 'Karnataka', 'Maharashtra', 'Rajasthan', 'Tamil Nadu', 'Telangana', 'Uttar Pradesh', 'West Bengal', 'Other'];
   saved = false;
 
   readonly coachingForm = this.fb.nonNullable.group({
-    name: ['Northstar Academy', Validators.required],
-    registrationNo: ['UDYAM-KR-03-0012345'],
-    gstin: ['29ABCDE1234F1Z5'],
-    established: ['2014'],
+    name: ['Northstar Academy', text(100)],
+    registrationNo: ['UDYAM-KR-03-0012345', Validators.maxLength(40)],
+    gstin: ['29ABCDE1234F1Z5', Validators.pattern(/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/i)],
+    established: ['2014', year],
     boards: [['CBSE', 'ICSE'] as string[]],
     classesFrom: [1], classesTo: [12],
-    headName: ['Jordan Davis', Validators.required],
-    headTitle: ['Director', Validators.required],
-    headPhone: ['+91 98765 43210', Validators.required],
-    headEmail: ['jordan@northstar.edu', [Validators.required, Validators.email]],
+    headName: ['Jordan Davis', [req, AppValidators.personName, Validators.maxLength(60)]],
+    headTitle: ['Director', req],
+    headPhone: ['9876543210', [req, AppValidators.mobile]],
+    headEmail: ['jordan@northstar.edu', [req, AppValidators.email, Validators.maxLength(120)]],
     session: ['April – March'],
     feeCycle: ['Monthly'],
-    phone: ['+91 80 4567 8900', Validators.required],
-    email: ['hello@northstar.edu', [Validators.required, Validators.email]],
-    address: ['14, 100 Feet Road, Indiranagar', Validators.required],
-    city: ['Bengaluru', Validators.required], state: ['Karnataka', Validators.required], pincode: ['560038', Validators.required]
+    phone: ['080 4567 8900', [req, officePhone]],
+    email: ['hello@northstar.edu', [req, AppValidators.email, Validators.maxLength(120)]],
+    address: ['14, 100 Feet Road, Indiranagar', text(200)],
+    city: ['Bengaluru', [req, AppValidators.personName, Validators.maxLength(60)]], state: ['Karnataka', req], pincode: ['560038', [req, AppValidators.pincode]]
   });
 
-  readonly collegeForm = this.fb.nonNullable.group({
-    name: ['Greenfield College', Validators.required],
-    collegeCode: ['C-41872'],
-    university: ['Bangalore University', Validators.required],
-    approvals: [['UGC'] as string[]],
-    naac: ['A+'],
-    established: ['1998'],
-    headName: ['Dr. Kavita Menon', Validators.required],
-    headTitle: ['Principal', Validators.required],
-    headPhone: ['+91 98450 22110', Validators.required],
-    headEmail: ['principal@greenfield.edu', [Validators.required, Validators.email]],
-    academicYear: ['2026–27'],
-    system: ['Semester'],
-    minAttendance: [75, [Validators.min(0), Validators.max(100)]],
-    grading: ['10-point CGPA'],
-    phone: ['+91 80 2233 4455', Validators.required],
-    email: ['office@greenfield.edu', [Validators.required, Validators.email]],
-    address: ['Greenfield Campus, Jayanagar 4th Block', Validators.required],
-    city: ['Bengaluru', Validators.required], state: ['Karnataka', Validators.required], pincode: ['560011', Validators.required]
+  readonly schoolForm = this.fb.nonNullable.group({
+    name: ['Greenfield Public School', text(100)],
+    board: ['CBSE', req],
+    affiliationNo: ['830412', [Validators.maxLength(20), Validators.pattern(/^[A-Za-z0-9/-]{4,20}$/)]],
+    udise: ['29200812345', Validators.pattern(/^\d{11}$/)],
+    established: ['1998', year],
+    classesFrom: ['Nursery'], classesTo: ['Class 12'],
+    headName: ['Mrs. Kavita Menon', [req, AppValidators.personName, Validators.maxLength(60)]],
+    headPhone: ['9845022110', [req, AppValidators.mobile]],
+    headEmail: ['principal@greenfieldpublic.edu.in', [req, AppValidators.email, Validators.maxLength(120)]],
+    session: ['April – March'],
+    feeCycle: ['Term-wise'],
+    phone: ['080 2233 4455', [req, officePhone]],
+    email: ['office@greenfieldpublic.edu.in', [req, AppValidators.email, Validators.maxLength(120)]],
+    address: ['22, 9th Main Road, Jayanagar 4th Block', text(200)],
+    city: ['Bengaluru', [req, AppValidators.personName, Validators.maxLength(60)]], state: ['Karnataka', req], pincode: ['560011', [req, AppValidators.pincode]]
   });
 
-  constructor(private fb: FormBuilder, public tenant: TenantContextService) {}
+  constructor(private fb: FormBuilder, public tenant: TenantContextService, private toast: ToastService) {}
 
-  get isCollege(): boolean { return this.tenant.isCollege; }
-  get form() { return this.isCollege ? this.collegeForm : this.coachingForm; }
+  get isSchool(): boolean { return this.tenant.isSchool; }
+  get form() { return this.isSchool ? this.schoolForm : this.coachingForm; }
+  errorFor(name: string, label: string): string { return validationMessage((this.form as FormGroup).get(name), label); }
 
   save(): void {
     this.saved = false;
     this.form.markAllAsTouched();
-    if (this.form.invalid) return;
+    if (this.form.invalid) { this.toast.invalidForm(); return; }
+    if (!this.isSchool && this.coachingForm.controls.classesFrom.value > this.coachingForm.controls.classesTo.value) { this.toast.error('“Classes from” cannot be higher than “Classes to”.'); return; }
+    if (this.isSchool && SCHOOL_CLASSES.indexOf(this.schoolForm.controls.classesFrom.value) > SCHOOL_CLASSES.indexOf(this.schoolForm.controls.classesTo.value)) { this.toast.error('“Classes from” cannot be higher than “Classes to”.'); return; }
+    this.form.controls.headPhone.setValue(normalizeMobile(this.form.controls.headPhone.value));
     // UI-only: keep the edited name in the header and sidebar for this session.
-    this.tenant.current.businessName = this.form.controls.name.value;
+    this.tenant.current.businessName = this.form.controls.name.value.trim();
     this.saved = true;
+    this.toast.success(this.isSchool ? 'School profile saved.' : 'Institute profile saved.');
   }
 }

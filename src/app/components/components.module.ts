@@ -20,5 +20,7 @@ import { WebsiteCmsComponent } from '../client/website-cms.component';
 import { ShopDashboardComponent } from '../shop/shop-dashboard.component';
 import { ShopManagementComponent } from '../shop/shop-management.component';
 import { ShopBillingComponent } from '../shop/shop-billing.component';
-@NgModule({ declarations: [InstituteSettingsComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
+import { AccountSettingsComponent } from './account-settings/account-settings.component';
+import { ModulePageComponent } from '../client/modules/module-page.component';
+@NgModule({ declarations: [InstituteSettingsComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
 export class ComponentsModule {}
