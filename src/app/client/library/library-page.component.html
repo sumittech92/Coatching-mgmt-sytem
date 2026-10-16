@@ -1,0 +1,131 @@
+<div class="page-head">
+  <div>
+    <app-breadcrumbs [items]="[workspaceLabel, 'Library']"></app-breadcrumbs>
+    <h1>Library</h1>
+    <p>Keep the book catalogue, issue and return books, and handle requests from students.</p>
+  </div>
+  <div class="head-actions" *ngIf="canEdit">
+    <button mat-stroked-button (click)="editBook()"><mat-icon>add</mat-icon>Add book</button>
+    <button mat-flat-button color="primary" (click)="issueBook()"><mat-icon>outbox</mat-icon>Issue book</button>
+  </div>
+</div>
+
+<div class="summary-grid">
+  <app-stat-card label="Titles" [value]="library.books.length + ''" [change]="totalCopies + ' copies in all'" icon="local_library"></app-stat-card>
+  <app-stat-card label="On loan" [value]="onLoan + ''" [change]="(totalCopies - onLoan) + ' copies on the shelf'" icon="outbox"></app-stat-card>
+  <app-stat-card label="Overdue" [value]="overdue + ''" [change]="'Fine ₹' + finePerDay + ' per day late'" icon="warning_amber" (click)="showOverdue()" class="clickable"></app-stat-card>
+  <app-stat-card label="Fines due" [value]="'₹' + finesDue.toLocaleString('en-IN')" [change]="openRequests.length + ' book requests waiting'" icon="currency_rupee"></app-stat-card>
+</div>
+
+<mat-card class="library-card">
+  <mat-card-content>
+    <mat-tab-group [(selectedIndex)]="tab" animationDuration="0ms">
+      <mat-tab label="Books">
+        <div class="toolbar">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput [(ngModel)]="bookSearch" placeholder="Search title, author or ISBN" aria-label="Search books">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-select [(ngModel)]="categoryFilter" aria-label="Category">
+              <mat-option value="">All categories</mat-option>
+              <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <span class="result-count">{{ books.length }} of {{ library.books.length }}</span>
+        </div>
+        <div class="table-responsive" *ngIf="books.length">
+          <table class="table align-middle mb-0 lib-table">
+            <thead><tr><th>TITLE</th><th>CATEGORY</th><th>SHELF</th><th>COPIES</th><th>AVAILABLE</th><th class="actions-col"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let book of books">
+                <td class="main-cell"><strong>{{ book.title }}</strong><small>{{ book.author }}<ng-container *ngIf="book.isbn"> · ISBN {{ book.isbn }}</ng-container></small></td>
+                <td>{{ book.category }}</td>
+                <td>{{ book.shelf || '—' }}</td>
+                <td>{{ book.copies }}</td>
+                <td><app-status-badge [label]="library.available(book) ? library.available(book) + ' available' : 'All on loan'" [tone]="library.available(book) ? 'success' : 'warning'"></app-status-badge></td>
+                <td class="actions-col">
+                  <button mat-stroked-button class="row-link" *ngIf="canEdit && library.available(book)" (click)="issueBook(book)"><mat-icon>outbox</mat-icon>Issue</button>
+                  <button mat-icon-button *ngIf="canEdit" [matMenuTriggerFor]="bookMenu" [attr.aria-label]="'Actions for ' + book.title"><mat-icon>more_vert</mat-icon></button>
+                  <mat-menu #bookMenu="matMenu">
+                    <button mat-menu-item (click)="editBook(book)"><mat-icon>edit</mat-icon>Edit</button>
+                    <button mat-menu-item class="delete-action" (click)="deleteBook(book)"><mat-icon>delete_outline</mat-icon>Delete</button>
+                  </mat-menu>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <app-empty-state *ngIf="!books.length" icon="local_library" [title]="library.books.length ? 'No matches' : 'No books yet'" [description]="library.books.length ? 'Try a different search or category.' : (canEdit ? 'Use “Add book” to start your catalogue.' : 'Books will appear here once they are added.')"></app-empty-state>
+      </mat-tab>
+
+      <mat-tab label="Issued books">
+        <div class="toolbar">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput [(ngModel)]="loanSearch" placeholder="Search book, member or ID" aria-label="Search issued books">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-select [(ngModel)]="loanFilter" aria-label="Loan status">
+              <mat-option value="">All statuses</mat-option>
+              <mat-option value="Issued">Issued</mat-option>
+              <mat-option value="Overdue">Overdue</mat-option>
+              <mat-option value="Returned">Returned</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <span class="result-count">{{ loans.length }} of {{ library.issues.length }}</span>
+        </div>
+        <div class="table-responsive" *ngIf="loans.length">
+          <table class="table align-middle mb-0 lib-table">
+            <thead><tr><th>BOOK</th><th>ISSUED TO</th><th>ISSUED</th><th>DUE</th><th>RETURNED</th><th>FINE</th><th>STATUS</th><th class="actions-col"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let item of loans">
+                <td class="main-cell"><strong>{{ item.title }}</strong></td>
+                <td>{{ item.member }}<small>{{ item.memberId }} · {{ item.memberType }}</small></td>
+                <td>{{ item.issued }}</td>
+                <td [class.late]="library.status(item) === 'Overdue'">{{ item.due }}</td>
+                <td>{{ item.returned || '—' }}</td>
+                <td [class.late]="library.fineFor(item) && !item.returned">{{ library.fineFor(item) ? '₹' + library.fineFor(item) : '—' }}</td>
+                <td><app-status-badge [label]="library.status(item)" [tone]="tone(library.status(item))"></app-status-badge></td>
+                <td class="actions-col">
+                  <ng-container *ngIf="canEdit && !item.returned">
+                    <button mat-stroked-button class="row-link" (click)="returnBook(item)"><mat-icon>assignment_return</mat-icon>Return</button>
+                    <button mat-icon-button [matMenuTriggerFor]="loanMenu" [attr.aria-label]="'More actions for ' + item.title"><mat-icon>more_vert</mat-icon></button>
+                    <mat-menu #loanMenu="matMenu">
+                      <button mat-menu-item (click)="renew(item)"><mat-icon>update</mat-icon>Renew for {{ loanDays }} days</button>
+                    </mat-menu>
+                  </ng-container>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <app-empty-state *ngIf="!loans.length" icon="outbox" [title]="library.issues.length ? 'No matches' : 'No books issued yet'" [description]="library.issues.length ? 'Try a different search or status.' : 'Issued books will appear here.'"></app-empty-state>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>Requests <span class="tab-count" *ngIf="openRequests.length">{{ openRequests.length }}</span></ng-template>
+        <div class="table-responsive" *ngIf="library.requests.length">
+          <table class="table align-middle mb-0 lib-table">
+            <thead><tr><th>BOOK</th><th>REQUESTED BY</th><th>REQUESTED ON</th><th>STATUS</th><th class="actions-col"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let request of library.requests">
+                <td class="main-cell"><strong>{{ request.title }}</strong></td>
+                <td>{{ request.member }}<small>{{ request.memberId }}</small></td>
+                <td>{{ request.requested }}</td>
+                <td><app-status-badge [label]="request.status" [tone]="tone(request.status)"></app-status-badge></td>
+                <td class="actions-col">
+                  <ng-container *ngIf="canEdit && request.status === 'Requested'">
+                    <button mat-stroked-button class="row-link" (click)="issueBook(undefined, request)"><mat-icon>outbox</mat-icon>Issue</button>
+                    <button mat-button class="delete-action" (click)="decline(request)">Decline</button>
+                  </ng-container>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <app-empty-state *ngIf="!library.requests.length" icon="inbox" title="No requests" description="Students can request books from the Library page in their portal."></app-empty-state>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card-content>
+</mat-card>

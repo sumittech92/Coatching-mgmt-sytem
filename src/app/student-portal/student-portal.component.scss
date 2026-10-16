@@ -21,3 +21,24 @@
 .timetable-table th small{display:block;font-weight:400;letter-spacing:0;margin-top:2px}
 .timetable-table td{white-space:nowrap}
 .timetable-table td.break-cell{background:#f6f8fa;color:#a1abb5;font-style:italic}
+
+/* Fees: pay online + submissions; Library */
+.fee-title{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.pay-cta{height:39px;border-radius:8px;font-size:12px}
+.fee-overview-3{grid-template-columns:repeat(3,1fr)}
+.pay-panel{margin-bottom:14px;border-color:#cfdcfb}
+.pay-account{display:flex;align-items:center;gap:10px;background:#f2f6ff;border-radius:9px;padding:10px 12px;margin-bottom:14px;color:#4269d3}
+.pay-account strong,.pay-account small{display:block}
+.pay-account strong{font-size:12px;color:#344256}
+.pay-account small{font-size:12px;color:#6f7d90;margin-top:3px;overflow-wrap:anywhere}
+.pay-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px}
+.pay-label{display:block;font-size:12px;font-weight:650;color:#536176;margin-bottom:5px}
+.pay-file{width:100%;font-size:12px;padding:9px;border:1px dashed #cfd7df;border-radius:8px;background:#fff}
+.pay-error{grid-column:1/-1;display:flex;align-items:center;gap:6px;color:#b5443d;background:#fff1ef;border-radius:8px;padding:9px 11px;font-size:12px}
+.pay-error mat-icon{font-size:17px;width:17px;height:17px}
+.pay-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.fee-actions{white-space:nowrap;text-align:right}
+.fee-actions button[mat-stroked-button]{font-size:12px;height:32px;margin-right:4px}
+.lib-heading{align-items:center;flex-wrap:wrap}
+.lib-search{width:min(320px,100%);font-size:12px}
+@media(max-width:600px){.fee-overview-3{grid-template-columns:1fr}.pay-form{grid-template-columns:1fr}.pay-cta{width:100%}.pay-actions button{flex:1}}

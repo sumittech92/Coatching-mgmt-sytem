@@ -22,5 +22,7 @@ import { ShopManagementComponent } from '../shop/shop-management.component';
 import { ShopBillingComponent } from '../shop/shop-billing.component';
 import { AccountSettingsComponent } from './account-settings/account-settings.component';
 import { ModulePageComponent } from '../client/modules/module-page.component';
-@NgModule({ declarations: [InstituteSettingsComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
+import { LibraryPageComponent } from '../client/library/library-page.component';
+import { FeeReminderDialogComponent } from '../client/fee-reminder-dialog.component';
+@NgModule({ declarations: [InstituteSettingsComponent, LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
 export class ComponentsModule {}

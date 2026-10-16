@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { ApiRole } from '../../core/auth-api.service';
 import { PATTERNS, isMobile, normalizeMobile } from '../../core/app-validators';
 import { ToastService } from '../../core/toast.service';
+import { WebsiteContentService } from '../../core/website-content.service';
 
 const API_ROLES: Record<DemoRole, ApiRole> = { 'Super Admin': 'superAdmin', Owner: 'admin', Teacher: 'teacher', Student: 'student', Parent: 'parent' };
 
@@ -21,7 +22,9 @@ export class SignInComponent {
     { value: 'coaching', title: 'Coaching', hint: 'Classes, courses & batches', icon: 'auto_stories' },
     { value: 'school', title: 'School', hint: 'Classes, sections & subjects', icon: 'account_balance' }
   ];
-  readonly supportPhone = environment.supportPhone;
+  /** Support number for the chosen workspace: the owner edits it in Website settings. */
+  get supportPhone(): string { const contact = this.content.profileFor(this.businessType).contact; return contact['phone'] || environment.supportPhone; }
+  get supportTel(): string { return WebsiteContentService.telLink(this.supportPhone); }
   panel: DemoRole = 'Owner';
   /** Super Admin sign-in is deliberately hidden: 5 quick taps on the logo reveal it (see brandTap). */
   platformAccess = false;
@@ -34,7 +37,7 @@ export class SignInComponent {
   rememberMe = true;
   errorMessage = '';
 
-  constructor(private router: Router, private route: ActivatedRoute, private auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService) {}
+  constructor(private router: Router, private route: ActivatedRoute, private auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private content: WebsiteContentService) {}
 
   get identifierIcon(): string { return /^[\d\s]+$/.test(this.identifier.trim()) && this.identifier.trim() ? 'smartphone' : 'mail_outline'; }
 

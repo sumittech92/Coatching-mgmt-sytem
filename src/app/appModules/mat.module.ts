@@ -5,6 +5,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -32,6 +33,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 
-const material = [NgChartsModule, MatButtonModule, MatDividerModule, MatIconModule, MatTooltipModule, MatInputModule, MatSelectModule, MatToolbarModule, MatCardModule, MatFormFieldModule, MatMenuModule, MatGridListModule, MatBadgeModule, MatListModule, MatDialogModule, MatSidenavModule, MatExpansionModule, MatDatepickerModule, MatChipsModule, MatTabsModule, MatRippleModule, MatNativeDateModule, MatCheckboxModule, MatRadioModule, MatSlideToggleModule, MatTableModule, NgApexchartsModule, MatProgressBarModule, MatProgressSpinnerModule, MatPaginatorModule, MatSnackBarModule];
+const material = [NgChartsModule, MatButtonModule, MatButtonToggleModule, MatDividerModule, MatIconModule, MatTooltipModule, MatInputModule, MatSelectModule, MatToolbarModule, MatCardModule, MatFormFieldModule, MatMenuModule, MatGridListModule, MatBadgeModule, MatListModule, MatDialogModule, MatSidenavModule, MatExpansionModule, MatDatepickerModule, MatChipsModule, MatTabsModule, MatRippleModule, MatNativeDateModule, MatCheckboxModule, MatRadioModule, MatSlideToggleModule, MatTableModule, NgApexchartsModule, MatProgressBarModule, MatProgressSpinnerModule, MatPaginatorModule, MatSnackBarModule];
 @NgModule({ imports: [CommonModule, ...material], exports: [...material] })
 export class MatModule {}

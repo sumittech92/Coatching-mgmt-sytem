@@ -19,7 +19,7 @@ export class WorkspacePageComponent {
     return this.tenant.current.businessType === 'coaching' ? 'Good morning, Jordan' : 'Good morning, Jordan';
   }
   get subheading(): string {
-    if (location.pathname.startsWith('/super-admin')) return 'A clear view of every business on Ageon.';
+    if (location.pathname.startsWith('/super-admin')) return 'A clear view of every business on EduNexa.';
     if (location.pathname.startsWith('/student')) return 'Pick up where you left off and keep moving forward.';
     if (location.pathname.startsWith('/public')) return 'Share your business with the people who matter.';
     return 'Here’s what’s happening with your business today.';

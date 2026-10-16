@@ -14,6 +14,7 @@ const routes: Routes = [
   { path: 'fees', component: StudentPortalComponent, canActivate: portalAccess, data: portalRoles },
   { path: 'results', component: StudentPortalComponent, canActivate: portalAccess, data: portalRoles },
   { path: 'materials', component: StudentPortalComponent, canActivate: portalAccess, data: studentOnly },
+  { path: 'library', component: StudentPortalComponent, canActivate: portalAccess, data: studentOnly },
   { path: 'notices', component: StudentPortalComponent, canActivate: portalAccess, data: portalRoles },
   // Parent menu only: school / institute updates feed.
   { path: 'updates', component: StudentPortalComponent, canActivate: portalAccess, data: { roles: ['Parent'] } },

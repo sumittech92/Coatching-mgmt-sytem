@@ -18,6 +18,7 @@ import { ShopBillingComponent } from '../shop/shop-billing.component';
 import { RoleAccessGuard } from '../core/role-access.guard';
 import { AccountSettingsComponent } from './account-settings/account-settings.component';
 import { ModulePageComponent } from '../client/modules/module-page.component';
+import { LibraryPageComponent } from '../client/library/library-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -54,6 +55,7 @@ const routes: Routes = [
   { path: 'client/batches/:id', component: ClientManagementComponent },
   { path: 'client/batches', component: ClientManagementComponent },
   { path: 'client/attendance', component: AttendancePageComponent },
+  { path: 'client/library', component: LibraryPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
   { path: 'client/fees/collect', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/fees/:studentId', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/fees', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },

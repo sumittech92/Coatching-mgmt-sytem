@@ -2,7 +2,7 @@ import { AfterViewInit, Component, QueryList, ViewChildren } from "@angular/core
 import { NgForm, NgModel, ValidatorFn, Validators } from "@angular/forms";
 import { NavigationEnd, Router, ActivatedRoute } from "@angular/router";
 import { filter } from "rxjs/operators";
-import { WebsiteContentService } from "../core/website-content.service";
+import { DEFAULT_CONTACT_NUMBER, WebsiteContentService } from "../core/website-content.service";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 import { TenantContextService } from "../core/tenant-context.service";
 import { AppValidators, normalizeMobile, validationMessage } from "../core/app-validators";
@@ -74,11 +74,11 @@ export class PublicSiteComponent implements AfterViewInit {
   }
   /** Direct-call link for the institute's contact number. */
   get callLink(): string {
-    return "tel:" + (this.profile.contact["phone"] || "").replace(/[^\d+]/g, "");
+    return WebsiteContentService.telLink(this.profile.contact["phone"] || DEFAULT_CONTACT_NUMBER);
   }
   /** wa.me needs the country code, which is no longer shown in the number itself. */
   get whatsappLink(): string {
-    return "https://wa.me/91" + (this.profile.contact["whatsapp"] || "").replace(/\D/g, "").slice(-10);
+    return WebsiteContentService.whatsappLink(this.profile.contact["whatsapp"] || this.profile.contact["phone"] || DEFAULT_CONTACT_NUMBER);
   }
   go(section: string): void {
     const path = section === "home" ? `/site/${this.slug}` : `/site/${this.slug}/${section}`;

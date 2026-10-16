@@ -1,6 +1,6 @@
 <div class="portal-shell">
     <aside class="portal-sidebar" [class.mobile-open]="menuOpen"><a class="portal-brand"
-            routerLink="/student/dashboard"><span>a</span> ageon</a>
+            routerLink="/student/dashboard"><span>E</span> EduNexa</a>
         <div class="student-card"><img
                 [src]="isParent ? 'assets/images/avatars/avatar-4.png' : 'assets/images/avatars/avatar-3.png'"
                 [alt]="displayName"><span><strong>{{displayName}}</strong><small>{{isParent ? 'Parent of ' +
@@ -11,7 +11,7 @@
                 [routerLinkActiveOptions]="{exact:true}"><mat-icon>{{item.icon}}</mat-icon>{{item.label}}<span
                     *ngIf="item.key==='notices'" class="nav-count">2</span></a></nav>
         <div class="portal-help"><mat-icon>support_agent</mat-icon><strong>Need help?</strong><small>Contact your
-                institute</small><a href="tel:08045678900">Call the office <mat-icon>arrow_forward</mat-icon></a>
+                institute</small><a [href]="officeTel">Call the office · {{officePhone}} <mat-icon>arrow_forward</mat-icon></a><a [href]="officeWhatsapp" target="_blank" rel="noopener">WhatsApp us <mat-icon>arrow_forward</mat-icon></a>
         </div><button class="portal-logout" type="button" (click)="logout()"><mat-icon>logout</mat-icon>Log out</button>
     </aside>
     <div class="portal-main">
@@ -205,13 +205,61 @@
                 </div>
             </section>
             <section *ngSwitchCase="'fees'">
-                <div class="page-title"><span>MY LEARNING</span>
+                <div class="page-title fee-title"><div><span>MY LEARNING</span>
                     <h1>Fees & receipts</h1>
-                    <p>View payments, outstanding balances and receipts.</p>
+                    <p>View payments, pay outstanding fees and download receipts.</p></div>
+                    <button mat-flat-button color="primary" class="pay-cta" *ngIf="payablePeriods.length && !payOpen" (click)="openPayment()"><mat-icon>payments</mat-icon>Pay fees</button>
                 </div>
-                <div class="fee-overview"><mat-card><mat-card-content><small>TOTAL PAID</small><strong>₹{{paidTotal |
+                <div class="fee-overview fee-overview-3"><mat-card><mat-card-content><small>TOTAL PAID</small><strong>₹{{paidTotal |
                                 number}}</strong><span>{{isSchool ? 'Academic year 2026–27' : 'July – September 2026'}}</span></mat-card-content></mat-card><mat-card><mat-card-content><small>AMOUNT
-                                DUE</small><strong class="due-value">₹{{feeDue | number}}</strong><span>{{isSchool ? 'Term 2 balance' : 'September 2026'}} · Due Oct 5</span></mat-card-content></mat-card></div>
+                                DUE</small><strong class="due-value">₹{{feeDue | number}}</strong><span>{{feeDue ? (isSchool ? 'Term 2 balance' : 'September 2026') + ' · Due Oct 5' : 'Nothing due'}}</span></mat-card-content></mat-card><mat-card><mat-card-content><small>AWAITING VERIFICATION</small><strong>₹{{pendingTotal | number}}</strong><span>{{pendingTotal ? 'The office will confirm soon' : 'No payments waiting'}}</span></mat-card-content></mat-card></div>
+
+                <div class="portal-panel pay-panel" *ngIf="payOpen">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>Submit a fee payment</h2>
+                            <p>Pay by UPI, card or bank transfer, then enter the transaction details here. The office checks the payment and issues your receipt.</p>
+                        </div>
+                        <button mat-icon-button (click)="payOpen = false" aria-label="Close payment form"><mat-icon>close</mat-icon></button>
+                    </div>
+                    <div class="pay-account">
+                        <mat-icon>account_balance</mat-icon>
+                        <div><strong>Pay to {{instituteName}}</strong><small>UPI: fees&#64;{{isSchool ? 'greenfieldschool' : 'nsacademy'}} · A/c 50200012345678 · IFSC HDFC0001234</small></div>
+                    </div>
+                    <form class="pay-form" (ngSubmit)="submitPayment()" novalidate>
+                        <div>
+                            <label class="pay-label" for="pay-period">{{isSchool ? 'Term' : 'Fee month'}} *</label>
+                            <mat-form-field appearance="outline" class="w-100"><mat-select id="pay-period" name="period" [(ngModel)]="pay.period" (selectionChange)="onPeriodChange()"><mat-option *ngFor="let fee of payablePeriods" [value]="fee.month">{{fee.month}} · ₹{{payableFor(fee) | number}} due</mat-option></mat-select></mat-form-field>
+                        </div>
+                        <div>
+                            <label class="pay-label" for="pay-amount">Amount (₹) *</label>
+                            <mat-form-field appearance="outline" class="w-100"><input matInput id="pay-amount" name="amount" type="number" min="1" [max]="selectedPayable" [(ngModel)]="pay.amount" placeholder="e.g. 2000"><mat-hint>Up to ₹{{selectedPayable | number}}</mat-hint></mat-form-field>
+                        </div>
+                        <div>
+                            <label class="pay-label" for="pay-mode">Payment method *</label>
+                            <mat-form-field appearance="outline" class="w-100"><mat-select id="pay-mode" name="mode" [(ngModel)]="pay.mode"><mat-option *ngFor="let mode of payModes" [value]="mode">{{mode}}</mat-option></mat-select></mat-form-field>
+                        </div>
+                        <div>
+                            <label class="pay-label" for="pay-ref">{{pay.mode === 'Cash at office' ? 'Office receipt no. (optional)' : 'Transaction / UTR no. *'}}</label>
+                            <mat-form-field appearance="outline" class="w-100"><input matInput id="pay-ref" name="reference" maxlength="30" [(ngModel)]="pay.reference" [placeholder]="pay.mode === 'UPI' ? 'e.g. 428915736201' : 'e.g. HDFC2610150042'"></mat-form-field>
+                        </div>
+                        <div>
+                            <label class="pay-label" for="pay-proof">Payment screenshot / receipt (optional)</label>
+                            <input id="pay-proof" class="pay-file" type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onProofFile($event)">
+                            <small class="cell-note">PDF, JPG or PNG · up to 5 MB</small>
+                        </div>
+                        <div>
+                            <label class="pay-label" for="pay-note">Note for the office (optional)</label>
+                            <mat-form-field appearance="outline" class="w-100"><input matInput id="pay-note" name="note" maxlength="200" [(ngModel)]="pay.note" placeholder="Anything the office should know"></mat-form-field>
+                        </div>
+                        <div class="pay-error" *ngIf="payError" role="alert"><mat-icon>error_outline</mat-icon>{{payError}}</div>
+                        <div class="pay-actions">
+                            <button mat-button type="button" (click)="payOpen = false">Cancel</button>
+                            <button mat-flat-button color="primary" type="submit"><mat-icon>send</mat-icon>Submit payment</button>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="portal-panel portal-table">
                     <div class="panel-heading">
                         <div>
@@ -238,19 +286,92 @@
                                     <td>{{fee.month}}</td>
                                     <td>₹{{fee.amount | number}}</td>
                                     <td>₹{{fee.paid | number}}</td>
-                                    <td [class.due-value]="fee.due">₹{{fee.due | number}}</td>
+                                    <td [class.due-value]="fee.due">₹{{fee.due | number}}<small class="cell-note" *ngIf="pendingFor(fee.month)">₹{{pendingFor(fee.month) | number}} awaiting verification</small></td>
                                     <td>{{fee.date}}</td>
                                     <td>{{fee.mode}}</td>
                                     <td><app-status-badge [label]="fee.status"
                                             [tone]="fee.status==='Paid'?'success':fee.status==='Partial'?'warning':'neutral'"></app-status-badge>
                                     </td>
-                                    <td><button mat-icon-button *ngIf="fee.paid"
+                                    <td class="fee-actions"><button mat-stroked-button *ngIf="payableFor(fee) > 0" (click)="openPayment(fee)">Pay now</button><button mat-icon-button *ngIf="fee.paid"
                                             (click)="printReceipt(fee.month,fee.paid)"
                                             aria-label="Print receipt"><mat-icon>receipt_long</mat-icon></button></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                <div class="portal-panel portal-table section-gap" *ngIf="submissions.length">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>My payment submissions</h2>
+                            <p>Payments you sent to the office for verification.</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead><tr><th>SUBMITTED</th><th>{{isSchool ? 'TERM' : 'MONTH'}}</th><th>AMOUNT</th><th>METHOD</th><th>REFERENCE</th><th>STATUS</th></tr></thead>
+                            <tbody>
+                                <tr *ngFor="let item of submissions">
+                                    <td>{{item.submittedOn}}<small class="cell-note">by {{item.submittedBy}}</small></td>
+                                    <td>{{item.period}}</td>
+                                    <td>₹{{item.amount | number}}</td>
+                                    <td>{{item.mode}}</td>
+                                    <td>{{item.reference || '—'}}<small class="cell-note" *ngIf="item.proof">{{item.proof}}</small></td>
+                                    <td><app-status-badge [label]="item.status" [tone]="submissionTone(item.status)"></app-status-badge><small class="cell-note" *ngIf="item.reviewNote">{{item.reviewNote}}</small></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <section *ngSwitchCase="'library'">
+                <div class="page-title"><span>MY LEARNING</span>
+                    <h1>Library</h1>
+                    <p>Books you have borrowed, and the library catalogue. Keep a book for {{loanDays}} days; the late fine is ₹{{finePerDay}} per day.</p>
+                </div>
+                <div class="fee-overview fee-overview-3"><mat-card><mat-card-content><small>BOOKS WITH ME</small><strong>{{myLoans.length}}</strong><span>{{myReturned.length}} returned earlier</span></mat-card-content></mat-card><mat-card><mat-card-content><small>LATE FINE</small><strong [class.due-value]="libraryFine">₹{{libraryFine | number}}</strong><span>{{libraryFine ? 'Pay at the library desk' : 'No fine'}}</span></mat-card-content></mat-card><mat-card><mat-card-content><small>MY REQUESTS</small><strong>{{myRequests.length}}</strong><span>Collect issued books from the library</span></mat-card-content></mat-card></div>
+                <div class="portal-panel portal-table">
+                    <div class="panel-heading"><div><h2>Books with me</h2><p>Return or renew at the library desk before the due date.</p></div></div>
+                    <div class="table-responsive" *ngIf="myLoans.length">
+                        <table class="table align-middle">
+                            <thead><tr><th>BOOK</th><th>ISSUED</th><th>DUE</th><th>FINE</th><th>STATUS</th></tr></thead>
+                            <tbody>
+                                <tr *ngFor="let item of myLoans">
+                                    <td>{{item.title}}</td>
+                                    <td>{{item.issued}}</td>
+                                    <td [class.due-value]="library.status(item) === 'Overdue'">{{item.due}}</td>
+                                    <td [class.due-value]="library.fineFor(item)">{{library.fineFor(item) ? '₹' + library.fineFor(item) : '—'}}</td>
+                                    <td><app-status-badge [label]="library.status(item)" [tone]="library.status(item) === 'Overdue' ? 'danger' : 'info'"></app-status-badge></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <app-empty-state *ngIf="!myLoans.length" icon="menu_book" title="No books with you" description="Request a book from the catalogue below."></app-empty-state>
+                </div>
+                <div class="portal-panel portal-table section-gap">
+                    <div class="panel-heading lib-heading"><div><h2>Library catalogue</h2><p>{{library.books.length}} titles</p></div>
+                        <mat-form-field appearance="outline" class="lib-search"><mat-icon matPrefix>search</mat-icon><input matInput [(ngModel)]="librarySearch" placeholder="Search title, author or subject" aria-label="Search library catalogue"></mat-form-field>
+                    </div>
+                    <div class="table-responsive" *ngIf="catalogue.length">
+                        <table class="table align-middle">
+                            <thead><tr><th>BOOK</th><th>CATEGORY</th><th>SHELF</th><th>AVAILABLE</th><th></th></tr></thead>
+                            <tbody>
+                                <tr *ngFor="let book of catalogue">
+                                    <td>{{book.title}}<small class="cell-note">{{book.author}}</small></td>
+                                    <td>{{book.category}}</td>
+                                    <td>{{book.shelf || '—'}}</td>
+                                    <td><app-status-badge [label]="library.available(book) ? library.available(book) + ' of ' + book.copies : 'All on loan'" [tone]="library.available(book) ? 'success' : 'warning'"></app-status-badge></td>
+                                    <td class="fee-actions">
+                                        <span class="cell-note" *ngIf="hasBook(book)">With you</span>
+                                        <span class="cell-note" *ngIf="!hasBook(book) && requested(book)">Requested</span>
+                                        <button mat-stroked-button *ngIf="!hasBook(book) && !requested(book)" (click)="requestBook(book)">Request</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <app-empty-state *ngIf="!catalogue.length" icon="search_off" title="No books found" description="Try a different search."></app-empty-state>
                 </div>
             </section>
             <section *ngSwitchCase="'results'">
@@ -696,7 +817,7 @@
             </section>
         </main>
         <footer class="portal-footer">{{instituteName}} · {{isParent ? 'Family portal' : isSchool ? 'School student
-            portal' : 'Student portal'}} <span>Need help? <a href="tel:08045678900">Call the office</a></span></footer>
+            portal' : 'Student portal'}} <span>Need help? <a [href]="officeTel">Call the office ({{officePhone}})</a></span></footer>
     </div>
     <div class="portal-scrim" [class.visible]="menuOpen" (click)="menuOpen=false"></div>
 </div>

@@ -4,6 +4,7 @@ import { TenantContextService } from '../core/tenant-context.service';
 import { COACHING_BOARDS, SCHOOL_CLASSES } from '../core/workspace-terms';
 import { AppValidators, normalizeMobile, validationMessage } from '../core/app-validators';
 import { ToastService } from '../core/toast.service';
+import { WebsiteContentService } from '../core/website-content.service';
 
 const THIS_YEAR = new Date().getFullYear();
 const req = AppValidators.required;
@@ -35,7 +36,7 @@ export class InstituteSettingsComponent {
     headEmail: ['jordan@northstar.edu', [req, AppValidators.email, Validators.maxLength(120)]],
     session: ['April – March'],
     feeCycle: ['Monthly'],
-    phone: ['080 4567 8900', [req, officePhone]],
+    phone: [this.content.profileFor('coaching').contact['phone'], [req, officePhone]],
     email: ['hello@northstar.edu', [req, AppValidators.email, Validators.maxLength(120)]],
     address: ['14, 100 Feet Road, Indiranagar', text(200)],
     city: ['Bengaluru', [req, AppValidators.personName, Validators.maxLength(60)]], state: ['Karnataka', req], pincode: ['560038', [req, AppValidators.pincode]]
@@ -53,13 +54,13 @@ export class InstituteSettingsComponent {
     headEmail: ['principal@greenfieldpublic.edu.in', [req, AppValidators.email, Validators.maxLength(120)]],
     session: ['April – March'],
     feeCycle: ['Term-wise'],
-    phone: ['080 2233 4455', [req, officePhone]],
+    phone: [this.content.profileFor('school').contact['phone'], [req, officePhone]],
     email: ['office@greenfieldpublic.edu.in', [req, AppValidators.email, Validators.maxLength(120)]],
     address: ['22, 9th Main Road, Jayanagar 4th Block', text(200)],
     city: ['Bengaluru', [req, AppValidators.personName, Validators.maxLength(60)]], state: ['Karnataka', req], pincode: ['560011', [req, AppValidators.pincode]]
   });
 
-  constructor(private fb: FormBuilder, public tenant: TenantContextService, private toast: ToastService) {}
+  constructor(private fb: FormBuilder, public tenant: TenantContextService, private toast: ToastService, private content: WebsiteContentService) {}
 
   get isSchool(): boolean { return this.tenant.isSchool; }
   get form() { return this.isSchool ? this.schoolForm : this.coachingForm; }
@@ -74,6 +75,8 @@ export class InstituteSettingsComponent {
     this.form.controls.headPhone.setValue(normalizeMobile(this.form.controls.headPhone.value));
     // UI-only: keep the edited name in the header and sidebar for this session.
     this.tenant.current.businessName = this.form.controls.name.value.trim();
+    // Office phone is the number used for Call / WhatsApp / support links across the website and portals.
+    this.content.setPhone(this.form.controls.phone.value.trim());
     this.saved = true;
     this.toast.success(this.isSchool ? 'School profile saved.' : 'Institute profile saved.');
   }

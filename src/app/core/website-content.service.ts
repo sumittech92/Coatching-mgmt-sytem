@@ -12,14 +12,28 @@ export interface WebsiteProfile {
   gallery: Record<string, string>[];
   updates: Record<string, string>[];
 }
+/** Default call / WhatsApp / support number. Owners change it in Website → Website Settings or Contact (and Institute settings). */
+export const DEFAULT_CONTACT_NUMBER = '6392909743';
+const STORAGE_KEY = 'demo-website-contact';
+type SavedContact = Record<string, { settings: Record<string, string>; contact: Record<string, string>; social: Record<string, string> }>;
+
 @Injectable({ providedIn: 'root' })
 export class WebsiteContentService {
-  constructor(private tenant: TenantContextService) {}
+  constructor(private tenant: TenantContextService) {
+    // Owner edits to contact details survive a reload (no backend for the website yet).
+    try {
+      const saved: SavedContact = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      ([['coaching', this.coachingProfile], ['school', this.schoolProfile]] as const).forEach(([key, profile]) => {
+        if (!saved[key]) return;
+        Object.assign(profile.settings, saved[key].settings); Object.assign(profile.contact, saved[key].contact); Object.assign(profile.social, saved[key].social);
+      });
+    } catch { /* storage unavailable: use defaults */ }
+  }
   private readonly coachingProfile: WebsiteProfile = {
-    settings: { name: 'Northstar Academy', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: '0522 4567 8900', email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', whatsapp: '98765 43210' },
+    settings: { name: 'Northstar Academy', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: DEFAULT_CONTACT_NUMBER, email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', whatsapp: DEFAULT_CONTACT_NUMBER },
     home: { title: 'Learn well. Do well.', subtitle: 'Classes, kind teachers and help for your child.', image: 'assets/images/coaching/classroom-india.jpg', ctaText: 'See classes', ctaLink: '/courses' },
     about: { description: 'We teach in clear steps. Our teachers help every child learn.', mission: 'Help every child learn well.', vision: 'Help children learn and reach their goals.', experience: 'We have taught for 12 years', statistics: '1,200 students · 24 teachers · 96% happy families' },
-    contact: { phone: '0522 4567 8900', email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', map: 'https://maps.example.com/northstar', whatsapp: '98765 43210' },
+    contact: { phone: DEFAULT_CONTACT_NUMBER, email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', map: 'https://maps.example.com/northstar', whatsapp: DEFAULT_CONTACT_NUMBER },
     social: { instagram: 'https://instagram.com/northstaracademy', facebook: 'https://facebook.com/northstaracademy', youtube: '', linkedin: '' },
     courses: [
       { name: 'Class 12 Science', description: 'Get ready for your board exams with help from our teachers.', duration: '12 months', fee: '₹4,500 / month', subjects: 'Physics, Chemistry, Mathematics', status: 'Published' },
@@ -47,10 +61,10 @@ export class WebsiteContentService {
     ]
   };
   private readonly schoolProfile: WebsiteProfile = {
-    settings: { name: 'Greenfield Public School', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: '080 4567 8900', email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', whatsapp: '98765 43210' },
+    settings: { name: 'Greenfield Public School', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: DEFAULT_CONTACT_NUMBER, email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', whatsapp: DEFAULT_CONTACT_NUMBER },
     home: { title: 'Rooted in values. Ready for tomorrow.', subtitle: 'A CBSE-affiliated school from Nursery to Class 12, where caring teachers help every child learn, play and grow.', image: 'assets/images/coaching/students-india.jpg', ctaText: 'See classes offered', ctaLink: '/courses' },
     about: { description: 'Greenfield Public School is a co-educational CBSE school in Bengaluru. We combine strong academics with sports, arts and values, so every child grows with confidence.', mission: 'Give every child a safe, joyful place to learn and discover their strengths.', vision: 'Nurture confident, kind and curious young citizens ready for the world.', experience: 'Serving families in Bengaluru since 1998', statistics: '2,486 students · 148 teachers · Nursery to Class 12 · 100% Class 10 & 12 board pass rate' },
-    contact: { phone: '080 4567 8900', email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', map: 'https://maps.example.com/greenfield', whatsapp: '98765 43210' },
+    contact: { phone: DEFAULT_CONTACT_NUMBER, email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', map: 'https://maps.example.com/greenfield', whatsapp: DEFAULT_CONTACT_NUMBER },
     social: { instagram: 'https://instagram.com/greenfieldschool', facebook: 'https://facebook.com/greenfieldschool', youtube: 'https://youtube.com/@greenfieldschool', linkedin: '' },
     courses: [
       { name: 'Pre-primary (Nursery – UKG)', description: 'Play-based learning that builds language, numbers and social skills in a warm, safe setting.', duration: 'Nursery, LKG, UKG', fee: '₹14,500 / term', subjects: 'Phonics, Numbers, Rhymes, Art & Craft, Play', status: 'Published' },
@@ -80,5 +94,22 @@ export class WebsiteContentService {
     ]
   };
   get profile(): WebsiteProfile { return this.tenant.current.businessType === 'school' ? this.schoolProfile : this.coachingProfile; }
+  profileFor(type: string): WebsiteProfile { return type === 'school' ? this.schoolProfile : this.coachingProfile; }
+  /** Number for "Call us" / "Call the office" / support links. */
+  get phone(): string { return this.profile.contact['phone'] || this.profile.settings['phone'] || DEFAULT_CONTACT_NUMBER; }
+  get whatsapp(): string { return this.profile.contact['whatsapp'] || this.profile.settings['whatsapp'] || this.phone; }
+  static telLink(phone: string): string { const digits = phone.replace(/[^\d+]/g, ''); return 'tel:' + (/^[6-9]\d{9}$/.test(digits) ? '+91' + digits : digits); }
+  static whatsappLink(phone: string): string { return 'https://wa.me/91' + phone.replace(/\D/g, '').slice(-10); }
+  /** Keeps the office phone the same everywhere (Institute settings writes here too). */
+  setPhone(phone: string): void { this.profile.settings['phone'] = phone; this.profile.contact['phone'] = phone; this.persist(); }
+  /** Saves contact details, settings (except unsaved blob images) and social links for the current workspace. */
+  persist(): void {
+    try {
+      const saved: SavedContact = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const settings = Object.fromEntries(Object.entries(this.profile.settings).filter(([, value]) => !String(value).startsWith('blob:')));
+      saved[this.tenant.current.businessType] = { settings, contact: { ...this.profile.contact }, social: { ...this.profile.social } };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    } catch { /* storage unavailable: keep in memory */ }
+  }
   get publicProfile(): WebsiteProfile { return this.profile; }
 }

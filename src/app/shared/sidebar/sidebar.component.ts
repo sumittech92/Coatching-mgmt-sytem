@@ -32,20 +32,20 @@ export class SidebarComponent {
       link('My Dashboard', 'space_dashboard', '/client/dashboard', 'CLASSROOM'), link('My Classes', 'class', '/client/my-classes', 'CLASSROOM'), link('My Subjects', 'menu_book', '/client/my-subjects', 'CLASSROOM'), link("Today's Timetable", 'today', '/client/today', 'CLASSROOM'),
       link('Students', 'groups', '/client/students', 'TEACHING'), link('Attendance', 'event_available', '/client/attendance', 'TEACHING'), link('Homework', 'edit_note', '/client/homework', 'TEACHING'), link('Assignments', 'assignment', '/client/assignments', 'TEACHING'),
       link('Exams', 'quiz', '/client/exams', 'ASSESSMENT'), link('Marks Entry', 'edit_square', '/client/marks', 'ASSESSMENT'), link('Results', 'emoji_events', '/client/results', 'ASSESSMENT'),
-      link('Study Material', 'folder_open', '/client/materials', 'RESOURCES'), link('Notices', 'campaign', '/client/notices', 'RESOURCES'), link('Profile', 'account_circle', '/account/profile', 'ACCOUNT')
+      link('Study Material', 'folder_open', '/client/materials', 'RESOURCES'), link('Library', 'local_library', '/client/library', 'RESOURCES'), link('Notices', 'campaign', '/client/notices', 'RESOURCES'), link('Profile', 'account_circle', '/account/profile', 'ACCOUNT')
     ]);
     if (this.auth.role === 'Teacher') return this.stableNavigation('coaching-teacher', [
       link('My Dashboard', 'space_dashboard', '/client/dashboard', 'TEACHING'), link('My Batches', 'view_module', '/client/my-batches', 'TEACHING'), link("Today's Classes", 'today', '/client/today', 'TEACHING'),
       link('Students', 'groups', '/client/students', 'STUDENTS'), link('Attendance', 'event_available', '/client/attendance', 'STUDENTS'), link('Assignments', 'assignment', '/client/assignments', 'STUDENTS'),
       link('Tests', 'quiz', '/client/tests', 'ASSESSMENT'), link('Results / Marks', 'emoji_events', '/client/results', 'ASSESSMENT'),
-      link('Study Material', 'folder_open', '/client/materials', 'RESOURCES'), link('Notices', 'campaign', '/client/notices', 'RESOURCES'), link('My Profile', 'account_circle', '/account/profile', 'ACCOUNT')
+      link('Study Material', 'folder_open', '/client/materials', 'RESOURCES'), link('Library', 'local_library', '/client/library', 'RESOURCES'), link('Notices', 'campaign', '/client/notices', 'RESOURCES'), link('My Profile', 'account_circle', '/account/profile', 'ACCOUNT')
     ]);
     if (school) return this.stableNavigation('school-owner', [
       link('Dashboard', 'space_dashboard', '/client/dashboard', 'SCHOOL'),
       link('Academic Sessions', 'event_note', '/client/sessions', 'ACADEMICS'), link('Classes', 'class', '/client/classes', 'ACADEMICS'), link('Sections', 'view_week', '/client/sections', 'ACADEMICS'), link('Subjects', 'menu_book', '/client/subjects', 'ACADEMICS'),
       link('Students', 'groups', '/client/students', 'PEOPLE'), link('Admissions', 'person_add_alt', '/client/admissions', 'PEOPLE'), link('Teachers & Staff', 'school', '/client/teachers', 'PEOPLE'),
       link('Attendance', 'event_available', '/client/attendance', 'DAILY'), link('Fees', 'payments', '/client/fees', 'DAILY'),
-      link('Exams', 'quiz', '/client/exams', 'ASSESSMENT'), link('Results', 'emoji_events', '/client/results', 'ASSESSMENT'), link('Timetable', 'calendar_month', '/client/timetable', 'ASSESSMENT'),
+      link('Exams', 'quiz', '/client/exams', 'ASSESSMENT'), link('Results', 'emoji_events', '/client/results', 'ASSESSMENT'), link('Timetable', 'calendar_month', '/client/timetable', 'ASSESSMENT'), link('Library', 'local_library', '/client/library', 'ASSESSMENT'),
       link('Notices', 'campaign', '/client/notices', 'COMMUNICATION'), link('Events', 'celebration', '/client/events', 'COMMUNICATION'), link('Gallery', 'photo_library', '/client/gallery', 'COMMUNICATION'),
       link('Reports', 'bar_chart', '/client/reports', 'SETTINGS'), link('Website', 'language', '/client/website', 'SETTINGS'), link('Settings', 'settings', '/client/settings', 'SETTINGS'), link('My profile', 'account_circle', '/account/profile', 'SETTINGS')
     ]);
@@ -54,7 +54,7 @@ export class SidebarComponent {
       link('Students', 'groups', '/client/students', 'PEOPLE'), link('Teachers', 'school', '/client/teachers', 'PEOPLE'), link('Admissions / Enquiries', 'person_add_alt', '/client/admissions', 'PEOPLE'),
       link('Courses', 'menu_book', '/client/courses', 'ACADEMICS'), link('Batches', 'view_module', '/client/batches', 'ACADEMICS'), link('Attendance', 'event_available', '/client/attendance', 'ACADEMICS'),
       link('Fees', 'payments', '/client/fees', 'FINANCE'),
-      link('Tests', 'quiz', '/client/tests', 'ASSESSMENT'), link('Results', 'emoji_events', '/client/results', 'ASSESSMENT'), link('Study Materials', 'folder_open', '/client/materials', 'ASSESSMENT'),
+      link('Tests', 'quiz', '/client/tests', 'ASSESSMENT'), link('Results', 'emoji_events', '/client/results', 'ASSESSMENT'), link('Study Materials', 'folder_open', '/client/materials', 'ASSESSMENT'), link('Library', 'local_library', '/client/library', 'ASSESSMENT'),
       link('Notices', 'campaign', '/client/notices', 'COMMUNICATION'), link('Gallery', 'photo_library', '/client/gallery', 'COMMUNICATION'),
       link('Reports', 'bar_chart', '/client/reports', 'SETTINGS'), link('Website', 'language', '/client/website', 'SETTINGS'), link('Settings', 'settings', '/client/settings', 'SETTINGS'), link('My profile', 'account_circle', '/account/profile', 'SETTINGS')
     ]);

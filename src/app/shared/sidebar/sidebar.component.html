@@ -1,6 +1,6 @@
 <aside class="sidebar-wrapper" [class.mini-sidebar]="getSideBarSate()">
-  <a class="brand" routerLink="/" aria-label="Ageon home"
-    ><span class="brand-mark">a</span><span class="brand-name">ageon<span class="brand-dot">.</span></span></a
+  <a class="brand" routerLink="/" aria-label="EduNexa home"
+    ><span class="brand-mark">E</span><span class="brand-name">EduNexa<span class="brand-dot">.</span></span></a
   >
   <div class="tenant-switcher">
     <div class="tenant-mark">
@@ -16,7 +16,7 @@
       <small>WORKSPACE</small
       ><strong>{{
         currentPath.startsWith("/super-admin")
-          ? "Ageon Platform"
+          ? "EduNexa Platform"
           : currentPath.startsWith("/shop")
             ? "Atelier & Co."
             : tenant.current.businessName
