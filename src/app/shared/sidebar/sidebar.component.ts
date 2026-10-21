@@ -6,15 +6,18 @@ import { TenantContextService } from '../../core/tenant-context.service';
 import { MockAuthService } from '../../core/mock-auth.service';
 import { SignOutService } from '../../core/sign-out.service';
 
+import { WebsiteContentService } from '../../core/website-content.service';
 @Component({ selector: 'app-sidebar', templateUrl: './sidebar.component.html', styleUrls: ['./sidebar.component.scss'] })
 export class SidebarComponent {
   currentPath = '';
   private readonly navigationCache = new Map<string, { label: string; icon: string; route: string; section: string }[]>();
-  constructor(public sidebarservice: SidebarService, public tenant: TenantContextService, public auth: MockAuthService, private router: Router, private signOutFlow: SignOutService) {
+  constructor(public sidebarservice: SidebarService, public tenant: TenantContextService, public auth: MockAuthService, private router: Router, private signOutFlow: SignOutService, public content: WebsiteContentService) {
     this.currentPath = router.url;
     router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => { this.currentPath = event.urlAfterRedirects; this.sidebarservice.setSidebarState(false); });
   }
   logout(): void { this.signOutFlow.signOut(); }
+  /** Owner/Teacher workspaces show the logo the owner uploaded; Super Admin and the shop keep the EduNexa brand. */
+  get workspaceLogo(): string | null { return this.currentPath.startsWith('/super-admin') || this.currentPath.startsWith('/shop') ? null : this.content.customLogo; }
   getSideBarSate(): boolean { return this.sidebarservice.getSidebarState(); }
   get navigation(): { label: string; icon: string; route: string; section: string }[] {
     if (this.currentPath.startsWith('/shop')) return this.stableNavigation('shop', [

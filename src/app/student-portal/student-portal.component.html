@@ -1,6 +1,6 @@
 <div class="portal-shell">
     <aside class="portal-sidebar" [class.mobile-open]="menuOpen"><a class="portal-brand"
-            routerLink="/student/dashboard"><span>E</span> EduNexa</a>
+            routerLink="/student/dashboard"><ng-container *ngIf="content.customLogo as logo; else defaultBrand"><img class="portal-logo" [src]="logo" alt="" />{{instituteName}}</ng-container><ng-template #defaultBrand><span>E</span> EduNexa</ng-template></a>
         <div class="student-card"><img
                 [src]="isParent ? 'assets/images/avatars/avatar-4.png' : 'assets/images/avatars/avatar-3.png'"
                 [alt]="displayName"><span><strong>{{displayName}}</strong><small>{{isParent ? 'Parent of ' +
@@ -138,29 +138,17 @@
                         and family contacts."}}</p>
                 </div>
                 <div class="profile-layout"><mat-card class="profile-card"><mat-card-content><img class="profile-photo"
-                                src="assets/images/avatars/avatar-3.png" alt="{{childName}}">
-                            <h2>{{childName}}</h2>
-                            <p>Admission no. · {{studentId}}</p><app-status-badge label="Active student"
-                                tone="success"></app-status-badge>
+                                src="assets/images/avatars/avatar-3.png" alt="{{profile.name}}">
+                            <h2>{{profile.name}}</h2>
+                            <p>Admission no. · {{profile.studentId}}</p><app-status-badge [label]="auth.user?.isBlocked ? 'Blocked' : 'Active student'"
+                                [tone]="auth.user?.isBlocked ? 'danger' : 'success'"></app-status-badge>
                             <div class="profile-course">
-                                <mat-icon>school</mat-icon><span><strong>{{academicPlacement}}</strong><small>{{groupPlacement}}</small></span>
+                                <mat-icon>school</mat-icon><span><strong>{{profile.placement}}</strong><small>{{profile.group}}</small></span>
                             </div>
                         </mat-card-content></mat-card><mat-card class="profile-info"><mat-card-content>
                             <h2>Personal information</h2>
                             <div class="info-grid">
-                                <div><small>Full name</small><strong>{{childName}}</strong></div>
-                                <div><small>Date of birth</small><strong>{{childDateOfBirth}}</strong></div>
-                                <div><small>Gender</small><strong>{{childGender}}</strong></div>
-                                <div><small>Phone</small><strong>{{childPhone}}</strong></div>
-                                <div><small>Email</small><strong>{{childEmail}}</strong></div>
-                                <div><small>Admission date</small><strong>12 June 2026</strong></div>
-                                <div><small>Father</small><strong>{{otherGuardian}}</strong></div>
-                                <div><small>Mother</small><strong>{{isSchool ? "Meera Rao" : "Neha Sharma"}}</strong>
-                                </div>
-                                <div><small>{{isSchool ? 'Guardian contact' : 'Parent contact'}}</small><strong>{{isSchool ? "98765 20002" : "98765
-                                        43210"}}</strong></div>
-                                <div class="wide"><small>Address</small><strong>12 Lake View Road, Bengaluru, Karnataka
-                                        560038</strong></div>
+                                <div *ngFor="let item of profile.details" [class.wide]="item.wide"><small>{{item.label}}</small><strong>{{item.value}}</strong></div>
                             </div>
                         </mat-card-content></mat-card></div>
                 <app-change-password></app-change-password>

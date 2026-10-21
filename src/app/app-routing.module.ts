@@ -4,8 +4,11 @@ import { FullLayoutComponent } from './layouts/full/full-layout.component';
 import { Full_ROUTES } from './shared/routes/full-layout.routes';
 import { AuthGuard } from './core/auth.guard';
 
+const HOME_PAGE = 'site/northstar-academy';
+
 const routes: Routes = [
-  { path: '', redirectTo: 'site/northstar-academy', pathMatch: 'full' },
+  // The public website is the default landing page; sign-in lives at /login.
+  { path: '', redirectTo: HOME_PAGE, pathMatch: 'full' },
   { path: '', loadChildren: () => import('./auth/auth.module').then(module => module.AuthModule) },
   { path: 'site/:slug', loadChildren: () => import('./public-website/public-website.module').then(module => module.PublicWebsiteModule) },
   { path: 'student', canActivate: [AuthGuard], loadChildren: () => import('./student-portal/student-portal.module').then(module => module.StudentPortalModule) },

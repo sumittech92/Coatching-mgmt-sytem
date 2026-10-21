@@ -1,6 +1,7 @@
 <aside class="sidebar-wrapper" [class.mini-sidebar]="getSideBarSate()">
   <a class="brand" routerLink="/" aria-label="EduNexa home"
-    ><span class="brand-mark">E</span><span class="brand-name">EduNexa<span class="brand-dot">.</span></span></a
+    ><ng-container *ngIf="workspaceLogo; else defaultBrand"><img class="brand-logo" [src]="workspaceLogo" alt="" /><span class="brand-name workspace-name">{{ tenant.current.businessName }}</span></ng-container
+    ><ng-template #defaultBrand><span class="brand-mark">E</span><span class="brand-name">EduNexa<span class="brand-dot">.</span></span></ng-template></a
   >
   <div class="tenant-switcher">
     <div class="tenant-mark">

@@ -15,6 +15,7 @@ export interface WebsiteProfile {
 /** Default call / WhatsApp / support number. Owners change it in Website → Website Settings or Contact (and Institute settings). */
 export const DEFAULT_CONTACT_NUMBER = '6392909743';
 const STORAGE_KEY = 'demo-website-contact';
+const DEFAULT_LOGO = 'assets/images/logo.svg';
 type SavedContact = Record<string, { settings: Record<string, string>; contact: Record<string, string>; social: Record<string, string> }>;
 
 @Injectable({ providedIn: 'root' })
@@ -112,4 +113,6 @@ export class WebsiteContentService {
     } catch { /* storage unavailable: keep in memory */ }
   }
   get publicProfile(): WebsiteProfile { return this.profile; }
+  /** Logo the owner uploaded for the current workspace; null while the default placeholder is in use. */
+  get customLogo(): string | null { const logo = this.profile.settings['logo']; return logo && logo !== DEFAULT_LOGO ? logo : null; }
 }

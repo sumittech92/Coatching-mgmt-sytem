@@ -42,3 +42,5 @@
 .lib-heading{align-items:center;flex-wrap:wrap}
 .lib-search{width:min(320px,100%);font-size:12px}
 @media(max-width:600px){.fee-overview-3{grid-template-columns:1fr}.pay-form{grid-template-columns:1fr}.pay-cta{width:100%}.pay-actions button{flex:1}}
+
+.portal-logo{width:32px;height:32px;border-radius:9px;object-fit:contain;flex:none}.portal-brand:has(.portal-logo){font-size:16px;letter-spacing:-.3px}

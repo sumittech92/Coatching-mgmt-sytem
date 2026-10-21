@@ -24,6 +24,8 @@ export class MockAuthService {
   get user(): ApiUser | null { return this.session?.user ?? null; }
   get isAuthenticated(): boolean { return !!this.session; }
   get isDemo(): boolean { return !!this.session && !this.session.token; }
+  /** Name of the signed-in account, whichever field the backend returned it in. */
+  get displayName(): string | null { return this.user?.fullName || this.user?.full_Name || null; }
 
   get landingPath(): string {
     if (this.role === 'Super Admin') return '/super-admin/dashboard';

@@ -4,12 +4,13 @@ import { DemoRole, MockAuthService } from '../../core/mock-auth.service';
 import { BusinessType } from '../../core/models/business-type';
 import { TenantContextService } from '../../core/tenant-context.service';
 import { environment } from '../../../environments/environment';
-import { ApiRole } from '../../core/auth-api.service';
+import { ApiRole, AuthApiService } from '../../core/auth-api.service';
 import { PATTERNS, isMobile, normalizeMobile } from '../../core/app-validators';
 import { ToastService } from '../../core/toast.service';
 import { WebsiteContentService } from '../../core/website-content.service';
 
-const API_ROLES: Record<DemoRole, ApiRole> = { 'Super Admin': 'superAdmin', Owner: 'admin', Teacher: 'teacher', Student: 'student', Parent: 'parent' };
+// Account roles each panel accepts. Parents share the student portal, so they sign in through the Student panel.
+const PANEL_ROLES: Record<DemoRole, ApiRole[]> = { 'Super Admin': ['superAdmin'], Owner: ['admin'], Teacher: ['teacher'], Student: ['student', 'parent'], Parent: ['parent'] };
 
 @Component({ selector: 'app-sign-in', templateUrl: './sign-in.component.html' })
 export class SignInComponent {
@@ -36,8 +37,9 @@ export class SignInComponent {
   businessType: BusinessType = this.tenant.current.businessType === 'school' ? 'school' : 'coaching';
   rememberMe = true;
   errorMessage = '';
+  loading = false;
 
-  constructor(private router: Router, private route: ActivatedRoute, private auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private content: WebsiteContentService) {}
+  constructor(private router: Router, private route: ActivatedRoute, private auth: MockAuthService, private api: AuthApiService, private tenant: TenantContextService, private toast: ToastService, private content: WebsiteContentService) {}
 
   get identifierIcon(): string { return /^[\d\s]+$/.test(this.identifier.trim()) && this.identifier.trim() ? 'smartphone' : 'mail_outline'; }
 
@@ -47,17 +49,32 @@ export class SignInComponent {
     this.errorMessage = '';
     this.fieldErrors = this.validate();
     if (Object.keys(this.fieldErrors).length) { this.toast.invalidForm(); return; }
-    // UI-testing mode: the auth API is disconnected, so any well-formed sign-in opens the selected panel.
+    if (this.loading) return;
     const id = this.identifier.trim();
-    const mobile = isMobile(id);
-    this.tenant.setBusinessType(this.businessType, this.rememberMe);
-    this.auth.login(this.panel, this.rememberMe, {
-      _id: 'demo', full_Name: null, profileImage: '', email: mobile ? null : id.toLowerCase(), countryCode: null,
-      phoneNumber: mobile ? normalizeMobile(id) : null, workPlace: this.panel === 'Super Admin' ? null : this.businessType === 'school' ? 'school' : 'coaching',
-      address: null, role: API_ROLES[this.panel], isBlocked: false
+    // The sign-in form has no country code field, so mobile numbers are sent as +91.
+    const credentials = isMobile(id) ? { countryCode: '+91', phoneNumber: normalizeMobile(id) } : { email: id.toLowerCase() };
+    this.loading = true;
+    this.api.login({ ...credentials, password: this.password }).subscribe({
+      next: ({ user, accessToken }) => {
+        this.loading = false;
+        if (!user.role || !PANEL_ROLES[this.panel].includes(user.role)) {
+          // The backend already issued a token for this account; revoke it before rejecting the sign-in.
+          this.api.logout(accessToken).subscribe({ error: () => { /* Best effort. */ } });
+          this.errorMessage = `This account is not ${/^[AEIOU]/.test(this.panelLabel) ? 'an' : 'a'} ${this.panelLabel} account.`;
+          this.toast.error(this.errorMessage);
+          return;
+        }
+        this.tenant.setBusinessType(this.businessType, this.rememberMe);
+        this.auth.startSession(user, accessToken, this.rememberMe);
+        this.toast.success(`Signed in to the ${this.panelLabel} panel.`);
+        this.goHome();
+      },
+      error: (error: Error) => {
+        this.loading = false;
+        this.errorMessage = error.message;
+        this.toast.error(error.message);
+      }
     });
-    this.toast.success(`Signed in to the ${this.panelLabel} panel.`);
-    this.goHome();
   }
 
   get panelLabel(): string { return this.panels.find(item => item.role === this.panel)?.label ?? this.panel; }

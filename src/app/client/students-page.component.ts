@@ -10,6 +10,7 @@ import { TenantContextService } from "../core/tenant-context.service";
 import { MockAuthService } from "../core/mock-auth.service";
 import { AppValidators, normalizeMobile, validationMessage } from "../core/app-validators";
 import { ToastService } from "../core/toast.service";
+import { StudentApiService, CreateStudentPayload } from "../core/student-api.service";
 import { ADMISSION_QUOTAS, COACHING_BOARDS, SCHOOL_TERMS } from "../core/workspace-terms";
 
 const notFuture = (control: AbstractControl): ValidationErrors | null => {
@@ -38,18 +39,23 @@ export class StudentsPageComponent implements OnInit {
   photo = "";
   selected?: MockStudent;
   mode: "list" | "add" | "edit" | "view" = "list";
+  saving = false;
+  hidePassword = true;
   readonly today = new Date();
   readonly form = this.fb.group({
     name: ["", [AppValidators.required, AppValidators.personName, Validators.maxLength(80)]],
     dob: ["", notFuture],
     gender: [""],
     phone: ["", [AppValidators.required, AppValidators.mobile]],
-    email: ["", [AppValidators.email, Validators.maxLength(120)]],
+    email: ["", [AppValidators.required, AppValidators.email, Validators.maxLength(120)]],
+    // Login password for the new student account; only used (and required) when adding.
+    password: [""],
     father: ["", [AppValidators.required, AppValidators.personName, Validators.maxLength(80)]],
     mother: ["", [AppValidators.personName, Validators.maxLength(80)]],
     parentPhone: ["", AppValidators.mobile],
-    course: ["", AppValidators.required],
-    batch: ["", AppValidators.required],
+    // Multi-select: a student can join several classes / batches. Stored and sent as "A, B".
+    course: [[] as string[], AppValidators.required],
+    batch: [[] as string[], AppValidators.required],
     admission: ["", [AppValidators.required, notFuture]],
     address: ["", Validators.maxLength(200)],
     city: ["", Validators.maxLength(60)],
@@ -75,6 +81,7 @@ export class StudentsPageComponent implements OnInit {
     private toast: ToastService,
     private tenant: TenantContextService,
     public auth: MockAuthService,
+    private studentApi: StudentApiService,
   ) {}
   get isTeacher(): boolean {
     return this.auth.role === "Teacher";
@@ -97,11 +104,16 @@ export class StudentsPageComponent implements OnInit {
       const path = this.router.url;
       this.mode = path.endsWith("/add") ? "add" : id ? (path.includes("/edit") ? "edit" : "view") : "list";
       this.selected = id ? this.data.students.find((student) => student.id === id) : undefined;
+      const password = this.form.controls.password;
+      password.setValidators(this.mode === "add" ? [AppValidators.required, AppValidators.password] : null);
+      password.updateValueAndValidity();
       if (this.selected && this.mode !== "list")
         this.form.patchValue({
           ...this.selected,
           phone: normalizeMobile(this.selected.phone),
           parentPhone: normalizeMobile(this.selected.phone),
+          course: StudentsPageComponent.splitList(this.selected.course),
+          batch: StudentsPageComponent.splitList(this.selected.batch),
         });
     });
   }
@@ -124,7 +136,7 @@ export class StudentsPageComponent implements OnInit {
     return this.data.students.filter(
       (student) =>
         (!q || `${student.name} ${student.studentId} ${student.phone} ${student.father}`.toLowerCase().includes(q)) &&
-        (!this.batch || student.batch === this.batch) &&
+        (!this.batch || StudentsPageComponent.splitList(student.batch).includes(this.batch)) &&
         (!this.status || student.status === this.status) &&
         (!this.feeStatus || student.feeStatus === this.feeStatus),
     );
@@ -165,7 +177,7 @@ export class StudentsPageComponent implements OnInit {
       });
   }
   save(): void {
-    if (this.isTeacher || this.mode === "view") return;
+    if (this.isTeacher || this.mode === "view" || this.saving) return;
     const discount = this.form.controls.discount;
     discount.updateValueAndValidity();
     if (Number(discount.value) > Number(this.form.controls.monthlyFee.value))
@@ -177,8 +189,9 @@ export class StudentsPageComponent implements OnInit {
     }
     const value = this.form.getRawValue();
     const name = (value.name || "").trim();
+    const { password, ...fields } = value;
     const record = {
-      ...value,
+      ...fields,
       name,
       email: (value.email || "").trim(),
       dob: this.dateValue(value.dob),
@@ -186,8 +199,8 @@ export class StudentsPageComponent implements OnInit {
       father: value.father || "",
       mother: value.mother || "",
       phone: normalizeMobile(value.parentPhone || value.phone || ""),
-      course: value.course || "",
-      batch: value.batch || "",
+      course: (value.course || []).join(", "),
+      batch: (value.batch || []).join(", "),
       admission: this.dateValue(value.admission),
       address: value.address || "",
       city: value.city || "",
@@ -198,13 +211,84 @@ export class StudentsPageComponent implements OnInit {
       feeStatus: "Paid" as const,
     };
     if (this.mode === "edit" && this.selected) {
+      // There is no update API yet, so edits stay in the local list.
       Object.assign(this.selected, record, this.photo ? { photo: this.photo } : {});
       this.toast.success("Changes saved.");
-    } else {
-      this.data.addStudent({ ...record, photo: this.photo });
-      this.toast.success(`Student “${name}” added.`);
+      this.closeForm();
+      return;
     }
-    this.closeForm();
+    const token = this.auth.token;
+    if (!token) {
+      this.toast.error("Sign in with an Owner account to add students.");
+      return;
+    }
+    this.saving = true;
+    this.studentApi.create(token, this.createPayload(record, password || "")).subscribe({
+      next: () => {
+        this.saving = false;
+        // There is no list API yet, so the new student is also added to the local list.
+        this.data.addStudent({ ...record, photo: this.photo });
+        this.toast.success(`Student “${name}” added.`);
+        this.closeForm();
+      },
+      error: (error: Error) => {
+        this.saving = false;
+        this.toast.error(error.message);
+      },
+    });
+  }
+  private createPayload(record: Record<string, any>, password: string): CreateStudentPayload {
+    const parentPhone = normalizeMobile(this.form.controls.parentPhone.value || "");
+    const gender = String(record["gender"]).toLowerCase();
+    const academic = this.isSchool
+      ? {
+          schoolInfo: {
+            schoolName: this.tenant.current.businessName,
+            className: record["course"],
+            section: record["batch"],
+            admissionDate: record["admission"] || null,
+            rollNumber: record["rollNo"] || null,
+            currentTerm: record["semester"] || null,
+            admissionCategory: record["quota"] || null,
+          },
+        }
+      : {
+          coachingInfo: {
+            coachingName: this.tenant.current.businessName,
+            className: record["course"],
+            course: record["course"],
+            batchTiming: record["batch"],
+            admissionDate: record["admission"] || null,
+            schoolName: record["school"] || null,
+            board: record["board"] || null,
+          },
+        };
+    return {
+      fullName: record["name"],
+      email: record["email"].toLowerCase(),
+      countryCode: "+91",
+      phoneNumber: normalizeMobile(this.form.controls.phone.value || ""),
+      password,
+      // No upload API yet: the photo stays in the local list only.
+      profileImage: "",
+      gender: ["male", "female", "other"].includes(gender) ? (gender as "male" | "female" | "other") : null,
+      parentsInfo: {
+        fatherName: record["father"] || null,
+        motherName: record["mother"] || null,
+        countryCode: parentPhone ? "+91" : null,
+        phoneNumber: parentPhone || null,
+      },
+      address: {
+        addressLine: record["address"] || null,
+        city: record["city"] || null,
+        state: record["state"] || null,
+        pincode: record["pincode"] || null,
+      },
+      ...academic,
+    };
+  }
+  private static splitList(value: string | null | undefined): string[] {
+    return (value || "").split(", ").filter(Boolean);
   }
   private dateValue(value: unknown): string {
     if (!value) return "";

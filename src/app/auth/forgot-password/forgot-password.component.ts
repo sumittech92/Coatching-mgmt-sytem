@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { PasswordResetState } from '../password-reset-state';
 import { AppValidators, normalizeMobile, validationMessage } from '../../core/app-validators';
 import { ToastService } from '../../core/toast.service';
+import { AuthApiService } from '../../core/auth-api.service';
 
 @Component({ selector: 'app-forgot-password', templateUrl: './forgot-password.component.html' })
 export class ForgotPasswordComponent {
@@ -13,7 +14,7 @@ export class ForgotPasswordComponent {
     phoneNumber: ['', [AppValidators.required, AppValidators.mobile]]
   });
 
-  constructor(private fb: FormBuilder, private router: Router, private resetState: PasswordResetState, private toast: ToastService) {}
+  constructor(private fb: FormBuilder, private router: Router, private resetState: PasswordResetState, private api: AuthApiService, private toast: ToastService) {}
 
   get phoneError(): string { return validationMessage(this.form.controls.phoneNumber, 'Mobile number'); }
 
@@ -25,11 +26,22 @@ export class ForgotPasswordComponent {
   sendOtp(): void {
     this.errorMessage = '';
     if (this.form.invalid) { this.form.markAllAsTouched(); this.toast.invalidForm(); return; }
+    if (this.loading) return;
     // The backend looks the account up by phone number only.
     const phoneNumber = normalizeMobile(this.form.controls.phoneNumber.value);
-    // UI-testing mode: the auth API is disconnected; the demo OTP is 1234.
-    this.resetState.set({ phone: phoneNumber, phoneNumber, resetToken: 'demo-reset' });
-    this.toast.success(`OTP sent to ${phoneNumber}. Demo code: 1234`);
-    this.router.navigateByUrl('/otp-verification');
+    this.loading = true;
+    this.api.forgotPassword(phoneNumber).subscribe({
+      next: ({ accessToken }) => {
+        this.loading = false;
+        this.resetState.set({ phone: phoneNumber, phoneNumber, resetToken: accessToken });
+        this.toast.success(`OTP sent to ${phoneNumber}.`);
+        this.router.navigateByUrl('/otp-verification');
+      },
+      error: (error: Error) => {
+        this.loading = false;
+        this.errorMessage = error.message;
+        this.toast.error(error.message);
+      }
+    });
   }
 }

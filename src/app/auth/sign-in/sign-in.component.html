@@ -68,7 +68,7 @@
 
         <div class="remember-row"><mat-checkbox name="rememberMe" [(ngModel)]="rememberMe">Keep me signed in</mat-checkbox></div>
         <div class="login-error" *ngIf="errorMessage" role="alert"><mat-icon>error_outline</mat-icon>{{ errorMessage }}</div>
-        <button class="sign-in-button" type="submit">Sign in <mat-icon>arrow_forward</mat-icon></button>
+        <button class="sign-in-button" type="submit" [disabled]="loading"><mat-spinner *ngIf="loading" [diameter]="17"></mat-spinner><ng-container *ngIf="!loading">Sign in <mat-icon>arrow_forward</mat-icon></ng-container><span *ngIf="loading">Signing in…</span></button>
         <div class="password-label forgot-row"><a routerLink="/forgot-password">Forgot password?</a></div>
       </form>
 

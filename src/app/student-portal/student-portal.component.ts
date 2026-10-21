@@ -10,6 +10,7 @@ import { WebsiteContentService } from '../core/website-content.service';
 import { FINE_PER_DAY, LOAN_DAYS, LibraryBook, LibraryService } from '../core/library.service';
 interface PortalFee { month: string; amount: number; paid: number; due: number; status: string; date: string; mode: string; }
 interface PortalMenu { key: string; label: string; icon: string; }
+import { formatDate, formatPhone } from '../core/profile-format';
 @Component({ selector: 'app-student-portal', templateUrl: './student-portal.component.html', styleUrls: ['./student-portal.component.scss'] })
 export class StudentPortalComponent {
   section = 'dashboard'; menuOpen = false;
@@ -92,13 +93,45 @@ export class StudentPortalComponent {
   get pendingHomework(): number { return this.homework.filter(h => h.status === 'Pending').length; }
   get pendingAssignments(): number { return this.assignments.filter(a => a.status === 'Pending').length; }
   readonly calendar = Array.from({ length: 30 }, (_, i) => ({ day: i + 1, status: [3, 10, 17, 22].includes(i + 1) ? 'absent' : [6].includes(i + 1) ? 'leave' : [8, 19].includes(i + 1) ? 'late' : i < 28 ? 'present' : 'future' }));
-  constructor(private router: Router, public auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private signOutFlow: SignOutService, private feeSubmissions: FeeSubmissionService, public library: LibraryService, private content: WebsiteContentService) { this.applyApprovedPayments(); this.update(router.url); router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => { this.update(event.urlAfterRedirects); this.menuOpen = false; }); }
+  constructor(private router: Router, public auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private signOutFlow: SignOutService, private feeSubmissions: FeeSubmissionService, public library: LibraryService, public content: WebsiteContentService) { this.applyApprovedPayments(); this.update(router.url); router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => { this.update(event.urlAfterRedirects); this.menuOpen = false; }); }
   get menu(): PortalMenu[] { return this.isParent ? (this.isSchool ? this.schoolParentMenu : this.coachingParentMenu) : this.isSchool ? this.schoolStudentMenu : this.coachingStudentMenu; }
   /** Sections outside the current role/workspace menu show a friendly fallback instead of the wrong content. */
   get activeSection(): string { return this.menu.some(item => item.key === this.section) ? this.section : 'unavailable'; }
   get isParent(): boolean { return this.auth.role === 'Parent'; }
   get isSchool(): boolean { return this.tenant.current.businessType === 'school'; }
-  get displayName(): string { if (this.auth.user?.full_Name) return this.auth.user.full_Name; return this.isParent ? (this.isSchool ? 'Meera Rao' : 'Neha Sharma') : (this.isSchool ? 'Ishita Rao' : 'Aarav Sharma'); }
+  get displayName(): string { if (this.auth.displayName) return this.auth.displayName; return this.isParent ? (this.isSchool ? 'Meera Rao' : 'Neha Sharma') : (this.isSchool ? 'Ishita Rao' : 'Aarav Sharma'); }
+  /**
+   * Profile page details. A real signed-in account shows its registered details from login; the student's
+   * parents, address and academic details have no read API yet, so they show "—". Demo sessions keep sample data.
+   */
+  get profile(): { name: string; studentId: string; placement: string; group: string; details: { label: string; value: string; wide?: boolean }[] } {
+    const user = this.auth.user;
+    if (this.auth.isDemo || !user) {
+      return {
+        name: this.childName, studentId: this.studentId, placement: this.academicPlacement, group: this.groupPlacement,
+        details: [
+          { label: 'Full name', value: this.childName }, { label: 'Date of birth', value: this.childDateOfBirth }, { label: 'Gender', value: this.childGender },
+          { label: 'Phone', value: this.childPhone }, { label: 'Email', value: this.childEmail }, { label: 'Admission date', value: '12 June 2026' },
+          { label: 'Father', value: this.otherGuardian }, { label: 'Mother', value: this.isSchool ? 'Meera Rao' : 'Neha Sharma' },
+          { label: this.isSchool ? 'Guardian contact' : 'Parent contact', value: this.isSchool ? '98765 20002' : '98765 43210' },
+          { label: 'Address', value: '12 Lake View Road, Bengaluru, Karnataka 560038', wide: true }
+        ]
+      };
+    }
+    // A parent's own login does not include the child's record, so a parent sees their own registered details.
+    const name = this.auth.displayName || '—';
+    return {
+      name, studentId: '—', placement: '—', group: '—',
+      details: [
+        { label: 'Full name', value: name }, { label: 'Role', value: this.isParent ? 'Parent' : 'Student' },
+        { label: 'Phone', value: formatPhone(user.countryCode, user.phoneNumber) }, { label: 'Email', value: user.email || '—' },
+        { label: 'Registered on', value: formatDate(user.createdAt) }, { label: 'Last sign-in', value: formatDate(user.lastLogin) },
+        { label: 'Date of birth', value: '—' }, { label: 'Gender', value: '—' }, { label: 'Admission date', value: '—' },
+        { label: 'Father', value: '—' }, { label: 'Mother', value: '—' }, { label: this.isSchool ? 'Guardian contact' : 'Parent contact', value: '—' },
+        { label: 'Address', value: '—', wide: true }
+      ]
+    };
+  }
   get childName(): string { return this.isSchool ? 'Ishita Rao' : 'Aarav Sharma'; }
   get firstName(): string { return (this.isParent ? (this.isSchool ? 'Meera Rao' : 'Neha Sharma') : this.displayName).split(' ')[0]; }
   get childFirstName(): string { return this.childName.split(' ')[0]; }

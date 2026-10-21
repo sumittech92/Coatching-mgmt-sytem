@@ -15,7 +15,7 @@ export class HeaderComponent {
     router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => this.updateBreadcrumbs(event.urlAfterRedirects));
   }
   get displayName(): string {
-    if (this.auth.user?.full_Name) return this.auth.user.full_Name;
+    if (this.auth.displayName) return this.auth.displayName;
     if (this.auth.role === 'Super Admin') return 'Alex Morgan';
     if (this.auth.role === 'Student') return this.tenant.isSchool ? 'Ishita Rao' : 'Aarav Sharma';
     if (this.auth.role === 'Teacher') return this.tenant.demoTeacherName;

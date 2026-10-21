@@ -3,11 +3,11 @@ import { Router } from '@angular/router';
 import { NgOtpInputComponent } from 'ng-otp-input';
 import { PasswordResetState } from '../password-reset-state';
 import { ToastService } from '../../core/toast.service';
+import { AuthApiService } from '../../core/auth-api.service';
 
 // The backend issues a fixed 4-digit code until SMS sending is connected.
 const OTP_LENGTH = 4;
 const RESEND_SECONDS = 30;
-const DEMO_OTP = '1234';
 
 @Component({ selector: 'app-otp-verification', templateUrl: './otp-verification.component.html' })
 export class OtpVerificationComponent implements OnInit, OnDestroy {
@@ -24,7 +24,7 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
   secondsLeft = RESEND_SECONDS;
   private timer?: ReturnType<typeof setInterval>;
 
-  constructor(private router: Router, private resetState: PasswordResetState, private toast: ToastService) {}
+  constructor(private router: Router, private resetState: PasswordResetState, private api: AuthApiService, private toast: ToastService) {}
 
   ngOnInit(): void {
     const state = this.resetState.value;
@@ -46,30 +46,48 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
     const state = this.resetState.value;
     if (this.otp.length < this.otpLength) { this.invalid = true; this.serverError = ''; this.toast.error(`Please enter all ${this.otpLength} digits.`); return; }
     if (!state?.resetToken) { this.router.navigateByUrl('/forgot-password'); return; }
-    // UI-testing mode: the auth API is disconnected; the demo OTP is 1234.
-    if (this.otp !== DEMO_OTP) {
-      this.otpInput?.setValue('');
-      this.otp = '';
-      this.invalid = true;
-      this.serverError = 'That code is not correct. Please try again.';
-      this.toast.error(this.serverError);
-      return;
-    }
-    this.resetState.set({ ...state, verifiedToken: 'demo-verified' });
-    this.toast.success('OTP verified. Set your new password.');
-    this.router.navigateByUrl('/reset-password');
+    if (this.loading) return;
+    this.loading = true;
+    this.api.verifyOtp(state.resetToken, this.otp).subscribe({
+      next: ({ accessToken }) => {
+        this.loading = false;
+        this.resetState.set({ ...state, verifiedToken: accessToken });
+        this.toast.success('OTP verified. Set your new password.');
+        this.router.navigateByUrl('/reset-password');
+      },
+      error: (error: Error) => {
+        this.loading = false;
+        this.otpInput?.setValue('');
+        this.otp = '';
+        this.invalid = true;
+        // The backend rejects a wrong code with a 400 validation message; show something readable instead.
+        this.serverError = /must be|invalid reset token or otp/i.test(error.message) ? 'That code is not correct. Please try again.' : error.message;
+        this.toast.error(this.serverError);
+      }
+    });
   }
 
   resend(): void {
     const state = this.resetState.value;
     if (!state) { this.router.navigateByUrl('/forgot-password'); return; }
+    if (this.resending) return;
     this.otpInput?.setValue('');
     this.otp = '';
     this.invalid = false;
     this.serverError = '';
-    this.resetState.set({ ...state, resetToken: 'demo-reset', verifiedToken: undefined });
-    this.startTimer();
-    this.toast.success('A new OTP has been sent. Demo code: 1234');
+    this.resending = true;
+    this.api.forgotPassword(state.phoneNumber).subscribe({
+      next: ({ accessToken }) => {
+        this.resending = false;
+        this.resetState.set({ ...state, resetToken: accessToken, verifiedToken: undefined });
+        this.startTimer();
+        this.toast.success('A new OTP has been sent.');
+      },
+      error: (error: Error) => {
+        this.resending = false;
+        this.toast.error(error.message);
+      }
+    });
   }
 
   private startTimer(): void {

@@ -7,6 +7,8 @@ export type ApiRole = 'superAdmin' | 'admin' | 'teacher' | 'student' | 'parent';
 
 export interface ApiUser {
   _id: string;
+  /** The Auth model field. Older responses used full_Name; read the name through MockAuthService.displayName. */
+  fullName?: string | null;
   full_Name: string | null;
   profileImage: string;
   email: string | null;
@@ -16,11 +18,16 @@ export interface ApiUser {
   address: string | null;
   role: ApiRole | null;
   isBlocked: boolean;
+  workType?: 'coaching' | 'school' | null;
+  createdAt?: string;
+  lastLogin?: number;
 }
 
 interface ApiResponse<T> { success: boolean; message: string; data: T; }
 
 export interface RegisterPayload { fullName: string; email: string; password: string; countryCode: string; phoneNumber: string; role: 'student' | 'teacher'; }
+/** Owner account created by a Super Admin. The backend always saves the role as "admin". */
+export interface CreateAdminPayload { fullName: string; email: string; password: string; countryCode: string; phoneNumber: string; workType?: 'coaching' | 'school'; }
 // Mobile sign-in: the UI no longer shows a country code, so callers send the default (+91).
 export type LoginPayload = { password: string } & ({ email: string } | { countryCode: string; phoneNumber: string });
 
@@ -59,6 +66,11 @@ export class AuthApiService {
     return this.post('change-password', { currentPassword, newPassword, confirmPassword }, accessToken);
   }
 
+  /** Super Admin only. */
+  createAdmin(accessToken: string, payload: CreateAdminPayload): Observable<ApiUser> {
+    return this.post('create-admin', { ...payload, role: 'admin' }, accessToken);
+  }
+
   logout(accessToken: string): Observable<unknown> {
     return this.post('logout', {}, accessToken);
   }
@@ -71,7 +83,7 @@ export class AuthApiService {
     );
   }
 
-  private static messageFor(error: HttpErrorResponse): string {
+  static messageFor(error: HttpErrorResponse): string {
     if (error.status === 0) return 'Cannot reach the server. Check that the backend is running and try again.';
     if (error.status === 404) return 'This action is not available on the server yet.';
     return error.error?.message || 'Something went wrong. Please try again.';

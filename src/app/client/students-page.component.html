@@ -191,7 +191,7 @@
                         <div class="col-md-6">
                             <label class="field-label">Gender</label><mat-form-field appearance="outline"
                                 class="w-100"><mat-select formControlName="gender"
-                                    placeholder="Select gender"><mat-option>Female</mat-option><mat-option>Male</mat-option><mat-option>Other</mat-option><mat-option>Prefer
+                                    placeholder="Select gender"><mat-option value="Female">Female</mat-option><mat-option value="Male">Male</mat-option><mat-option value="Other">Other</mat-option><mat-option value="Prefer not to say">Prefer
                                         not to say</mat-option></mat-select></mat-form-field>
                         </div>
                         <div class="col-md-6">
@@ -201,10 +201,19 @@
                                     errorFor("phone", "Student mobile") }}</mat-error></mat-form-field>
                         </div>
                         <div class="col-md-6">
-                            <label class="field-label">Email address</label><mat-form-field appearance="outline"
+                            <label class="field-label">Email address *</label><mat-form-field appearance="outline"
                                 class="w-100"><input matInput type="email" maxlength="120" formControlName="email"
                                     placeholder="student@email.com" /><mat-error>{{ errorFor("email", "Email address")
                                     }}</mat-error></mat-form-field>
+                        </div>
+                        <div class="col-md-6" *ngIf="mode === 'add'">
+                            <label class="field-label">Login password *</label><mat-form-field appearance="outline"
+                                class="w-100"><input matInput [type]="hidePassword ? 'password' : 'text'" autocomplete="new-password"
+                                    formControlName="password" placeholder="Min. 8 characters" /><button
+                                    mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"
+                                    [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'"><mat-icon>{{
+                                    hidePassword ? "visibility_off" : "visibility" }}</mat-icon></button><mat-error>{{
+                                    errorFor("password", "Login password") }}</mat-error></mat-form-field>
                         </div>
                     </div>
                 </section>
@@ -254,8 +263,8 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="field-label">{{ isSchool ? "Class *" : "Class / course *"
-                                }}</label><mat-form-field appearance="outline" class="w-100"><mat-select
-                                    formControlName="course" placeholder="Choose a class"><mat-option
+                                }}</label><mat-form-field appearance="outline" class="w-100"><mat-select multiple
+                                    formControlName="course" [placeholder]="isSchool ? 'Choose classes' : 'Choose classes / courses'"><mat-option
                                         *ngFor="let course of courseOptions" [value]="course">{{
                                         course
                                         }}</mat-option></mat-select><mat-error>{{ errorFor("course", isSchool ? "Class"
@@ -263,9 +272,9 @@
                         </div>
                         <div class="col-md-6">
                             <label class="field-label">{{ isSchool ? "Section *" : "Batch & timing *"
-                                }}</label><mat-form-field appearance="outline" class="w-100"><mat-select
+                                }}</label><mat-form-field appearance="outline" class="w-100"><mat-select multiple
                                     formControlName="batch"
-                                    [placeholder]="isSchool ? 'Choose a section' : 'Choose a batch'"><mat-option
+                                    [placeholder]="isSchool ? 'Choose sections' : 'Choose batches'"><mat-option
                                         *ngFor="let batchName of batchOptions" [value]="batchName">{{
                                         batchName
                                         }}</mat-option></mat-select><mat-error>{{ errorFor("batch", isSchool ? "Section"
@@ -384,8 +393,8 @@
             </fieldset>
             <div class="form-actions">
                 <button type="button" mat-button (click)="closeForm()">{{ mode === "view" ? "Close" : "Cancel"
-                    }}</button><button type="submit" mat-flat-button color="primary" *ngIf="mode !== 'view'">
-                    {{ mode === "edit" ? "Save changes" : "Add student" }}
+                    }}</button><button type="submit" mat-flat-button color="primary" *ngIf="mode !== 'view'" [disabled]="saving">
+                    {{ mode === "edit" ? "Save changes" : saving ? "Adding…" : "Add student" }}
                 </button>
             </div>
         </form>
