@@ -1,40 +1,40 @@
 /* Coaching dashboard */
 .dashboard-head h1 { font-size: clamp(28px, 3vw, 36px); line-height: 1.2; }
-.dashboard-head p, .academy-banner p { font-size: 15px; line-height: 1.65; }
-.date-line, .dashboard-head > button, .academy-eyebrow, .academy-live { font-size: 13px; }
-.academy-banner-actions a { font-size: 14px; }
+.dashboard-head p, .academy-banner p { font-size: clamp(14px, 13.648px + 0.0939vw, 15px); line-height: 1.65; }
+.date-line, .dashboard-head > button, .academy-eyebrow, .academy-live { font-size: clamp(12px, 11.648px + 0.0939vw, 13px); }
+.academy-banner-actions a { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
 .academy-banner h2 { font-size: clamp(30px, 3vw, 40px); }
-.panel-head h2 { font-size: 18px; }
-.panel-head p { font-size: 14px; line-height: 1.5; }
-.panel-head button, .panel-head a { font-size: 14px; }
-.axis, .months, .bar-group small { font-size: 13px; }
-.legend span { font-size: 14px; }
-.fee-summary small { font-size: 14px; }
-.fee-summary strong { font-size: 23px; }
-.row-copy strong { font-size: 15px; }
-.row-copy small, .row-time { font-size: 14px; line-height: 1.4; }
-.avatar { font-size: 14px; }
-.due-amount, .attendance-percent { font-size: 14px; }
+.panel-head h2 { font-size: clamp(16px, 15.296px + 0.1878vw, 18px); }
+.panel-head p { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); line-height: 1.5; }
+.panel-head button, .panel-head a { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
+.axis, .months, .bar-group small { font-size: clamp(12px, 11.648px + 0.0939vw, 13px); }
+.legend span { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
+.fee-summary small { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
+.fee-summary strong { font-size: clamp(20px, 18.944px + 0.2817vw, 23px); }
+.row-copy strong { font-size: clamp(14px, 13.648px + 0.0939vw, 15px); }
+.row-copy small, .row-time { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); line-height: 1.4; }
+.avatar { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
+.due-amount, .attendance-percent { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
 
 /* School (owner) dashboard */
-.school-kicker, .school-overline { font-size: 13px; letter-spacing: .08em; }
+.school-kicker, .school-overline { font-size: clamp(12px, 11.648px + 0.0939vw, 13px); letter-spacing: .08em; }
 .school-hero h1 { font-size: clamp(36px, 4vw, 54px); }
-.school-hero-copy > p { font-size: 15px; line-height: 1.65; }
-.school-hero-actions a { font-size: 14px; }
-.school-live { font-size: 14px; }
-.school-photo-note strong { font-size: 15px; }
-.school-photo-note small { font-size: 13px; }
-.school-stats small { font-size: 14px; }
+.school-hero-copy > p { font-size: clamp(14px, 13.648px + 0.0939vw, 15px); line-height: 1.65; }
+.school-hero-actions a { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
+.school-live { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
+.school-photo-note strong { font-size: clamp(14px, 13.648px + 0.0939vw, 15px); }
+.school-photo-note small { font-size: clamp(12px, 11.648px + 0.0939vw, 13px); }
+.school-stats small { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
 .school-stats strong { font-size: clamp(20px, 2vw, 24px); }
-.school-stats em { font-size: 13px; }
-.school-panel-head h2 { font-size: 18px; }
-.school-panel-head p { font-size: 14px; line-height: 1.5; }
-.school-panel-head > a, .department-all { font-size: 14px; }
+.school-stats em { font-size: clamp(12px, 11.648px + 0.0939vw, 13px); }
+.school-panel-head h2 { font-size: clamp(16px, 15.296px + 0.1878vw, 18px); }
+.school-panel-head p { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); line-height: 1.5; }
+.school-panel-head > a, .department-all { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
 .notice-date small { font-size: 12px; }
-.class-status { font-size: 13px; }
-.schedule-row time { font-size: 14px; }
-.schedule-row > div strong, .department-row strong, .school-notice > span:nth-child(2) strong, .school-quick-links strong { font-size: 15px; line-height: 1.35; }
-.schedule-row > div small, .department-row small, .school-notice > span:nth-child(2) small, .school-quick-links small { font-size: 14px; line-height: 1.4; }
+.class-status { font-size: clamp(12px, 11.648px + 0.0939vw, 13px); }
+.schedule-row time { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); }
+.schedule-row > div strong, .department-row strong, .school-notice > span:nth-child(2) strong, .school-quick-links strong { font-size: clamp(14px, 13.648px + 0.0939vw, 15px); line-height: 1.35; }
+.schedule-row > div small, .department-row small, .school-notice > span:nth-child(2) small, .school-quick-links small { font-size: clamp(13px, 12.648px + 0.0939vw, 14px); line-height: 1.4; }
 
 @media (max-width: 700px) {
   .dashboard-head { align-items: flex-start; }

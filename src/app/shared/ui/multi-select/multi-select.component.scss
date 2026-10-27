@@ -1,0 +1,15 @@
+:host { display: block; min-width: 0; }
+.ms-field { width: 100%; }
+.ms-show-empty ::ng-deep .mat-mdc-select-value { color: inherit; }
+.ms-clear { width: 32px; height: 32px; padding: 4px; margin-right: 2px; }
+.ms-clear mat-icon { font-size: 18px; width: 18px; height: 18px; color: #8290a0; }
+.ms-chips { display: block; margin: -10px 0 10px; }
+.ms-chips ::ng-deep .mdc-evolution-chip-set__chips { gap: 6px; flex-wrap: wrap; }
+.ms-chips mat-chip { max-width: 100%; }
+.ms-search { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #fff; border-bottom: 1px solid #e6ebf0; }
+.ms-search mat-icon { color: #8290a0; font-size: 20px; width: 20px; height: 20px; flex: none; }
+.ms-search input { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: clamp(13px, 12.648px + 0.0939vw, 14px); padding: 6px 0; background: transparent; }
+.ms-search-clear { border: 0; background: transparent; padding: 0; cursor: pointer; display: flex; }
+.ms-all { padding: 4px 4px 4px 6px; border-bottom: 1px solid #eef1f4; }
+.ms-count { color: #8290a0; font-size: 12px; }
+.ms-empty { padding: 14px 16px; color: #8290a0; font-size: clamp(12px, 11.648px + 0.0939vw, 13px); }

@@ -16,7 +16,7 @@
 }
 
 .cms-heading h1 {
-    font-size: 25px;
+    font-size: clamp(21px, 19.592px + 0.3756vw, 25px);
     font-weight: 700;
     color: #243247;
     margin: 8px 0 4px
@@ -102,7 +102,7 @@
 
 .nav-arrow {
     margin-left: auto;
-    font-size: 15px;
+    font-size: clamp(14px, 13.648px + 0.0939vw, 15px);
     width: 15px;
     height: 15px
 }
@@ -162,7 +162,7 @@
 }
 
 .content-heading h2 {
-    font-size: 16px;
+    font-size: clamp(15px, 14.648px + 0.0939vw, 16px);
     color: #2e3c50;
     font-weight: 700;
     margin: 3px 0 0

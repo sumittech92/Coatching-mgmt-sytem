@@ -2,6 +2,6 @@
 .account-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px 22px}
 .account-grid small,.account-grid strong{display:block}
 .account-grid small{font-size:12px;color:#95a0ad;margin-bottom:4px}
-.account-grid strong{font-size:13px;color:#354256;font-weight:650;overflow-wrap:anywhere}
+.account-grid strong{font-size:clamp(12px, 11.648px + 0.0939vw, 13px);color:#354256;font-weight:650;overflow-wrap:anywhere}
 .demo-note{display:flex;align-items:center;gap:8px;margin-top:18px;padding:10px 12px;border-radius:10px;background:#f8f9ff;border:1px dashed #cdd6f5;font-size:12px;color:#4a5785}
 .demo-note mat-icon{font-size:18px;width:18px;height:18px;color:#4974e9;flex:none}

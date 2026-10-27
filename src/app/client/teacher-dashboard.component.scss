@@ -20,7 +20,7 @@
   align-items: center;
   gap: 9px;
   color: #4268d0;
-  font-size: 13px;
+  font-size: clamp(12px, 11.648px + 0.0939vw, 13px);
   font-weight: 750;
   letter-spacing: .08em;
 }
@@ -39,7 +39,7 @@
 .teacher-welcome p {
   margin: 0;
   color: #697285;
-  font-size: 16px;
+  font-size: clamp(15px, 14.648px + 0.0939vw, 16px);
   line-height: 1.6;
 }
 
@@ -88,9 +88,9 @@
 .teacher-shortcut-icon.shortcut-blue { background: #eaf2fb; color: #5076aa; }
 
 .teacher-shortcut-copy { display: grid; min-width: 0; gap: 4px; }
-.teacher-shortcut-copy strong { font-size: 15px; line-height: 1.3; font-weight: 700; }
-.teacher-shortcut-copy small { color: #757c8c; font-size: 14px; line-height: 1.4; }
-.teacher-shortcuts .shortcut-arrow { flex: 0 0 18px; width: 18px; height: 18px; margin-left: auto; color: #8b92a4; font-size: 18px; }
+.teacher-shortcut-copy strong { font-size: clamp(14px, 13.648px + 0.0939vw, 15px); line-height: 1.3; font-weight: 700; }
+.teacher-shortcut-copy small { color: #757c8c; font-size: clamp(13px, 12.648px + 0.0939vw, 14px); line-height: 1.4; }
+.teacher-shortcuts .shortcut-arrow { flex: 0 0 18px; width: 18px; height: 18px; margin-left: auto; color: #8b92a4; font-size: clamp(16px, 15.296px + 0.1878vw, 18px); }
 
 .teacher-schedule {
   padding: clamp(18px, 2.5vw, 26px);
@@ -111,7 +111,7 @@
 
 .teacher-section-label { font-size: 12px; }
 .teacher-schedule-heading h2 { margin: 7px 0 4px; color: #283064; font-size: clamp(20px, 2vw, 24px); font-weight: 700; line-height: 1.25; }
-.teacher-schedule-heading p { margin: 0; color: #757c8c; font-size: 14px; line-height: 1.5; }
+.teacher-schedule-heading p { margin: 0; color: #757c8c; font-size: clamp(13px, 12.648px + 0.0939vw, 14px); line-height: 1.5; }
 
 .teacher-schedule-heading > a {
   display: inline-flex;
@@ -119,7 +119,7 @@
   align-items: center;
   gap: 7px;
   color: #4268d1;
-  font-size: 14px;
+  font-size: clamp(13px, 12.648px + 0.0939vw, 14px);
   font-weight: 650;
   text-decoration: none;
 }
@@ -137,10 +137,10 @@
 }
 
 .teacher-class-list article:last-child { padding-bottom: 2px; border-bottom: 0; }
-.teacher-class-list time { color: #3f64c7; font-size: 15px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.teacher-class-list time { color: #3f64c7; font-size: clamp(14px, 13.648px + 0.0939vw, 15px); font-weight: 750; font-variant-numeric: tabular-nums; }
 .teacher-class-copy { display: grid; min-width: 0; gap: 4px; }
-.teacher-class-copy strong { color: #353a4d; font-size: 15px; font-weight: 650; line-height: 1.35; }
-.teacher-class-copy small { color: #757c8c; font-size: 14px; line-height: 1.4; }
+.teacher-class-copy strong { color: #353a4d; font-size: clamp(14px, 13.648px + 0.0939vw, 15px); font-weight: 650; line-height: 1.35; }
+.teacher-class-copy small { color: #757c8c; font-size: clamp(13px, 12.648px + 0.0939vw, 14px); line-height: 1.4; }
 
 /* My batches / my classes and assignments / homework, side by side */
 .teacher-panels {
@@ -152,7 +152,7 @@
 .teacher-count {
   display: grid;
   color: #3f64c7;
-  font-size: 18px;
+  font-size: clamp(16px, 15.296px + 0.1878vw, 18px);
   font-weight: 750;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;

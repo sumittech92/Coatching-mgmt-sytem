@@ -47,11 +47,7 @@
             ><mat-select [(ngModel)]="batch"
               ><mat-option [value]="'All batches'">All {{ isSchool ? 'classes / sections' : 'classes / batches' }}</mat-option><mat-option *ngFor="let item of batchOptions" [value]="item">{{ item }}</mat-option></mat-select
             ></mat-form-field
-          ><mat-form-field appearance="outline" *ngIf="!isTeacher"
-            ><mat-label>{{ isSchool ? 'Class teacher' : 'Teacher' }}</mat-label
-            ><mat-select [(ngModel)]="teacher"
-              ><mat-option [value]="'All teachers'">All {{ isSchool ? 'class teachers' : 'teachers' }}</mat-option><mat-option *ngFor="let item of teacherOptions" [value]="item">{{ item }}</mat-option></mat-select
-            ></mat-form-field
+          ><app-multi-select *ngIf="!isTeacher" class="teacher-filter" [label]="isSchool ? 'Class teachers' : 'Teachers'" [options]="teacherOptions" [(value)]="teachers" [emptyText]="isSchool ? 'All class teachers' : 'All teachers'" [searchPlaceholder]="'Search teachers'" [showChips]="false"></app-multi-select
           ><button mat-stroked-button [matMenuTriggerFor]="bulkMenu"><mat-icon>done_all</mat-icon> Mark all</button
           ><mat-menu #bulkMenu="matMenu"
             ><button mat-menu-item (click)="markAll('Present')">All present</button

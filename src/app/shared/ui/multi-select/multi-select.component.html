@@ -1,0 +1,27 @@
+<mat-form-field appearance="outline" class="ms-field" [floatLabel]="emptyText ? 'always' : 'auto'">
+  <mat-label *ngIf="label">{{ label }}</mat-label>
+  <mat-select multiple [value]="selected" [placeholder]="emptyText || placeholder" [disabled]="disabled" [errorStateMatcher]="matcher" [class.ms-show-empty]="!!emptyText"
+    panelClass="ms-panel" (selectionChange)="select($event.value)" (openedChange)="openedChange($event)">
+    <mat-select-trigger>{{ summary }}</mat-select-trigger>
+    <div class="ms-search" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <mat-icon>search</mat-icon>
+      <input #searchBox type="text" [(ngModel)]="query" [ngModelOptions]="{ standalone: true }" [placeholder]="searchPlaceholder" autocomplete="off" aria-label="Search options" />
+      <button type="button" class="ms-search-clear" *ngIf="query" (click)="query = ''" aria-label="Clear search"><mat-icon>close</mat-icon></button>
+    </div>
+    <div class="ms-all" *ngIf="visibleOptions.length > 1">
+      <mat-checkbox color="primary" [checked]="allVisibleSelected" [indeterminate]="someVisibleSelected" (change)="toggleAll()">
+        {{ query ? 'Select all matches' : 'Select all' }} <span class="ms-count">({{ selected.length }}/{{ options.length }})</span>
+      </mat-checkbox>
+    </div>
+    <mat-option *ngFor="let option of options" [value]="option" [style.display]="matches(option) ? null : 'none'">{{ option }}</mat-option>
+    <div class="ms-empty" *ngIf="!visibleOptions.length">No matches for “{{ query }}”</div>
+  </mat-select>
+  <button mat-icon-button matSuffix type="button" class="ms-clear" *ngIf="selected.length && !disabled" (click)="clear($event)" aria-label="Clear selection"><mat-icon>close</mat-icon></button>
+  <mat-error>{{ error }}</mat-error>
+</mat-form-field>
+<mat-chip-set class="ms-chips" *ngIf="showChips && selected.length" aria-label="Selected">
+  <mat-chip *ngFor="let item of selected" [removable]="!disabled" (removed)="remove(item)" [disabled]="disabled">
+    {{ item }}
+    <button matChipRemove *ngIf="!disabled" [attr.aria-label]="'Remove ' + item"><mat-icon>cancel</mat-icon></button>
+  </mat-chip>
+</mat-chip-set>

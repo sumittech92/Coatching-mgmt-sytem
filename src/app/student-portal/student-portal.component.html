@@ -21,9 +21,10 @@
                     PORTAL'}}</small><strong>{{sectionLabel}}</strong></div>
             <div class="portal-top-actions"><button mat-icon-button aria-label="Notifications" (click)="showNotifications()"><mat-icon matBadge="2"
                         matBadgeColor="warn" matBadgeSize="small">notifications_none</mat-icon></button><button
-                    class="top-profile"><img
+                    class="top-profile" [matMenuTriggerFor]="profileMenu" aria-label="Account menu"><img
                         [src]="isParent ? 'assets/images/avatars/avatar-4.png' : 'assets/images/avatars/avatar-3.png'"
-                        alt=""><span>{{firstName}}</span><mat-icon>expand_more</mat-icon></button></div>
+                        alt=""><span>{{firstName}}</span><mat-icon>expand_more</mat-icon></button>
+                <mat-menu #profileMenu="matMenu" xPosition="before"><button mat-menu-item (click)="go('profile')"><mat-icon>person_outline</mat-icon>My profile</button><button mat-menu-item (click)="logout()"><mat-icon>logout</mat-icon>Log out</button></mat-menu></div>
         </header>
         <main class="portal-content" [ngSwitch]="activeSection">
             <section *ngSwitchCase="'dashboard'">
@@ -180,7 +181,7 @@
                         </div><span class="calendar-rate">{{attendanceRate}}% this month</span>
                     </div>
                     <div class="full-calendar"><span class="weekday"
-                            *ngFor="let d of ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']">{{d}}</span><span
+                            *ngFor="let d of ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']"><span class="wd-full">{{d}}</span><span class="wd-short">{{d.slice(0, 3)}}</span></span><span
                             class="empty-day" *ngFor="let n of [1] "></span><span *ngFor="let day of calendar"
                             [class]="'calendar-day '+day.status"><span>{{day.day}}</span><small
                                 *ngIf="day.status==='present'">Present</small><small

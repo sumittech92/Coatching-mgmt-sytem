@@ -48,12 +48,12 @@ export interface FeeReminderDialogData { rows: ReminderRow[]; isSchool: boolean;
   <button mat-button mat-dialog-close>Close</button>
   <button mat-flat-button color="primary" [disabled]="!nextRow" (click)="sendNext()"><mat-icon>skip_next</mat-icon>{{ nextRow ? 'Send next: ' + nextRow.fee.student : 'All sent today' }}</button>
 </mat-dialog-actions>`,
-  styles: [`:host{display:block}.title{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:700;color:#263447}.title mat-icon{color:#1fa855}
+  styles: [`:host{display:block}.title{display:flex;align-items:center;gap:8px;font-size:clamp(17px, 16.296px + 0.1878vw, 19px);font-weight:700;color:#263447}.title mat-icon{color:#1fa855}
 .content{min-width:min(640px,86vw);max-height:70vh}.intro{font-size:12px;color:#6f7d90;margin:0 0 12px;line-height:1.55}
 .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.bar mat-button-toggle-group{font-size:12px}.progress{margin-left:auto;font-size:12px;color:#6f7d90}
 .list{margin-top:10px;border:1px solid #edf0f3;border-radius:10px}.row{display:grid;grid-template-columns:minmax(0,1.6fr) auto minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border-top:1px solid #f0f2f4}.row:first-child{border-top:0}.row.done{background:#f4fbf6}
-.who strong,.who small{display:block}.who strong{font-size:13px;color:#344256}.who small{font-size:12px;color:#8a96a3;margin-top:2px}.who small.bad{color:#b5443d}
-.amount{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.amount strong{font-size:13px;color:#b5534a}
+.who strong,.who small{display:block}.who strong{font-size:clamp(12px, 11.648px + 0.0939vw, 13px);color:#344256}.who small{font-size:12px;color:#8a96a3;margin-top:2px}.who small.bad{color:#b5443d}
+.amount{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.amount strong{font-size:clamp(12px, 11.648px + 0.0939vw, 13px);color:#b5534a}
 .action{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.sent{display:flex;align-items:center;gap:3px;font-size:12px;color:#1f8a4c}.sent mat-icon{font-size:15px;width:15px;height:15px}
 .wa{font-size:12px;height:32px;color:#178a47;border-color:#9fd8b5}.wa mat-icon{font-size:16px;width:16px;height:16px}
 .preview{margin-top:12px;font-size:12px;color:#536176}.preview summary{cursor:pointer;font-weight:650}.preview pre{white-space:pre-wrap;font:12px/1.55 inherit;background:#effaf2;border-radius:10px;padding:12px;margin-top:8px;color:#29374a}

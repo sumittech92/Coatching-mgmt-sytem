@@ -263,7 +263,7 @@ body {
     background: var(--button) !important;
     border-radius: 8px !important;
     line-height: 2.005 !important;
-    font-size: 16px !important;
+    font-size: clamp(15px, 14.648px + 0.0939vw, 16px) !important;
     color: #fff !important;
     border: none !important;
 }
@@ -294,7 +294,7 @@ body {
 
 mat-label {
     color: #666;
-    font-size: 16px;
+    font-size: clamp(15px, 14.648px + 0.0939vw, 16px);
     line-height: 2.2;
 }
 
@@ -303,7 +303,7 @@ mat-label {
 }
 
 .page-title {
-    font-size: 23px;
+    font-size: clamp(20px, 18.944px + 0.2817vw, 23px);
     font-weight: 400;
     color: #000;
 }
@@ -315,7 +315,7 @@ mat-label {
         margin-top: -10px;
         background-color: #fff;
         padding: 5px;
-        font-size: 14px;
+        font-size: clamp(13px, 12.648px + 0.0939vw, 14px);
         color: #949494;
         z-index: 1;
     }
@@ -329,7 +329,7 @@ mat-label {
 }
 
 .account {
-    font-size: 15px;
+    font-size: clamp(14px, 13.648px + 0.0939vw, 15px);
 }
 
 /* Background */
@@ -342,7 +342,7 @@ mat-label {
 
 .text {
     color: #000;
-    font-size: 16px;
+    font-size: clamp(15px, 14.648px + 0.0939vw, 16px);
 }
 
 .light_mode .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-floating-label {
@@ -378,7 +378,7 @@ mat-label {
 
 body {
     color: var(--ui-ink);
-    font-size: 14px;
+    font-size: clamp(13px, 12.648px + 0.0939vw, 14px);
     line-height: 1.5;
     background: var(--ui-canvas);
 }
@@ -413,27 +413,27 @@ body {
 /* Keep dense records legible on laptop and phone screens. */
 .main-content .table tbody td,
 .portal-content .table tbody td {
-    font-size: 15px !important;
+    font-size: clamp(14px, 13.648px + 0.0939vw, 15px) !important;
 }
 
 .main-content .table thead th,
 .portal-content .table thead th {
-    font-size: 13px !important;
+    font-size: clamp(12px, 11.648px + 0.0939vw, 13px) !important;
 }
 
 .main-content .feature-table tbody td {
-    font-size: 14px !important;
+    font-size: clamp(13px, 12.648px + 0.0939vw, 14px) !important;
 }
 
 .main-content .feature-table thead th {
-    font-size: 13px !important;
+    font-size: clamp(12px, 11.648px + 0.0939vw, 13px) !important;
 }
 
 .main-content .student-row .student-info strong,
 .main-content .student-row .batch-copy strong,
 .main-content .filter-row .mat-mdc-input-element,
 .main-content .toolbar .mat-mdc-input-element {
-    font-size: 14px !important;
+    font-size: clamp(13px, 12.648px + 0.0939vw, 14px) !important;
 }
 
 .mat-mdc-icon-button {
@@ -458,7 +458,7 @@ body {
 
 .table tbody td {
     color: #555d6d;
-    font-size: 14px;
+    font-size: clamp(13px, 12.648px + 0.0939vw, 14px);
 }
 
 @media(max-width:600px) {
@@ -489,7 +489,7 @@ body {
     border: 1px solid #dce2ef;
     border-radius: 8px;
     color: var(--deep);
-    font-size: 14px;
+    font-size: clamp(13px, 12.648px + 0.0939vw, 14px);
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap
@@ -529,7 +529,7 @@ body {
     display: inline-block;
     margin: 10px 3px 2px;
     color: var(--brand);
-    font-size: 14px;
+    font-size: clamp(13px, 12.648px + 0.0939vw, 14px);
     font-weight: 600;
     text-decoration: underline
 }
@@ -551,13 +551,13 @@ body {
 .public-site .public-course p,
 .public-site .course-detail-card>p,
 .public-site .public-feed p {
-    font-size: 15px;
+    font-size: clamp(14px, 13.648px + 0.0939vw, 15px);
     line-height: 1.7
 }
 
 .public-site .section-kicker,
 .public-site .hero-kicker {
-    font-size: 13px;
+    font-size: clamp(12px, 11.648px + 0.0939vw, 13px);
     letter-spacing: 1px
 }
 
@@ -576,7 +576,7 @@ body {
 .public-site .public-gallery-grid figcaption,
 .public-site .public-feed small,
 .public-site .contact-details article p {
-    font-size: 14px
+    font-size: clamp(13px, 12.648px + 0.0939vw, 14px)
 }
 
 @media(max-width:600px) {
@@ -595,8 +595,10 @@ body {
 /* ===== Shared page blocks (reused by owner, teacher, admin pages) ===== */
 /* Title row: h1 + subtitle, actions on the right. Pages override sizes for mobile in their own styles. */
 .page-head,.dashboard-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:20px}
-:is(.page-head,.page-heading,.dashboard-head,.page-header) h1{font-size:25px;color:#202c3e;font-weight:700;margin:8px 0 4px}
-:is(.page-head,.page-heading,.dashboard-head,.page-header) p{font-size:13px;color:#8793a1;margin:0}
+:is(.page-head,.page-heading,.dashboard-head,.page-header) h1{font-size:clamp(21px, 19.592px + 0.3756vw, 25px);color:#202c3e;font-weight:700;margin:8px 0 4px}
+:is(.page-head,.page-heading,.dashboard-head,.page-header) p{font-size:clamp(12px, 11.648px + 0.0939vw, 13px);color:#8793a1;margin:0}
+/* Phones: actions drop below the title instead of squeezing it. */
+@media(max-width:575.98px){.page-head,.dashboard-head{flex-wrap:wrap;align-items:flex-start}.page-head>div:first-child,.dashboard-head>div:first-child{min-width:0;flex:1 1 100%}}
 /* Bordered card for panels, lists and forms. Qualified with .mat-mdc-card to outrank Material's card styles. */
 .mat-mdc-card:is(.panel-card,.list-card,.form-card,.list-panel,.filter-panel,.detail-panel,.composer-card,.post-card){border:1px solid #e9edf2;border-radius:14px;box-shadow:0 4px 18px #23344d08}
 .mat-mdc-card:is(.panel-card,.list-panel,.filter-panel,.detail-panel,.composer-card,.post-card){margin-bottom:14px}
@@ -607,7 +609,7 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
 .auth-page{
   &{min-height:100vh;display:grid;grid-template-columns:minmax(420px,1.06fr) minmax(460px,.94fr);background:#fff}
   .auth-story{position:relative;overflow:hidden;min-height:100vh;padding:36px clamp(34px,6vw,88px);color:#fff;display:flex;flex-direction:column}
-  .auth-brand{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;font-size:22px;font-weight:750;letter-spacing:-1px}
+  .auth-brand{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;font-size:clamp(19px, 17.944px + 0.2817vw, 22px);font-weight:750;letter-spacing:-1px}
   .auth-brand>span:last-child{color:#87a9fc;margin-left:-8px}
   .brand-mark{width:30px;height:30px;border-radius:10px;color:#fff;display:grid;place-items:center;font:700 21px Georgia;letter-spacing:0}
   .story-copy{margin:auto 0;position:relative;z-index:1;max-width:520px;padding:30px 0 12px}
@@ -615,7 +617,7 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .eyebrow{display:flex;align-items:center;gap:9px}
   .eyebrow span{width:18px;height:2px}
   .story-copy h1{font-size:clamp(42px,5vw,64px);line-height:1.07;margin:23px 0 17px}
-  .story-copy>p{max-width:400px;font-size:14px;line-height:1.8}
+  .story-copy>p{max-width:400px;font-size:clamp(13px, 12.648px + 0.0939vw, 14px);line-height:1.8}
   .story-visual{height:280px;position:relative;margin-top:22px;display:flex;align-items:center;justify-content:center}
   .visual-orbit{position:absolute;border:1px solid #ffffff16;border-radius:50%;width:370px;height:220px;transform:rotate(-20deg)}
   .orbit-two{width:490px;height:300px;transform:rotate(20deg)}
@@ -623,7 +625,7 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .visual-card{position:absolute;background:#fff;color:#253644;box-shadow:0 18px 45px #0b0b3b50;border:1px solid #ffffff27;border-radius:13px}
   .card-one{width:238px;padding:17px 18px;left:4%;top:27px}
   .visual-label{font-size:12px;letter-spacing:1px;color:#8f96a6;font-weight:700}
-  .card-one strong{font-size:22px;display:block;margin:6px 0}
+  .card-one strong{font-size:clamp(19px, 17.944px + 0.2817vw, 22px);display:block;margin:6px 0}
   .visual-up{font-size:12px;color:#4a77f5;display:flex;align-items:center;gap:2px}
   .visual-up mat-icon{width:13px;height:13px;font-size:13px}
   .mini-bars{height:40px;display:flex;gap:6px;align-items:flex-end;margin-top:4px}
@@ -632,7 +634,7 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .mini-bars i:nth-child(4n){height:90%;background:#5986fc}
   .mini-bars i:nth-child(2n){height:53%}
   .card-two{right:1%;bottom:34px;padding:13px;display:flex;align-items:center;gap:9px}
-  .student-avatar{width:30px;height:30px;border-radius:50%;background:#f8e5ca;color:#a86823;display:grid;place-items:center;font-weight:700;font-size:13px}
+  .student-avatar{width:30px;height:30px;border-radius:50%;background:#f8e5ca;color:#a86823;display:grid;place-items:center;font-weight:700;font-size:clamp(12px, 11.648px + 0.0939vw, 13px)}
   .card-two strong,.card-two small{display:block}
   .card-two strong{font-size:12px}
   .card-two small{font-size:12px;color:#82909a;margin-top:4px}
@@ -645,8 +647,8 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .auth-form-wrap{width:100%;max-width:390px}
   .mobile-brand{display:none}
   .welcome-tag{margin-bottom:12px}
-  .auth-form-wrap h2{font-weight:680;letter-spacing:-.7px;font-size:27px;margin:0}
-  .auth-subtitle{font-size:14px;color:#8792a0;margin:9px 0 31px}
+  .auth-form-wrap h2{font-weight:680;letter-spacing:-.7px;font-size:clamp(23px, 21.592px + 0.3756vw, 27px);margin:0}
+  .auth-subtitle{font-size:clamp(13px, 12.648px + 0.0939vw, 14px);color:#8792a0;margin:9px 0 31px}
   .auth-label{font-size:12px;font-weight:650;color:#39475a;margin:0 0 7px}
   .auth-field{width:100%;margin-bottom:9px}
   .auth-field mat-icon{color:#9aa6b2;margin-right:8px;font-size:19px}
@@ -689,9 +691,9 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .ws-icon mat-icon{font-size:19px;width:19px;height:19px}
   .workspace-choice button.on .ws-icon{background:var(--ux-blue-600);color:#fff}
   .ws-text{display:flex;flex-direction:column;gap:3px;min-width:0}
-  .ws-text strong{font-size:13px;color:#29394a}
+  .ws-text strong{font-size:clamp(12px, 11.648px + 0.0939vw, 13px);color:#29394a}
   .ws-text small{font-size:11.5px;color:#8693a0;line-height:1.3}
-  .ws-check{position:absolute;top:8px;right:8px;font-size:17px;width:17px;height:17px;color:#c5cddb}
+  .ws-check{position:absolute;top:8px;right:8px;font-size:clamp(15px, 14.296px + 0.1878vw, 17px);width:17px;height:17px;color:#c5cddb}
   .workspace-choice button.on .ws-check{color:var(--ux-blue-600)}
   @media(max-width:420px){
     .workspace-choice{grid-template-columns:1fr}
@@ -722,26 +724,26 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .welcome-tag{display:inline-block;padding:6px 12px;border-radius:999px;background:#fff0f7;color:#e0156f}
   .auth-form-wrap h2{color:var(--ux-navy-900)}
   .password-label a,.auth-help a,.auth-policy a{color:var(--ux-blue-600)}
-  .sign-in-button{position:relative;overflow:hidden;isolation:isolate;border-radius:999px;height:50px;font-size:14px;background:var(--ux-grad-cta);background-size:180% 100%;box-shadow:var(--ux-glow-pink);transition:transform .18s ease,box-shadow .18s ease,background-position .5s ease}
+  .sign-in-button{position:relative;overflow:hidden;isolation:isolate;border-radius:999px;height:50px;font-size:clamp(13px, 12.648px + 0.0939vw, 14px);background:var(--ux-grad-cta);background-size:180% 100%;box-shadow:var(--ux-glow-pink);transition:transform .18s ease,box-shadow .18s ease,background-position .5s ease}
   .sign-in-button::after{content:"";position:absolute;inset:0 auto 0 0;width:40%;z-index:-1;background:linear-gradient(90deg,transparent,#ffffff66,transparent);animation:ux-shine 3.2s ease-in-out infinite}
   .sign-in-button:hover{background:var(--ux-grad-cta);background-size:180% 100%;background-position:100% 0;transform:translateY(-2px);box-shadow:0 16px 36px -8px #ff2d8ab3}
   .sign-in-button mat-icon{transition:transform .2s ease}
   .sign-in-button:hover mat-icon{transform:translateX(4px)}
   .mobile-brand{color:var(--ux-navy-900)}
   .forgot-row{justify-content:center;margin-top:14px}
-  .forgot-row a{font-size:13px}
+  .forgot-row a{font-size:clamp(12px, 11.648px + 0.0939vw, 13px)}
   .demo-box{margin-top:20px;border:1px dashed #cdd6f5;border-radius:12px;background:#f8f9ff}
-  .demo-toggle{width:100%;display:flex;align-items:center;gap:8px;padding:11px 14px 8px;color:#4a5785;font-size:13px;font-weight:600}
+  .demo-toggle{width:100%;display:flex;align-items:center;gap:8px;padding:11px 14px 8px;color:#4a5785;font-size:clamp(12px, 11.648px + 0.0939vw, 13px);font-weight:600}
   .demo-panels{display:grid;padding:0 14px 12px}
   .demo-toggle mat-icon{font-size:18px;width:18px;height:18px;color:var(--ux-blue-600)}
-  .demo-enter{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:42px;padding:0 12px;border:1.5px solid var(--ux-blue-600);border-radius:10px;background:#fff;color:var(--ux-blue-600);font-size:13px;font-weight:700;cursor:pointer}
+  .demo-enter{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:42px;padding:0 12px;border:1.5px solid var(--ux-blue-600);border-radius:10px;background:#fff;color:var(--ux-blue-600);font-size:clamp(12px, 11.648px + 0.0939vw, 13px);font-weight:700;cursor:pointer}
   .demo-enter:hover{background:var(--ux-blue-600);color:#fff}
   .demo-enter mat-icon{font-size:17px;width:17px;height:17px}
   &.signup-page .auth-form-side{align-items: start;padding-top: 34px;padding-bottom: 34px}
   &.signup-page .auth-form-wrap{max-width: 540px}
   &.signup-page .auth-subtitle{margin-bottom: 22px}
   .feature-pills{display: flex;flex-wrap: wrap;gap: 10px;margin-top: 26px}
-  .feature-pill{display: inline-flex;align-items: center;gap: 10px;padding: 8px 16px 8px 8px;border-radius: 999px;border: 1px solid #ffffff2e;background: #ffffff12;backdrop-filter: blur(6px);font-size: 13px;font-weight: 600;color: #fff;animation: ux-fade-up .6s cubic-bezier(.2, .7, .2, 1) both}
+  .feature-pill{display: inline-flex;align-items: center;gap: 10px;padding: 8px 16px 8px 8px;border-radius: 999px;border: 1px solid #ffffff2e;background: #ffffff12;backdrop-filter: blur(6px);font-size: clamp(12px, 11.648px + 0.0939vw, 13px);font-weight: 600;color: #fff;animation: ux-fade-up .6s cubic-bezier(.2, .7, .2, 1) both}
   .feature-pill:nth-child(2){animation-delay: .12s}
   .feature-pill:nth-child(3){animation-delay: .24s}
   .feature-pill .pill-icon{width: 30px;height: 30px;border-radius: 50%;display: grid;place-items: center;color: #fff}
@@ -751,10 +753,10 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .pill-blue{background: linear-gradient(135deg, #3d63f0, #1c34b5)}
   .story-stats{display: flex;gap: 26px;margin-top: 30px;padding-top: 22px;border-top: 1px solid #ffffff1f}
   .story-stats div{display: flex;flex-direction: column;gap: 3px}
-  .story-stats strong{font-size: 24px;font-weight: 800;background: var(--ux-grad-text);-webkit-background-clip: text;background-clip: text;color: transparent}
+  .story-stats strong{font-size: clamp(20px, 18.592px + 0.3756vw, 24px);font-weight: 800;background: var(--ux-grad-text);-webkit-background-clip: text;background-clip: text;color: transparent}
   .story-stats small{font-size: 12px;color: #aab3e6}
   .role-switch{position: relative;display: grid;grid-template-columns: 1fr 1fr;padding: 5px;margin-bottom: 24px;border-radius: 999px;background: #eef2ff}
-  .role-switch a{position: relative;z-index: 1;display: flex;align-items: center;justify-content: center;gap: 7px;height: 40px;border-radius: 999px;color: #5b6890;font-size: 13px;font-weight: 650;text-decoration: none;transition: color .2s ease}
+  .role-switch a{position: relative;z-index: 1;display: flex;align-items: center;justify-content: center;gap: 7px;height: 40px;border-radius: 999px;color: #5b6890;font-size: clamp(12px, 11.648px + 0.0939vw, 13px);font-weight: 650;text-decoration: none;transition: color .2s ease}
   .role-switch a mat-icon{font-size: 17px;width: 17px;height: 17px}
   .role-switch a.active{color: #fff}
   .role-switch .switch-thumb{position: absolute;top: 5px;bottom: 5px;left: 5px;width: calc(50% - 5px);border-radius: 999px;background: linear-gradient(90deg, var(--ux-blue-600), var(--ux-navy-800));box-shadow: var(--ux-glow-blue);transition: transform .3s cubic-bezier(.2, .7, .2, 1)}
@@ -764,7 +766,7 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .field-grid{display: grid;grid-template-columns: 1fr 1fr;column-gap: 14px}
   .field-grid .span-2{grid-column: 1/-1}
   .class-chips{display: grid;grid-template-columns: repeat(6, 1fr);gap: 8px;margin-bottom: 14px}
-  .class-chips button{height: 38px;border-radius: 10px;border: 1px solid #dfe5f5;background: #fff;color: #3a4766;font-size: 13px;font-weight: 650;cursor: pointer;transition: transform .15s ease, background .15s ease, border-color .15s ease, color .15s ease}
+  .class-chips button{height: 38px;border-radius: 10px;border: 1px solid #dfe5f5;background: #fff;color: #3a4766;font-size: clamp(12px, 11.648px + 0.0939vw, 13px);font-weight: 650;cursor: pointer;transition: transform .15s ease, background .15s ease, border-color .15s ease, color .15s ease}
   .class-chips button:hover{border-color: #a7bdff;transform: translateY(-1px)}
   .class-chips button.selected{border-color: transparent;background: var(--ux-grad-cta);color: #fff;box-shadow: 0 6px 16px -6px #ff2d8aa6}
   .terms-row{margin: 4px 0 18px;font-size: 12px;color: #536174}
@@ -774,7 +776,7 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .signup-success{text-align: center;padding: 26px 6px;animation: ux-fade-up .6s cubic-bezier(.2, .7, .2, 1) both}
   .success-badge{background: var(--ux-grad-cta);box-shadow: var(--ux-glow-pink)}
   .signup-success h2{margin-bottom: 10px !important}
-  .signup-success p{font-size: 14px;color: #7e8b99;line-height: 1.7;margin: 0 auto 24px;max-width: 360px}
+  .signup-success p{font-size: clamp(13px, 12.648px + 0.0939vw, 14px);color: #7e8b99;line-height: 1.7;margin: 0 auto 24px;max-width: 360px}
   .signup-success .sign-in-button{max-width: 300px;margin: 0 auto}
   @media(max-width:560px){
     .field-grid{grid-template-columns: 1fr}
@@ -787,13 +789,13 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
     &.signup-page .auth-form-wrap{min-width: 0}
   }
   .workspace-toggle{display: grid;width: max-content;max-width: 100%;grid-template-columns: 1fr 1fr;gap: 6px;padding: 4px;margin: 0 0 18px;border: 1px solid #e4e8f7;border-radius: 12px;background: #fff}
-  .workspace-toggle button{display: flex;align-items: center;justify-content: center;gap: 6px;height: 36px;padding: 0 16px;border: 0;border-radius: 9px;background: transparent;color: #5b6890;font-size: 14px;font-weight: 650;cursor: pointer;transition: background .2s ease, color .2s ease}
+  .workspace-toggle button{display: flex;align-items: center;justify-content: center;gap: 6px;height: 36px;padding: 0 16px;border: 0;border-radius: 9px;background: transparent;color: #5b6890;font-size: clamp(13px, 12.648px + 0.0939vw, 14px);font-weight: 650;cursor: pointer;transition: background .2s ease, color .2s ease}
   .workspace-toggle button mat-icon{font-size: 18px;width: 18px;height: 18px}
   .workspace-toggle button.on{background: #fff0f7;color: #e0156f;box-shadow: inset 0 0 0 1px #ffc0dd}
   .optional{font-weight: 500;color: #8a96a3}
   .recovery-steps{list-style:none;padding:0;margin:30px 0 0;display:grid;gap:12px;max-width:380px}
-  .recovery-steps li{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:14px;border:1px solid #ffffff1f;background:#ffffff0d;color:#aab3e6;font-size:14px;font-weight:600;transition:.25s ease}
-  .recovery-steps li span{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;background:#ffffff14;color:#fff;font-size:13px;font-weight:800}
+  .recovery-steps li{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:14px;border:1px solid #ffffff1f;background:#ffffff0d;color:#aab3e6;font-size:clamp(13px, 12.648px + 0.0939vw, 14px);font-weight:600;transition:.25s ease}
+  .recovery-steps li span{width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;background:#ffffff14;color:#fff;font-size:clamp(12px, 11.648px + 0.0939vw, 13px);font-weight:800}
   .recovery-steps li small{display:block;font-size:12px;font-weight:500;color:#8e97c8;margin-top:2px}
   .recovery-steps li.done span{background:linear-gradient(135deg,#2ee6c8,#0ea5a4)}
   .recovery-steps li.current{border-color:#ffffff40;background:#ffffff1a;color:#fff;box-shadow:0 12px 30px -16px #ff2d8a}
@@ -806,20 +808,20 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .field-error{display:block;font-size:12px;color:#d23b5a;margin:-4px 0 8px}
   .demo-hint{display:flex;align-items:center;gap:7px;padding:9px 12px;margin:0 0 18px;border-radius:10px;background:#eef2ff;color:var(--ux-blue-600);font-size:12px}
   .demo-hint mat-icon{font-size:16px;width:16px;height:16px}
-  .back-link{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:22px;color:var(--ux-blue-600);font-size:13px;font-weight:650;text-decoration:none}
+  .back-link{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:22px;color:var(--ux-blue-600);font-size:clamp(12px, 11.648px + 0.0939vw, 13px);font-weight:650;text-decoration:none}
   .back-link mat-icon{font-size:16px;width:16px;height:16px;transition:transform .2s}
   .back-link:hover mat-icon{transform:translateX(-3px)}
   .otp-wrap{margin:4px 0 14px}
-  .otp-box{width:62px!important;height:62px!important;margin:0 12px 0 0!important;border-radius:14px!important;border:1.5px solid #dfe5f5!important;font-size:24px!important;font-weight:800;color:var(--ux-navy-900);transition:border-color .15s,box-shadow .15s,transform .15s}
+  .otp-box{width:62px!important;height:62px!important;margin:0 12px 0 0!important;border-radius:14px!important;border:1.5px solid #dfe5f5!important;font-size:clamp(20px, 18.592px + 0.3756vw, 24px)!important;font-weight:800;color:var(--ux-navy-900);transition:border-color .15s,box-shadow .15s,transform .15s}
   .otp-box:focus{outline:0;border-color:var(--ux-blue-600)!important;box-shadow:0 0 0 4px #3d63f026;transform:translateY(-2px)}
   .otp-wrap.invalid .otp-box{border-color:#d23b5a!important;animation:otp-shake .35s ease}
-  .resend-row{display:flex;align-items:center;justify-content:space-between;margin:0 0 20px;font-size:13px;color:#7e8b99}
+  .resend-row{display:flex;align-items:center;justify-content:space-between;margin:0 0 20px;font-size:clamp(12px, 11.648px + 0.0939vw, 13px);color:#7e8b99}
   .resend-row button{border:0;background:none;padding:0;color:var(--ux-blue-600);font-weight:700;cursor:pointer}
   .resend-row button:disabled{color:#a4aeb8;cursor:default}
   .recovery-success{text-align:center;animation:ux-fade-up .6s cubic-bezier(.2,.7,.2,1) both}
   .success-badge{width:78px;height:78px;margin:0 auto 20px;border-radius:50%;display:grid;place-items:center;background:var(--ux-grad-cta);color:#fff;box-shadow:var(--ux-glow-pink);animation:ux-float 4s ease-in-out infinite}
   .success-badge mat-icon{font-size:38px;width:38px;height:38px}
-  .recovery-success p{font-size:14px;color:#7e8b99;line-height:1.7;margin:10px auto 24px;max-width:340px}
+  .recovery-success p{font-size:clamp(13px, 12.648px + 0.0939vw, 14px);color:#7e8b99;line-height:1.7;margin:10px auto 24px;max-width:340px}
   @media(max-width:420px){
     .otp-box{width:52px!important;height:52px!important;margin-right:8px!important}
   }
@@ -841,3 +843,101 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
 .auth-page .auth-brand{cursor:default;user-select:none;-webkit-tap-highlight-color:transparent}
 .auth-page .platform-note{margin:0 0 14px;font-size:12px;color:#9aa5b1}
 .auth-page .platform-note a{color:#9aa5b1;text-decoration:underline}
+
+/* Phones: every .table (see StackTableDirective) becomes a list of cards, each cell labelled by its column header. */
+@media (max-width: 575.98px) {
+    table.stack-mobile {
+        min-width: 0 !important;
+        width: 100% !important;
+        border-collapse: separate;
+    }
+
+    table.stack-mobile thead {
+        display: none;
+    }
+
+    table.stack-mobile tbody,
+    table.stack-mobile tbody tr,
+    table.stack-mobile tbody td {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    table.stack-mobile tbody tr {
+        position: relative;
+        margin-bottom: 10px;
+        padding: 4px 14px;
+        border: 1px solid #e6ebf0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(31, 48, 67, .05);
+    }
+
+    table.stack-mobile tbody td {
+        position: relative;
+        min-height: 36px;
+        padding: 9px 0 9px 40% !important;
+        border: 0 !important;
+        border-bottom: 1px dashed #edf0f3 !important;
+        text-align: left !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+
+    table.stack-mobile tbody td:last-child {
+        border-bottom: 0 !important;
+    }
+
+    table.stack-mobile tbody td[data-label]::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        top: 10px;
+        width: calc(40% - 12px);
+        color: #8592a3;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        line-height: 1.35;
+        text-transform: uppercase;
+    }
+
+    /* The first column (usually the name) is the card title. */
+    table.stack-mobile tbody td:first-child {
+        padding-top: 12px !important;
+        border-bottom-style: solid !important;
+        font-weight: 600;
+    }
+
+    table.stack-mobile tbody td:first-child::before {
+        display: none;
+    }
+
+    table.stack-mobile tbody td:first-child,
+    table.stack-mobile tbody td:not([data-label]),
+    table.stack-mobile tbody td.stack-full {
+        padding-left: 0 !important;
+    }
+
+    /* Action columns usually have no header: keep their buttons together on one line. */
+    table.stack-mobile tbody td:not([data-label]):not(.stack-full) {
+        display: flex !important;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+
+    table.stack-mobile tbody td .d-flex,
+    table.stack-mobile tbody td [class*="actions"] {
+        flex-wrap: wrap;
+    }
+
+    table.stack-mobile tfoot {
+        display: block;
+    }
+
+    .table-responsive:has(> table.stack-mobile) {
+        overflow: visible;
+    }
+}

@@ -6,7 +6,7 @@ import { ToastService } from '../core/toast.service';
 interface AttendanceRecord { id: string; name: string; course: string; batch: string; teacher: string; photo: string; status: 'Present'|'Absent'|'Late'|'Leave'; percent: number; }
 @Component({ selector: 'app-attendance-page', templateUrl: './attendance-page.component.html', styleUrls: ['./attendance-page.component.scss'] })
 export class AttendancePageComponent {
-  readonly today = new Date(); date = new Date(2026, 8, 28); batch = 'All batches'; teacher = 'All teachers'; view: 'daily'|'monthly' = 'daily'; history?: AttendanceRecord;
+  readonly today = new Date(); date = new Date(2026, 8, 28); batch = 'All batches'; teachers: string[] = []; view: 'daily'|'monthly' = 'daily'; history?: AttendanceRecord;
   private readonly coachingRecords: AttendanceRecord[] = [
     { id: 'NS-2401', name: 'Aarav Sharma', course: 'Class 12 Science', batch: 'Physics · Morning', teacher: 'Priya Nair', photo: 'AS', status: 'Present', percent: 96 },
     { id: 'NS-2402', name: 'Meera Kapoor', course: 'Class 11 Science', batch: 'Chemistry · Evening', teacher: 'Ankit Rao', photo: 'MK', status: 'Present', percent: 91 },
@@ -40,7 +40,7 @@ export class AttendancePageComponent {
   get absent(): number { return this.visible.filter(item => item.status === 'Absent').length; }
   get marked(): number { return this.visible.length; }
   get average(): number { return Math.round(this.records.reduce((sum, item) => sum + item.percent, 0) / this.records.length); }
-  get visible(): AttendanceRecord[] { return this.records.filter(item => (this.batch === 'All batches' || this.group(item) === this.batch) && (this.isTeacher || this.teacher === 'All teachers' || item.teacher === this.teacher)); }
+  get visible(): AttendanceRecord[] { return this.records.filter(item => (this.batch === 'All batches' || this.group(item) === this.batch) && (this.isTeacher || !this.teachers.length || this.teachers.includes(item.teacher))); }
   mark(record: AttendanceRecord, status: AttendanceRecord['status']): void { record.status = status; }
   markAll(status: AttendanceRecord['status']): void { const rows = this.visible; if (!rows.length) { this.toast.warning('No students in view to mark.'); return; } rows.forEach(item => item.status = status); this.toast.success(`Marked ${rows.length} student${rows.length === 1 ? '' : 's'} ${status.toLowerCase()}.`); }
   setView(value: 'daily'|'monthly'): void { this.view = value; this.history = undefined; }
