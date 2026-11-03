@@ -30,10 +30,7 @@ export class HeaderComponent {
   }
   get profilePath(): string { return this.auth.role === 'Student' || this.auth.role === 'Parent' ? '/student/profile' : '/account/profile'; }
   /** Panel-level settings page, where the role has one. */
-  get settingsPath(): string | null {
-    if (this.auth.role === 'Super Admin') return '/super-admin/settings';
-    return this.auth.role === 'Owner' ? '/client/settings' : null;
-  }
+  get settingsPath(): string | null { return this.auth.role === 'Super Admin' ? '/super-admin/settings' : null; }
   logout(): void { this.signOutFlow.signOut(); }
   toggleSidebar(): void { this.sidebarservice.setSidebarState(!this.sidebarservice.getSidebarState()); }
   openSearch(): void { /* Search is provided on list screens. */ }

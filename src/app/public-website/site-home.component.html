@@ -1,0 +1,58 @@
+<div class="directory-page">
+  <header class="directory-header">
+    <a class="directory-brand" routerLink="/"><span class="brand-mark">E</span> EduNexa<span>.</span></a>
+    <a mat-stroked-button routerLink="/login"><mat-icon>login</mat-icon>Sign in</a>
+  </header>
+
+  <section class="directory-hero">
+    <div class="hero-kicker">COACHING CENTRES &amp; SCHOOLS</div>
+    <h1>Find the right place<br /><em>for your child to learn.</em></h1>
+    <p>Visit an institute's website to see its classes, teachers and results, and send an admission enquiry.</p>
+    <div class="directory-toolbar">
+      <mat-form-field appearance="outline" class="directory-search">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [(ngModel)]="search" placeholder="Search by name or city" aria-label="Search institutes" />
+      </mat-form-field>
+      <div class="type-filter" role="group" aria-label="Institute type">
+        <button type="button" [class.active]="type === ''" (click)="type = ''">All <small>{{ sites.length }}</small></button>
+        <button type="button" [class.active]="type === 'coaching'" (click)="type = 'coaching'">Coaching <small>{{ count('coaching') }}</small></button>
+        <button type="button" [class.active]="type === 'school'" (click)="type = 'school'">Schools <small>{{ count('school') }}</small></button>
+      </div>
+    </div>
+  </section>
+
+  <main class="directory-main">
+    <app-loading-state *ngIf="state === 'loading'" label="Loading institutes…"></app-loading-state>
+    <div class="directory-error" *ngIf="state === 'error'">
+      <app-empty-state icon="cloud_off" title="Could not load institutes" description="Check your connection and try again."></app-empty-state>
+      <button mat-flat-button color="primary" (click)="loadDirectory()"><mat-icon>refresh</mat-icon>Try again</button>
+    </div>
+    <ng-container *ngIf="state === 'ready'">
+      <div class="site-grid" *ngIf="filtered.length; else noSites">
+        <a class="site-card" *ngFor="let site of filtered" [routerLink]="['/site', site.siteSlug]" [style.--accent]="site.primary || null">
+          <span class="site-logo">
+            <img *ngIf="logoOf(site) as logo; else initial" [src]="logo" [alt]="site.name + ' logo'" />
+            <ng-template #initial>{{ site.name.charAt(0) }}</ng-template>
+          </span>
+          <span class="site-info">
+            <strong>{{ site.name }}</strong>
+            <small *ngIf="site.address"><mat-icon>location_on</mat-icon>{{ site.address }}</small>
+          </span>
+          <span class="site-type" [class.school]="site.workType === 'school'">{{ site.workType === 'school' ? 'School' : 'Coaching' }}</span>
+          <mat-icon class="site-arrow">arrow_forward</mat-icon>
+        </a>
+      </div>
+      <ng-template #noSites>
+        <app-empty-state icon="travel_explore" [title]="sites.length ? 'No institutes match your search' : 'No institutes yet'" [description]="sites.length ? 'Try another name or city, or clear the filter.' : 'Institutes appear here once they publish their website.'"></app-empty-state>
+      </ng-template>
+    </ng-container>
+
+    <section class="sample-sites">
+      <h2>Sample websites</h2>
+      <p>See what an institute website looks like.</p>
+      <div class="sample-links">
+        <a *ngFor="let sample of samples" [routerLink]="sample.path"><mat-icon>{{ sample.type === 'School' ? 'account_balance' : 'school' }}</mat-icon>{{ sample.name }}<small>{{ sample.type }}</small></a>
+      </div>
+    </section>
+  </main>
+</div>

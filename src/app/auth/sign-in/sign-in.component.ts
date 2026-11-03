@@ -64,7 +64,8 @@ export class SignInComponent {
           this.toast.error(this.errorMessage);
           return;
         }
-        this.tenant.setBusinessType(this.businessType, this.rememberMe);
+        // The backend only allows an account to manage records of its own work type.
+        this.tenant.setBusinessType(user.workType || this.businessType, this.rememberMe);
         this.auth.startSession(user, accessToken, this.rememberMe);
         this.toast.success(`Signed in to the ${this.panelLabel} panel.`);
         this.goHome();

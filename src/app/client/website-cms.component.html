@@ -4,19 +4,27 @@
       <app-breadcrumbs [items]="['Client', 'Website']"></app-breadcrumbs>
       <h1>Website management</h1>
       <p>Shape the public website for {{profile.settings['name']}}.</p>
+      <p class="site-status" *ngIf="isLive && ownerSite">
+        <app-status-badge [label]="ownerSite.isPublished ? 'Published' : 'Hidden'" [tone]="ownerSite.isPublished ? 'success' : 'warning'"></app-status-badge>
+        <span>{{ ownerSite.isPublished ? 'Visitors can see your website and send enquiries.' : 'Only you can see this. Publish to make it visible and take enquiries.' }}</span>
+        <span *ngIf="ownerSite.customDomain">Domain: <strong>{{ ownerSite.customDomain }}</strong></span>
+      </p>
+      <p class="site-link" *ngIf="siteSlug"><mat-icon>link</mat-icon><span>Your website: <a [href]="sitePath" target="_blank" rel="noopener">{{ siteUrl }}</a></span><button type="button" class="copy-link" (click)="copyLink()"><mat-icon>content_copy</mat-icon>Copy link</button></p>
     </div>
     <div class="heading-actions">
-      <button mat-stroked-button (click)="preview()"><mat-icon>open_in_new</mat-icon> Preview website</button
-      ><button mat-flat-button color="primary" (click)="save()">
+      <button mat-stroked-button *ngIf="isLive && ownerSite" [disabled]="publishing || loading" (click)="setPublished(!ownerSite.isPublished)"><mat-icon>{{ ownerSite.isPublished ? 'visibility_off' : 'public' }}</mat-icon> {{ publishing ? 'Please wait…' : ownerSite.isPublished ? 'Hide website' : 'Publish website' }}</button
+      ><button mat-stroked-button (click)="preview()"><mat-icon>open_in_new</mat-icon> Preview website</button
+      ><button mat-flat-button color="primary" [disabled]="loading" (click)="save()">
         <mat-icon>{{ saving ? "sync" : "save" }}</mat-icon
         >{{ saving ? "Saving…" : "Save changes" }}
       </button>
     </div>
   </div>
   <div class="save-message" *ngIf="saved">
-    <mat-icon>check_circle</mat-icon>Your website changes are saved in this demo.
+    <mat-icon>check_circle</mat-icon>{{ isLive ? 'Your website changes are saved.' : 'Your website changes are saved in this demo.' }}
   </div>
-  <div class="cms-layout">
+  <app-loading-state *ngIf="loading" label="Loading your website…"></app-loading-state>
+  <div class="cms-layout" *ngIf="!loading">
     <aside class="cms-nav">
       <div class="cms-nav-title">WEBSITE CONTENT</div>
       <button
@@ -27,9 +35,9 @@
         <mat-icon>{{ section.icon }}</mat-icon
         >{{ section.label }}<mat-icon class="nav-arrow">chevron_right</mat-icon>
       </button>
-      <div class="website-status">
+      <div class="website-status" [class.hidden-site]="isLive && !ownerSite?.isPublished">
         <span class="live-dot"></span
-        ><span><strong>Website is live</strong><small>{{isSchool ? 'greenfield-school' : 'northstar-academy'}}.edunexa.site</small></span>
+        ><span><strong>{{ !isLive ? 'Sample website' : ownerSite?.isPublished ? 'Website is live' : 'Website is hidden' }}</strong><small>{{ siteHost }}</small></span>
       </div>
     </aside>
     <main class="cms-content">
@@ -38,7 +46,7 @@
           <span class="content-eyebrow">EDITING SECTION</span>
           <h2>{{ activeLabel }}</h2>
         </div>
-        <span class="autosave"><mat-icon>cloud_done</mat-icon>Saved just now</span>
+        <span class="autosave" *ngIf="saved"><mat-icon>cloud_done</mat-icon>Saved just now</span>
       </header>
       <section *ngIf="activeSection === 'settings'">
         <mat-card class="cms-card"
@@ -54,7 +62,7 @@
               <div class="brand-uploads">
                 <div class="upload-preview logo-preview">
                   <img [src]="profile.settings['logo']" alt="Institute logo preview" /><label
-                    >Change logo<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" (change)="upload('logo', $event)"
+                    >Change logo<input type="file" accept="image/png,image/jpeg,image/webp" (change)="upload('logo', $event)"
                   /></label>
                 </div>
                 <div class="upload-preview favicon-preview">
@@ -114,6 +122,46 @@
               <div class="form-footer">
                 <span>Changes update your public website preview.</span
                 ><button mat-flat-button color="primary" type="submit">Save settings</button>
+              </div>
+            </form></mat-card-content
+          ></mat-card
+        >
+        <mat-card class="cms-card institute-card"
+          ><mat-card-content
+            ><div class="section-intro">
+              <span class="section-icon"><mat-icon>account_balance</mat-icon></span>
+              <div>
+                <h3>{{ isSchool ? 'School details' : 'Institute details' }}</h3>
+                <p>{{ isSchool ? 'Affiliation and codes shown on the website and fee receipts.' : 'Registration details shown on the website and fee receipts.' }}</p>
+              </div>
+            </div>
+            <form (ngSubmit)="save()">
+              <div class="row g-3">
+                <div class="col-md-6"><label class="field-label">Year established</label><mat-form-field appearance="outline" class="w-100"><input matInput name="established" maxlength="4" placeholder="e.g. 2014" [(ngModel)]="profile.settings['established']" inputmode="numeric" /><mat-error>{{ errorFor('established') }}</mat-error></mat-form-field></div>
+                <ng-container *ngIf="!isSchool">
+                <div class="col-md-6"><label class="field-label">Registration no. (Udyam / Shops &amp; Establishment)</label><mat-form-field appearance="outline" class="w-100"><input matInput name="registrationNo" maxlength="40" placeholder="e.g. UDYAM-UP-32-0012345" [(ngModel)]="profile.settings['registrationNo']" /><mat-error>{{ errorFor('registrationNo') }}</mat-error></mat-form-field></div>
+                <div class="col-md-6"><label class="field-label">GSTIN</label><mat-form-field appearance="outline" class="w-100"><input matInput name="gstin" maxlength="15" placeholder="e.g. 09ABCDE1234F1Z5 (optional)" [(ngModel)]="profile.settings['gstin']" /><mat-error>{{ errorFor('gstin') }}</mat-error></mat-form-field></div>
+                <div class="col-md-6"><label class="field-label">Boards you prepare for</label><mat-form-field appearance="outline" class="w-100"><mat-select name="boards" multiple [(ngModel)]="boardsValue"><mat-option *ngFor="let option of boards" [value]="option">{{ option }}</mat-option></mat-select></mat-form-field></div>
+                </ng-container>
+                <ng-container *ngIf="isSchool">
+                <div class="col-md-6"><label class="field-label">Affiliation board *</label><mat-form-field appearance="outline" class="w-100"><mat-select name="board" [(ngModel)]="profile.settings['board']"><mat-option *ngFor="let option of schoolBoards" [value]="option">{{ option }}</mat-option></mat-select><mat-error>{{ errorFor('board') }}</mat-error></mat-form-field></div>
+                <div class="col-md-6"><label class="field-label">Affiliation no.</label><mat-form-field appearance="outline" class="w-100"><input matInput name="affiliationNo" maxlength="20" placeholder="e.g. 830412" [(ngModel)]="profile.settings['affiliationNo']" /><mat-error>{{ errorFor('affiliationNo') }}</mat-error></mat-form-field></div>
+                <div class="col-md-6"><label class="field-label">UDISE code</label><mat-form-field appearance="outline" class="w-100"><input matInput name="udise" maxlength="11" placeholder="11-digit UDISE+ code" [(ngModel)]="profile.settings['udise']" inputmode="numeric" /><mat-error>{{ errorFor('udise') }}</mat-error></mat-form-field></div>
+                </ng-container>
+              </div>
+              <div class="sub-heading"><mat-icon>badge</mat-icon><div><h4>{{ isSchool ? 'Principal' : 'Head of institute' }}</h4><p>{{ isSchool ? 'Signs report cards, notices and fee receipts; shown on the About page.' : 'The person responsible for the centre; shown on the About page.' }}</p></div></div>
+              <div class="row g-3">
+                <div class="col-md-6"><label class="field-label">{{ isSchool ? 'Principal name' : 'Full name' }} *</label><mat-form-field appearance="outline" class="w-100"><input matInput name="headName" maxlength="60" placeholder="e.g. Kavita Menon" [(ngModel)]="profile.settings['headName']" /><mat-error>{{ errorFor('headName') }}</mat-error></mat-form-field></div>
+                <div class="col-md-6" *ngIf="!isSchool"><label class="field-label">Role *</label><mat-form-field appearance="outline" class="w-100"><mat-select name="headTitle" [(ngModel)]="profile.settings['headTitle']"><mat-option *ngFor="let option of headTitles" [value]="option">{{ option }}</mat-option></mat-select><mat-error>{{ errorFor('headTitle') }}</mat-error></mat-form-field></div>
+                <div class="col-md-6"><label class="field-label">Mobile *</label><mat-form-field appearance="outline" class="w-100"><input matInput name="headPhone" maxlength="10" placeholder="9876543210" [(ngModel)]="profile.settings['headPhone']" type="tel" inputmode="numeric" /><mat-error>{{ errorFor('headPhone') }}</mat-error></mat-form-field></div>
+                <div class="col-md-6"><label class="field-label">Email *</label><mat-form-field appearance="outline" class="w-100"><input matInput name="headEmail" maxlength="120" placeholder="head@institute.in" [(ngModel)]="profile.settings['headEmail']" type="email" /><mat-error>{{ errorFor('headEmail') }}</mat-error></mat-form-field></div>
+              </div>
+              <div class="sub-heading"><mat-icon>event_repeat</mat-icon><div><h4>Session &amp; classes</h4><p>Defaults used for {{ isSchool ? 'classes, exams' : 'batches' }} and fee reminders; shown on the About page.</p></div></div>
+              <div class="row g-3">
+                <div class="col-md-6"><label class="field-label">Academic session</label><mat-form-field appearance="outline" class="w-100"><mat-select name="session" [(ngModel)]="profile.settings['session']"><mat-option *ngFor="let option of sessions" [value]="option">{{ option }}</mat-option></mat-select><mat-error>{{ errorFor('session') }}</mat-error></mat-form-field></div>
+                <div class="col-md-6"><label class="field-label">Fee cycle</label><mat-form-field appearance="outline" class="w-100"><mat-select name="feeCycle" [(ngModel)]="profile.settings['feeCycle']"><mat-option *ngFor="let option of feeCycles" [value]="option">{{ option }}</mat-option></mat-select><mat-error>{{ errorFor('feeCycle') }}</mat-error></mat-form-field></div>
+                <div class="col-md-3"><label class="field-label">Classes from</label><mat-form-field appearance="outline" class="w-100"><mat-select name="classesFrom" [(ngModel)]="profile.settings['classesFrom']"><mat-option *ngFor="let option of classOptions" [value]="option">{{ option }}</mat-option></mat-select><mat-error>{{ errorFor('classesFrom') }}</mat-error></mat-form-field></div>
+                <div class="col-md-3"><label class="field-label">Classes to</label><mat-form-field appearance="outline" class="w-100"><mat-select name="classesTo" [(ngModel)]="profile.settings['classesTo']"><mat-option *ngFor="let option of classOptions" [value]="option">{{ option }}</mat-option></mat-select><mat-error>{{ errorFor('classesTo') }}</mat-error></mat-form-field></div>
               </div>
             </form></mat-card-content
           ></mat-card

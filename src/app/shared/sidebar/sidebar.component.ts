@@ -50,7 +50,7 @@ export class SidebarComponent {
       link('Attendance', 'event_available', '/client/attendance', 'DAILY'), link('Fees', 'payments', '/client/fees', 'DAILY'),
       link('Exams', 'quiz', '/client/exams', 'ASSESSMENT'), link('Results', 'emoji_events', '/client/results', 'ASSESSMENT'), link('Timetable', 'calendar_month', '/client/timetable', 'ASSESSMENT'), link('Library', 'local_library', '/client/library', 'ASSESSMENT'),
       link('Notices', 'campaign', '/client/notices', 'COMMUNICATION'), link('Events', 'celebration', '/client/events', 'COMMUNICATION'), link('Gallery', 'photo_library', '/client/gallery', 'COMMUNICATION'),
-      link('Reports', 'bar_chart', '/client/reports', 'SETTINGS'), link('Website', 'language', '/client/website', 'SETTINGS'), link('Settings', 'settings', '/client/settings', 'SETTINGS'), link('My profile', 'account_circle', '/account/profile', 'SETTINGS')
+      link('Reports', 'bar_chart', '/client/reports', 'SETTINGS'), link('Website', 'language', '/client/website', 'SETTINGS'), link('My profile', 'account_circle', '/account/profile', 'SETTINGS')
     ]);
     return this.stableNavigation('coaching-owner', [
       link('Dashboard', 'space_dashboard', '/client/dashboard', 'WORKSPACE'),
@@ -59,7 +59,7 @@ export class SidebarComponent {
       link('Fees', 'payments', '/client/fees', 'FINANCE'),
       link('Tests', 'quiz', '/client/tests', 'ASSESSMENT'), link('Results', 'emoji_events', '/client/results', 'ASSESSMENT'), link('Study Materials', 'folder_open', '/client/materials', 'ASSESSMENT'), link('Library', 'local_library', '/client/library', 'ASSESSMENT'),
       link('Notices', 'campaign', '/client/notices', 'COMMUNICATION'), link('Gallery', 'photo_library', '/client/gallery', 'COMMUNICATION'),
-      link('Reports', 'bar_chart', '/client/reports', 'SETTINGS'), link('Website', 'language', '/client/website', 'SETTINGS'), link('Settings', 'settings', '/client/settings', 'SETTINGS'), link('My profile', 'account_circle', '/account/profile', 'SETTINGS')
+      link('Reports', 'bar_chart', '/client/reports', 'SETTINGS'), link('Website', 'language', '/client/website', 'SETTINGS'), link('My profile', 'account_circle', '/account/profile', 'SETTINGS')
     ]);
   }
   private stableNavigation(key: string, links: { label: string; icon: string; route: string; section: string }[]): { label: string; icon: string; route: string; section: string }[] {

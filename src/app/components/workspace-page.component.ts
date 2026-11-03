@@ -11,7 +11,7 @@ export class WorkspacePageComponent {
     { name: 'Rohan Verma', detail: 'Class 12 · Mathematics', date: 'Yesterday', amount: '₹2,500', status: 'Paid', tone: 'success' as const, initials: 'RV', color: 'blue' }
   ];
   constructor(public tenant: TenantContextService, private toast: ToastService) {}
-  switchBusiness(type: BusinessType): void { if (this.tenant.current.businessType === type) return; this.tenant.setBusinessType(type); this.toast.info(`Switched to the ${type === 'coaching' ? 'coaching' : 'clothing'} workspace.`); }
+  switchBusiness(type: BusinessType): void { if (this.tenant.isLocked || this.tenant.current.businessType === type) return; this.tenant.setBusinessType(type); this.toast.info(`Switched to the ${type === 'coaching' ? 'coaching' : 'clothing'} workspace.`); }
   get heading(): string {
     if (location.pathname.startsWith('/super-admin')) return 'Platform overview';
     if (location.pathname.startsWith('/student')) return 'My learning';

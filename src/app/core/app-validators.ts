@@ -54,6 +54,9 @@ export const isMobile = (value: string): boolean => PATTERNS.mobile.test(digitsO
 export const normalizeMobile = (value: string): string => digitsOnly(value);
 
 /** One message per control, in priority order. Use in <mat-error>{{ errorFor(control, 'Label') }}</mat-error>. */
+/** "Year established" -> "year established", but acronyms such as GSTIN or UDISE keep their capitals. */
+const lowerLabel = (label: string): string => label.split(' ').map(word => /^[A-Z0-9]{2,}$/.test(word) ? word : word.toLowerCase()).join(' ');
+
 export function validationMessage(control: AbstractControl | null | undefined, label: string): string {
   const errors = control?.errors;
   if (!errors) return '';
@@ -70,6 +73,6 @@ export function validationMessage(control: AbstractControl | null | undefined, l
   if (errors['positive']) return `${label} must be greater than 0.`;
   if (errors['nonNegative']) return `${label} cannot be negative.`;
   if (errors['url']) return 'Enter a valid link starting with https:// or /.';
-  if (errors['pattern']) return `Enter a valid ${label.toLowerCase()}.`;
-  return `Check ${label.toLowerCase()}.`;
+  if (errors['pattern']) return `Enter a valid ${lowerLabel(label)}.`;
+  return `Check ${lowerLabel(label)}.`;
 }

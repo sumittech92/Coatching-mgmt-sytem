@@ -3,7 +3,7 @@ import { FormBuilder, ValidatorFn, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { AppValidators, validationMessage } from '../../core/app-validators';
 import { ToastService } from '../../core/toast.service';
-export interface RecordField { key: string; label: string; type?: 'text'|'email'|'phone'|'number'|'date'|'select'|'multiselect'|'textarea'|'file'|'tags'; options?: string[]; required?: boolean; hint?: string; }
+export interface RecordField { key: string; label: string; type?: 'text'|'email'|'phone'|'number'|'password'|'date'|'select'|'multiselect'|'textarea'|'file'|'tags'; options?: string[]; required?: boolean; hint?: string; }
 export interface RecordDialogData { title: string; submitLabel: string; fields: RecordField[]; record?: Record<string, unknown>; readonly?: boolean;
   /** Toast shown after a valid save. Defaults to "Saved successfully."; pass '' when the caller shows its own. */
   successMessage?: string; }
@@ -16,7 +16,7 @@ export class RecordDialogComponent {
     this.form = this.fb.group(controls);
   }
   isPhone(field: RecordField): boolean { return RecordDialogComponent.phoneField(field); }
-  inputType(field: RecordField): string { return this.isPhone(field) ? 'tel' : field.type === 'email' || field.type === 'number' ? field.type : 'text'; }
+  inputType(field: RecordField): string { return this.isPhone(field) ? 'tel' : field.type === 'email' || field.type === 'number' || field.type === 'password' ? field.type : 'text'; }
   /** Example text for every field type, so empty fields show what to enter. */
   placeholderFor(field: RecordField): string {
     const label = field.label.replace(/\s*\(.*\)$/, '').toLowerCase();
@@ -26,6 +26,7 @@ export class RecordDialogComponent {
     if (field.type === 'multiselect') return `Select one or more ${label}`;
     if (field.type === 'tags') return 'Separate items with commas';
     if (field.type === 'date') return 'DD/MM/YYYY';
+    if (field.type === 'password') return 'At least 8 characters';
     if (field.type === 'number') return 'e.g. 100';
     if (field.type === 'textarea') return `Add ${label}`;
     return `Enter ${label}`;
@@ -40,6 +41,7 @@ export class RecordDialogComponent {
     if (RecordDialogComponent.phoneField(field)) list.push(AppValidators.mobile);
     if (key.includes('pincode')) list.push(AppValidators.pincode);
     if (/(full name|parent|guardian|father|mother|owner)/i.test(field.label) && !/(email|phone|mobile|contact)/i.test(field.label)) list.push(AppValidators.personName);
+    if (field.type === 'password') list.push(AppValidators.password);
     if (field.type === 'number') list.push(/(amount|price|rent|fee|mrp)/.test(key) ? AppValidators.positive : AppValidators.nonNegative);
     if (/(url|link)$/.test(key)) list.push(AppValidators.url);
     if (!field.type || field.type === 'text' || field.type === 'email' || field.type === 'phone') list.push(Validators.maxLength(120));

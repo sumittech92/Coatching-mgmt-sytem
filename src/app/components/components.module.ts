@@ -11,7 +11,6 @@ import { SuperAdminPageComponent } from '../super-admin/super-admin-page.compone
 import { StudentsPageComponent } from '../client/students-page.component';
 import { ClientDashboardComponent } from '../client/client-dashboard.component';
 import { ClientSectionComponent } from '../client/client-section.component';
-import { InstituteSettingsComponent } from '../client/institute-settings.component';
 import { ClientManagementComponent } from '../client/management/client-management.component';
 import { RecordDialogComponent } from '../client/management/record-dialog.component';
 import { AttendancePageComponent } from '../client/attendance-page.component';
@@ -24,5 +23,5 @@ import { AccountSettingsComponent } from './account-settings/account-settings.co
 import { ModulePageComponent } from '../client/modules/module-page.component';
 import { LibraryPageComponent } from '../client/library/library-page.component';
 import { FeeReminderDialogComponent } from '../client/fee-reminder-dialog.component';
-@NgModule({ declarations: [InstituteSettingsComponent, LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
+@NgModule({ declarations: [LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
 export class ComponentsModule {}

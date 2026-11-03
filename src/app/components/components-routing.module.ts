@@ -6,7 +6,6 @@ import { SuperAdminPageComponent } from '../super-admin/super-admin-page.compone
 import { StudentsPageComponent } from '../client/students-page.component';
 import { ClientDashboardComponent } from '../client/client-dashboard.component';
 import { ClientSectionComponent } from '../client/client-section.component';
-import { InstituteSettingsComponent } from '../client/institute-settings.component';
 import { ClientManagementComponent } from '../client/management/client-management.component';
 import { RecordDialogComponent } from '../client/management/record-dialog.component';
 import { AttendancePageComponent } from '../client/attendance-page.component';
@@ -15,6 +14,7 @@ import { WebsiteCmsComponent } from '../client/website-cms.component';
 import { ShopDashboardComponent } from '../shop/shop-dashboard.component';
 import { ShopManagementComponent } from '../shop/shop-management.component';
 import { ShopBillingComponent } from '../shop/shop-billing.component';
+import { ShopWorkspaceGuard } from '../core/workspace.guard';
 import { RoleAccessGuard } from '../core/role-access.guard';
 import { AccountSettingsComponent } from './account-settings/account-settings.component';
 import { ModulePageComponent } from '../client/modules/module-page.component';
@@ -68,7 +68,8 @@ const routes: Routes = [
   { path: 'client/results', component: ClientManagementComponent },
   { path: 'client/materials', component: ClientManagementComponent },
   { path: 'client/website', component: WebsiteCmsComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
-  { path: 'client/settings', component: InstituteSettingsComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  // Institute details are managed on the Website page; password change lives on My profile.
+  { path: 'client/settings', redirectTo: 'account/profile' },
   { path: 'account/profile', component: AccountSettingsComponent },
   { path: 'student/dashboard', component: WorkspacePageComponent },
   { path: 'company-management', component: CompanyMgtComponent },
@@ -102,5 +103,6 @@ routes.filter(route => !route.redirectTo && (route.path?.startsWith('client/') |
   route.canActivate = [RoleAccessGuard];
   route.data = { ...route.data, roles: route.data?.['roles'] || (route.path?.startsWith('super-admin/') ? ['Super Admin'] : ['Owner', 'Teacher']) };
 });
+routes.filter(route => !route.redirectTo && route.path?.startsWith('shop/')).forEach(route => route.canActivate = [ShopWorkspaceGuard]);
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })
 export class ComponentsRoutingModule {}

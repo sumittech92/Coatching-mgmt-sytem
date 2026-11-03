@@ -10,10 +10,20 @@ import { MockAuthService } from '../../core/mock-auth.service';
 import { ToastService } from '../../core/toast.service';
 import { AppValidators, normalizeMobile, validationMessage } from '../../core/app-validators';
 import { SCHOOL_CLASSES, SCHOOL_DEPARTMENTS, SCHOOL_DESIGNATIONS, SCHOOL_SECTIONS, SCHOOL_SUBJECTS, termsFor } from '../../core/workspace-terms';
+import { ApiTeacher, ApiTeacherStatus, TeacherApiService, TeacherPayload } from '../../core/teacher-api.service';
+import { ApiEnquiry, ApiEnquirySource, ApiEnquiryStatus, AdmissionApiService, EnquiryPayload } from '../../core/admission-api.service';
+import { Observable, map } from 'rxjs';
 
 interface FeatureConfig { title: string; description: string; singular: string; icon: string; fields: RecordField[]; action: string; }
 type Row = any;
 const MAX_MEDIA_BYTES = 10 * 1024 * 1024;
+const TEACHER_STATUS_LABELS: Record<ApiTeacherStatus, string> = { active: 'Active', inactive: 'Inactive', pending: 'Pending', onLeave: 'On leave' };
+const TEACHER_STATUS_VALUES: Record<string, ApiTeacherStatus> = { Active: 'active', Inactive: 'inactive', Pending: 'pending', 'On leave': 'onLeave' };
+const ENQUIRY_STATUS_LABELS: Record<ApiEnquiryStatus, string> = { new: 'New', contacted: 'Contacted', interested: 'Interested', joined: 'Joined', rejected: 'Rejected' };
+const ENQUIRY_SOURCE_LABELS: Record<ApiEnquirySource, string> = { website: 'Website', referral: 'Referral', instagram: 'Instagram', walkIn: 'Walk-in', phone: 'Phone' };
+const invert = <T extends string>(labels: Record<T, string>) => Object.fromEntries(Object.entries(labels).map(([value, label]) => [label, value])) as Record<string, T>;
+const ENQUIRY_STATUS_VALUES = invert(ENQUIRY_STATUS_LABELS);
+const ENQUIRY_SOURCE_VALUES = invert(ENQUIRY_SOURCE_LABELS);
 @Component({ selector: 'app-client-management', templateUrl: './client-management.component.html', styleUrls: ['./client-management.component.scss'] })
 export class ClientManagementComponent implements OnInit {
   readonly options = {
@@ -88,6 +98,11 @@ export class ClientManagementComponent implements OnInit {
   readonly coachingCourses: Row[] = Array.from({ length: 12 }, (_, index) => ({ id: 100 + index, name: `Class ${index + 1}${index === 9 ? ' Foundation' : index >= 10 ? ' Science' : ''}`, description: `Guided coaching and practice for students in Class ${index + 1}.`, duration: '10 months', fee: index >= 10 ? '₹4,500 / month' : '₹2,800 / month', subjects: index >= 10 ? 'Physics, Chemistry, Mathematics' : 'Mathematics, Science, English', status: 'Active', enrolled: 64 + index * 9, accent: ['teal', 'blue', 'amber'][index % 3] }));
   key = 'teachers'; search = ''; filter = ''; view = 'table'; page = 0; startDate: string | Date = ''; endDate: string | Date = '';
   detail?: Row;
+  /** Teachers from crm-backend when signed in with a real Owner account; demo sessions keep the sample data. */
+  apiTeachers?: Row[];
+  /** Admission enquiries (including website form submissions) from crm-backend for a real Owner account. */
+  apiAdmissions?: Row[];
+  loading = false;
   selectedDate = '2026-09-28'; selectedBatch = 'All batches'; selectedTeacher = 'All teachers'; attendanceView: 'daily'|'monthly' = 'daily';
   readonly featureData: Record<string, Row[]> = {
     teachers: [
@@ -150,8 +165,10 @@ export class ClientManagementComponent implements OnInit {
     results: { title: 'Results', description: 'Record and publish student exam performance.', singular: 'result', icon: 'assignment_turned_in', action: 'Add result', fields: [{ key: 'student', label: 'Students', type: 'multiselect', options: ['Aarav Sharma', 'Meera Kapoor', 'Diya Iyer', 'Rohan Verma'], required: true }, { key: 'course', label: 'Course', type: 'select', options: ['Class 12 Science', 'Class 11 Science', 'Class 10 Foundation'] }, { key: 'batch', label: 'Batch', type: 'select', options: ['Physics · Morning', 'Chemistry · Evening', 'Foundation · Afternoon'] }, { key: 'exam', label: 'Exam name', required: true }, { key: 'examDate', label: 'Exam date', type: 'date' }, { key: 'subject', label: 'Subject', type: 'select', options: ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English'] }, { key: 'marks', label: 'Marks obtained', type: 'number', required: true }, { key: 'total', label: 'Maximum marks', type: 'number', required: true }, { key: 'grade', label: 'Grade' }, { key: 'resultStatus', label: 'Status', type: 'select', options: ['Published', 'Draft'], required: true }] },
     materials: { title: 'Study materials', description: 'Organize and share learning resources with your classes.', singular: 'material', icon: 'folder_open', action: 'Upload material', fields: [{ key: 'title', label: 'Title', required: true }, { key: 'description', label: 'Description', type: 'textarea' }, { key: 'course', label: 'Course', type: 'select', options: ['Class 12 Science', 'Class 11 Science', 'Class 10 Foundation'] }, { key: 'batch', label: 'Batch', type: 'select', options: ['Physics · Morning', 'Chemistry · Evening', 'Foundation · Afternoon'] }, { key: 'subject', label: 'Subject', type: 'select', options: ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English'] }, { key: 'type', label: 'Material type', type: 'select', options: ['PDF', 'Notes', 'Assignment', 'Video', 'Question Paper'], required: true }, { key: 'file', label: 'File', type: 'file', required: true }, { key: 'date', label: 'Publish date', type: 'date' }, { key: 'status', label: 'Status', type: 'select', options: ['Published', 'Draft'], required: true }] }
   };
-  constructor(private route: ActivatedRoute, public router: Router, private dialog: MatDialog, private confirm: ConfirmationDialogService, private mockData: MockDataService, private tenant: TenantContextService, public auth: MockAuthService, private toast: ToastService) {}
+  constructor(private route: ActivatedRoute, public router: Router, private dialog: MatDialog, private confirm: ConfirmationDialogService, private mockData: MockDataService, private tenant: TenantContextService, public auth: MockAuthService, private toast: ToastService, private teacherApi: TeacherApiService, private admissionApi: AdmissionApiService) {}
   get isTeacher(): boolean { return this.auth.role === 'Teacher'; }
+  get useTeacherApi(): boolean { return this.key === 'teachers' && !this.isShop && !!this.auth.token; }
+  get useAdmissionApi(): boolean { return this.key === 'admissions' && !this.isShop && !!this.auth.token; }
   ngOnInit(): void {
     this.isShop = this.router.url.startsWith('/shop/');
     this.key = this.route.snapshot.url[1]?.path || this.route.snapshot.url[0]?.path || 'teachers';
@@ -161,9 +178,12 @@ export class ClientManagementComponent implements OnInit {
     if (this.isShop && this.key === 'gallery') this.config = { ...this.config, title: 'Gallery', description: 'Curate product photography and moments from your store.', singular: 'album', action: 'Create album' };
     if (this.router.url.endsWith('/add')) setTimeout(() => this.openRecord(), 0);
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (id) this.detail = this.rows.find(row => row.id === id);
+    if (this.useTeacherApi) this.loadTeachers(id);
+    else if (this.useAdmissionApi) this.loadAdmissions();
+    else if (id) this.detail = this.rows.find(row => row.id === id);
+    if (this.key === 'batches' && !this.isShop && this.auth.token) this.loadTeacherOptions();
   }
-  get rows(): Row[] { if (this.key === 'courses' && !this.isShop) return this.isSchool ? this.schoolClasses : this.coachingCourses; if (this.isSchool && this.schoolData[this.key]) return this.schoolData[this.key]; return this.isShop && this.shopSocialData[this.key] ? this.shopSocialData[this.key] : this.featureData[this.key] || []; }
+  get rows(): Row[] { if (this.key === 'teachers' && this.apiTeachers) return this.apiTeachers; if (this.key === 'admissions' && this.apiAdmissions) return this.apiAdmissions; if (this.key === 'courses' && !this.isShop) return this.isSchool ? this.schoolClasses : this.coachingCourses; if (this.isSchool && this.schoolData[this.key]) return this.schoolData[this.key]; return this.isShop && this.shopSocialData[this.key] ? this.shopSocialData[this.key] : this.featureData[this.key] || []; }
   get filtered(): Row[] {
     const query = this.search.trim().toLowerCase();
     return this.rows.filter(row => (!query || Object.values(row).join(' ').toLowerCase().includes(query)) && (!this.filter || String(row.status || '').toLowerCase() === this.filter.toLowerCase() || String(row.resultStatus || '').toLowerCase() === this.filter.toLowerCase() || String(row.type || '').toLowerCase() === this.filter.toLowerCase() || String(row.subjects || '').toLowerCase().includes(this.filter.toLowerCase()) || String(row.department || '').toLowerCase() === this.filter.toLowerCase()) && this.inDateRange(row.date || row.joining || row.examDate));
@@ -171,12 +191,14 @@ export class ClientManagementComponent implements OnInit {
   openRecord(row?: Row, draft?: Row): void {
     if (this.isTeacher && !['results', 'materials'].includes(this.key)) return;
     const record = draft || (row ? { ...row, ...(row.phone ? { phone: normalizeMobile(String(row.phone)) } : {}) } : undefined);
-    const ref = this.dialog.open(RecordDialogComponent, { width: '640px', maxWidth: 'calc(100vw - 24px)', data: { title: `${row ? 'Edit' : 'Add'} ${this.config.singular}`, submitLabel: row ? 'Save changes' : this.config.action, fields: this.config.fields, record, successMessage: '' } });
+    const ref = this.dialog.open(RecordDialogComponent, { width: '640px', maxWidth: 'calc(100vw - 24px)', data: { title: `${row ? 'Edit' : 'Add'} ${this.config.singular}`, submitLabel: row ? 'Save changes' : this.config.action, fields: this.dialogFields(row), record, successMessage: '' } });
     ref.afterClosed().subscribe(async value => {
       if (!value) { if (this.router.url.endsWith('/add')) this.router.navigate([`${this.isShop ? '/shop' : '/client'}/${this.key}`]); return; }
       // Cross-field checks the shared dialog can't express: reopen with the entered values so nothing is lost.
       const problem = this.recordProblem(value) || await this.mediaProblem(value.media, true) || await this.mediaProblem(value.file, false);
       if (problem) { this.toast.error(problem); this.openRecord(row, value); return; }
+      if (this.useTeacherApi) { this.saveTeacher(value, row); return; }
+      if (this.useAdmissionApi) { this.saveAdmission(value, row); return; }
       this.config.fields.forEach(field => { if (field.type === 'date' && value[field.key] instanceof Date) value[field.key] = (value[field.key] as Date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); });
       const normalized: Row = { ...value, id: row?.id || Date.now() };
       if (normalized.phone) normalized.phone = normalizeMobile(String(normalized.phone));
@@ -203,6 +225,7 @@ export class ClientManagementComponent implements OnInit {
     const time = (v: unknown): number => v instanceof Date ? v.getTime() : v ? new Date(String(v)).getTime() : NaN;
     const nameCheck = (key: string, label: string): string => value[key] ? validationMessage(new FormControl(value[key], AppValidators.personName), label) : '';
     if (this.key === 'results') { const marks = Number(value.marks), total = Number(value.total); if (!(total > 0)) return 'Maximum marks must be greater than 0.'; if (marks < 0 || marks > total) return `Marks obtained must be between 0 and ${total}.`; }
+    if (this.key === 'teachers' && value.experience && !/^\d+(\.\d+)?\b/.test(String(value.experience).trim())) return 'Enter experience in years, e.g. 5 years.';
     if (this.key === 'batches' && time(value.end) < time(value.start)) return 'End date must be on or after the start date.';
     if (this.key === 'notices' && time(value.expires) < time(value.date)) return 'Expiry date must be on or after the publish date.';
     if (this.key === 'admissions') return nameCheck('name', 'Student name') || (this.isSchool ? nameCheck('parent', 'Parent name') : '');
@@ -214,16 +237,16 @@ export class ClientManagementComponent implements OnInit {
     if (!src.startsWith('blob:')) return mediaOnly && !/^(assets\/|https?:|data:)/.test(src) ? 'Please choose an image or video file.' : '';
     try { const blob = await (await fetch(src)).blob(); return blob.size > MAX_MEDIA_BYTES ? 'File must be 10 MB or smaller.' : ''; } catch { return ''; }
   }
-  viewRow(row: Row): void { this.dialog.open(RecordDialogComponent, { width: '660px', maxWidth: 'calc(100vw - 24px)', data: { title: `${this.singularLabel} details`, submitLabel: 'Done', fields: this.config.fields, record: row, readonly: true } }); }
-  followUp(row: Row): void { if (this.isTeacher) return; const ref = this.dialog.open(RecordDialogComponent, { width: '560px', maxWidth: 'calc(100vw - 24px)', data: { title: `Schedule follow-up · ${row.name}`, submitLabel: 'Save follow-up', fields: [{ key: 'followup', label: 'Follow-up date and time', type: 'text', required: true }, { key: 'notes', label: 'Follow-up notes', type: 'textarea' }], record: { followup: row.followup }, successMessage: `Follow-up saved for ${row.name}.` } }); ref.afterClosed().subscribe(value => { if (value) row.followup = value.followup; }); }
+  viewRow(row: Row): void { this.dialog.open(RecordDialogComponent, { width: '660px', maxWidth: 'calc(100vw - 24px)', data: { title: `${this.singularLabel} details`, submitLabel: 'Done', fields: this.useAdmissionApi ? this.admissionFields(row) : this.config.fields, record: row, readonly: true } }); }
+  followUp(row: Row): void { if (this.isTeacher) return; if (this.useAdmissionApi) { this.followUpApi(row); return; } const ref = this.dialog.open(RecordDialogComponent, { width: '560px', maxWidth: 'calc(100vw - 24px)', data: { title: `Schedule follow-up · ${row.name}`, submitLabel: 'Save follow-up', fields: [{ key: 'followup', label: 'Follow-up date and time', type: 'text', required: true }, { key: 'notes', label: 'Follow-up notes', type: 'textarea' }], record: { followup: row.followup }, successMessage: `Follow-up saved for ${row.name}.` } }); ref.afterClosed().subscribe(value => { if (value) row.followup = value.followup; }); }
   download(row: Row): void { const blob = new Blob([`Demo study material: ${row.title}\n${row.description || ''}\nFile reference: ${row.file || ''}`], { type: 'text/plain' }); const anchor = document.createElement('a'); anchor.href = URL.createObjectURL(blob); anchor.download = (row.file || `${row.title}.txt`).split('/').pop(); anchor.click(); URL.revokeObjectURL(anchor.href); this.toast.success(`Downloading “${row.title}”.`); }
   preview(media: string): void { if (media) window.open(media, '_blank', 'noopener'); }
   uploadMedia(row: Row): void { if (this.isTeacher) return; const ref = this.dialog.open(RecordDialogComponent, { width: '560px', maxWidth: 'calc(100vw - 24px)', data: { title: `Upload media · ${row.name}`, submitLabel: 'Add to album', fields: [{ key: 'media', label: 'Photo or video file', type: 'file', required: true, hint: 'Images or videos up to 10 MB' }], successMessage: '' } }); ref.afterClosed().subscribe(async value => { if (!value?.media) return; const problem = await this.mediaProblem(value.media, true); if (problem) { this.toast.error(problem); return; } row.media = value.media; row.count = (Number(row.count) || 0) + 1; this.toast.success(`Media added to “${row.name}”.`); }); }
   private inDateRange(value: string): boolean { if (!value || (!this.startDate && !this.endDate)) return true; const date = new Date(value); const from = this.startDate ? new Date(this.startDate instanceof Date ? this.startDate.getTime() : this.startDate) : undefined; const to = this.endDate ? new Date(this.endDate instanceof Date ? this.endDate.getTime() : this.endDate) : undefined; return !Number.isNaN(date.getTime()) && (!from || date >= from) && (!to || date <= to); }
-  remove(row: Row): void { if (this.isTeacher) return; this.confirm.confirm({ title: `Delete ${this.config.singular}?`, message: `Delete “${row.name || row.title || row.student}” from this workspace? This mock action cannot be undone.`, confirmLabel: `Delete ${this.config.singular}`, destructive: true }).subscribe(ok => { if (ok) { const collection = this.rows; const index = collection.indexOf(row); if (index >= 0) collection.splice(index, 1); this.toast.success(`${this.singularLabel} “${row.name || row.title || row.student}” deleted.`); } }); }
+  remove(row: Row): void { if (this.isTeacher) return; this.confirm.confirm({ title: `Delete ${this.config.singular}?`, message: `Delete “${row.name || row.title || row.student}” from this workspace? ${this.useTeacherApi ? 'Their sign-in account is closed too. This action' : this.useAdmissionApi ? 'This action' : 'This mock action'} cannot be undone.`, confirmLabel: `Delete ${this.config.singular}`, destructive: true }).subscribe(ok => { if (ok && this.useTeacherApi) { this.deleteTeacher(row); return; } if (ok && this.useAdmissionApi) { this.deleteAdmission(row); return; } if (ok) { const collection = this.rows; const index = collection.indexOf(row); if (index >= 0) collection.splice(index, 1); this.toast.success(`${this.singularLabel} “${row.name || row.title || row.student}” deleted.`); } }); }
   toggleStatus(row: Row): void { if (this.isTeacher) return; if (row.status || !row.resultStatus) row.status = row.status === 'Published' ? 'Draft' : row.status === 'Draft' ? 'Published' : row.status === 'Active' ? 'Inactive' : 'Active'; if (row.resultStatus) row.resultStatus = row.resultStatus === 'Published' ? 'Draft' : 'Published'; const state = row.resultStatus || row.status; this.toast.success(`“${row.name || row.title || row.student}” ${state === 'Published' ? 'published' : state === 'Draft' ? 'moved to drafts' : `marked ${String(state).toLowerCase()}`}.`); }
   togglePin(row: Row): void { if (this.isTeacher) return; row.pinned = !row.pinned; this.toast.success(row.pinned ? `“${row.title || row.name}” pinned to the top.` : `“${row.title || row.name}” unpinned.`); }
-  convert(row: Row): void { this.confirm.confirm({ title: 'Convert inquiry to student?', message: `Create a student record for ${row.name}? This will add a mock student to the directory.`, confirmLabel: 'Convert to student' }).subscribe(ok => { if (ok) { row.status = 'Joined'; const student = this.mockData.addStudent({ name: row.name, father: row.parent || '', mother: '', phone: normalizeMobile(String(row.phone || '')), email: '', course: row.course, batch: this.isSchool ? 'Section A' : row.course.includes('12') ? 'Physics · Morning' : 'Chemistry · Evening', admission: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), dob: '', gender: '', address: '', city: '', state: '', pincode: '', monthlyFee: 0, discount: 0, feeStatus: 'Pending' }); this.toast.success(`${row.name} added to students.`); this.router.navigate(['/client/students', student.id]); } }); }
+  convert(row: Row): void { if (this.useAdmissionApi) { this.convertApi(row); return; } this.confirm.confirm({ title: 'Convert inquiry to student?', message: `Create a student record for ${row.name}? This will add a mock student to the directory.`, confirmLabel: 'Convert to student' }).subscribe(ok => { if (ok) { row.status = 'Joined'; const student = this.mockData.addStudent({ name: row.name, father: row.parent || '', mother: '', phone: normalizeMobile(String(row.phone || '')), email: '', course: row.course, batch: this.isSchool ? 'Section A' : row.course.includes('12') ? 'Physics · Morning' : 'Chemistry · Evening', admission: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), dob: '', gender: '', address: '', city: '', state: '', pincode: '', monthlyFee: 0, discount: 0, feeStatus: 'Pending' }); this.toast.success(`${row.name} added to students.`); this.router.navigate(['/client/students', student.id]); } }); }
   addChild(): void { this.openRecord(); }
   initials(name: string): string { return name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(); }
   get filters(): string[] { if (this.key === 'teachers') return this.isSchool ? SCHOOL_DEPARTMENTS : this.options.subjects; if (this.key === 'admissions') return ['New', 'Contacted', 'Interested', 'Joined', 'Rejected']; if (this.key === 'posts') return ['Image', 'Video', 'Text', 'Announcement', 'Published', 'Draft']; if (this.key === 'notices') return ['General', 'Holiday', 'Exam', 'Fee Reminder', this.isSchool ? 'PTM' : 'New Batch', 'Important', 'Published', 'Draft']; if (this.key === 'materials') return ['PDF', 'Notes', 'Assignment', 'Video', 'Question Paper', 'Published', 'Draft']; if (this.key === 'gallery') return ['Published', 'Draft']; if (this.key === 'results') return ['Published', 'Draft']; return ['Active', 'Inactive']; }
@@ -231,6 +254,193 @@ export class ClientManagementComponent implements OnInit {
   get cardMode(): boolean { return ['courses', 'posts', 'gallery', 'materials'].includes(this.key); }
   get statusTone(): 'success'|'warning'|'danger'|'neutral'|'info' { return 'success'; }
   trackById(_: number, row: Row): number { return row.id; }
+  private loadTeachers(id: number): void {
+    this.loading = true;
+    this.teacherApi.list(this.auth.token!).subscribe({
+      next: teachers => {
+        this.loading = false;
+        this.apiTeachers = teachers.map(teacher => this.teacherRow(teacher));
+        if (id) this.detail = this.apiTeachers.find(row => row.id === id);
+      },
+      error: (error: Error) => { this.loading = false; this.apiTeachers = []; this.toast.error(error.message); }
+    });
+  }
+  /** Batches pick their teachers from the owner's real teacher list when it is available. */
+  private loadTeacherOptions(): void {
+    this.teacherApi.list(this.auth.token!).subscribe({
+      next: teachers => {
+        const names = teachers.map(teacher => teacher.fullName || '').filter(Boolean);
+        if (names.length) this.config.fields = this.config.fields.map(field => field.key === 'teacher' ? { ...field, options: names } : field);
+      },
+      error: () => { /* Keep the sample teacher names. */ }
+    });
+  }
+  /** The backend assigns the employee ID, and a new teacher needs a password to sign in with. */
+  private dialogFields(row?: Row): RecordField[] {
+    if (this.useAdmissionApi) return this.admissionFields(row);
+    if (!this.useTeacherApi) return this.config.fields;
+    const fields = this.config.fields.filter(field => field.key !== 'employeeId');
+    if (row) return fields;
+    const after = fields.findIndex(field => field.key === 'email') + 1;
+    return [...fields.slice(0, after), { key: 'password', label: 'Login password', type: 'password', required: true, hint: 'The teacher signs in with their email or phone and this password.' }, ...fields.slice(after)];
+  }
+  private saveTeacher(value: Row, row?: Row): void {
+    const token = this.auth.token!;
+    const payload = this.teacherPayload(value);
+    const request: Observable<ApiTeacher> = row
+      ? this.teacherApi.update(token, row.code, payload)
+      : this.teacherApi.create(token, { ...payload, password: String(value.password || '') }).pipe(map(result => result.teacher));
+    request.subscribe({
+      next: teacher => {
+        const saved = this.teacherRow(teacher);
+        if (row) Object.assign(row, saved); else this.apiTeachers?.unshift(saved);
+        this.toast.success(`${this.singularLabel} “${saved.name}” ${row ? 'updated' : 'added'}.`);
+        if (this.router.url.endsWith('/add')) this.router.navigate(['/client/teachers']);
+      },
+      // Reopen with the entered values so nothing is lost.
+      error: (error: Error) => { this.toast.error(error.message); this.openRecord(row, value); }
+    });
+  }
+  private deleteTeacher(row: Row): void {
+    this.teacherApi.remove(this.auth.token!, row.code).subscribe({
+      next: () => {
+        this.apiTeachers = this.apiTeachers?.filter(item => item !== row);
+        this.toast.success(`${this.singularLabel} “${row.name}” deleted.`);
+        if (this.detail === row) this.router.navigate(['/client/teachers']);
+      },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  private teacherPayload(value: Row): TeacherPayload {
+    const list = (text: unknown): string[] => String(text || '').split(',').map(item => item.trim()).filter(Boolean);
+    const info = { qualification: list(value.qualification), subjects: list(value.subjects), classesTaught: list(value.classes) };
+    const years = parseFloat(String(value.experience || ''));
+    return {
+      fullName: String(value.name || '').trim(),
+      email: String(value.email || '').trim().toLowerCase(),
+      countryCode: '+91',
+      phoneNumber: normalizeMobile(String(value.phone || '')),
+      joiningDate: ClientManagementComponent.isoDate(value.joining),
+      status: TEACHER_STATUS_VALUES[value.status] || 'active',
+      ...(this.isSchool
+        ? { schoolInfo: { ...info, designation: value.designation || null, department: value.department || null } }
+        : { coachingInfo: { ...info, experience: Number.isFinite(years) ? years : null } })
+    };
+  }
+  /** Maps an API teacher to the row shape the table, cards and dialog already use. `id` is the 6-digit teacher code. */
+  private teacherRow(teacher: ApiTeacher): Row {
+    const info = (teacher.workType === 'school' ? teacher.schoolInfo : teacher.coachingInfo) ?? { qualification: [], subjects: [], classesTaught: [] };
+    const name = teacher.fullName || '';
+    const years = teacher.coachingInfo?.experience;
+    const joining = teacher.joiningDate ? new Date(teacher.joiningDate) : null;
+    return {
+      id: Number(teacher.teacherCode),
+      code: teacher.teacherCode,
+      name,
+      employeeId: teacher.schoolInfo?.employeeId || teacher.teacherCode,
+      designation: teacher.schoolInfo?.designation || '',
+      department: teacher.schoolInfo?.department || '',
+      qualification: info.qualification.join(', '),
+      subjects: info.subjects.join(', '),
+      classes: info.classesTaught.join(', '),
+      experience: years !== null && years !== undefined ? `${years} year${years === 1 ? '' : 's'}` : '',
+      phone: teacher.phoneNumber || '',
+      email: teacher.email || '',
+      joining: joining && !Number.isNaN(joining.getTime()) ? joining.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+      status: TEACHER_STATUS_LABELS[teacher.status] || 'Active',
+      photo: this.initials(name) || '?',
+      color: '#e7eefd'
+    };
+  }
+  /** Open enquiries with a follow-up date set, and enquiries marked Joined this month (API data only). */
+  get admissionFollowUps(): number { return (this.apiAdmissions || []).filter(row => row.followup && !['Joined', 'Rejected'].includes(row.status)).length; }
+  get admissionsJoinedThisMonth(): number { const now = new Date(); return (this.apiAdmissions || []).filter(row => row.status === 'Joined' && row.updatedAt && new Date(row.updatedAt).getMonth() === now.getMonth() && new Date(row.updatedAt).getFullYear() === now.getFullYear()).length; }
+  private loadAdmissions(): void {
+    this.loading = true;
+    this.admissionApi.list(this.auth.token!).subscribe({
+      next: enquiries => { this.loading = false; this.apiAdmissions = enquiries.map(enquiry => this.admissionRow(enquiry)); },
+      error: (error: Error) => { this.loading = false; this.apiAdmissions = []; this.toast.error(error.message); }
+    });
+  }
+  /** Website enquiries can name a class that is not in the dialog's list, so keep it selectable; the visitor's question shows as notes. */
+  private admissionFields(row?: Row): RecordField[] {
+    const fields = this.config.fields.map(field => field.key === 'course' && row?.course && !field.options?.includes(row.course) ? { ...field, options: [row.course, ...(field.options || [])] } : field);
+    return [...fields, { key: 'message', label: 'Message / notes', type: 'textarea' }];
+  }
+  private saveAdmission(value: Row, row?: Row): void {
+    const token = this.auth.token!;
+    const payload = this.admissionPayload(value);
+    const request = row ? this.admissionApi.update(token, row.code, payload) : this.admissionApi.create(token, payload);
+    request.subscribe({
+      next: enquiry => {
+        const saved = this.admissionRow(enquiry);
+        if (row) Object.assign(row, saved); else this.apiAdmissions?.unshift(saved);
+        this.toast.success(`${this.singularLabel} for “${saved.name}” ${row ? 'updated' : 'added'}.`);
+        if (this.router.url.endsWith('/add')) this.router.navigate(['/client/admissions']);
+      },
+      // Reopen with the entered values so nothing is lost.
+      error: (error: Error) => { this.toast.error(error.message); this.openRecord(row, value); }
+    });
+  }
+  private updateAdmission(row: Row, payload: EnquiryPayload, message: string, then?: () => void): void {
+    this.admissionApi.update(this.auth.token!, row.code, payload).subscribe({
+      next: enquiry => { Object.assign(row, this.admissionRow(enquiry)); this.toast.success(message); then?.(); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  private followUpApi(row: Row): void {
+    const ref = this.dialog.open(RecordDialogComponent, { width: '560px', maxWidth: 'calc(100vw - 24px)', data: { title: `Schedule follow-up · ${row.name}`, submitLabel: 'Save follow-up', fields: [{ key: 'followup', label: 'Follow-up date', type: 'date', required: true }], record: { followup: row.followup }, successMessage: '' } });
+    ref.afterClosed().subscribe(value => { if (value) this.updateAdmission(row, { followUpDate: ClientManagementComponent.isoDate(value.followup) }, `Follow-up saved for ${row.name}.`); });
+  }
+  /** Marks the enquiry Joined, then opens the student form; the student's sign-in account is created there. */
+  private convertApi(row: Row): void {
+    this.confirm.confirm({ title: 'Convert enquiry to student?', message: `Mark ${row.name}'s enquiry as Joined and open the new student form?`, confirmLabel: 'Convert to student' }).subscribe(ok => {
+      if (ok) this.updateAdmission(row, { status: 'joined' }, `${row.name} marked as joined. Add their student details next.`, () => this.router.navigate(['/client/students/add']));
+    });
+  }
+  private deleteAdmission(row: Row): void {
+    this.admissionApi.remove(this.auth.token!, row.code).subscribe({
+      next: () => { this.apiAdmissions = this.apiAdmissions?.filter(item => item !== row); this.toast.success(`${this.singularLabel} for “${row.name}” deleted.`); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  /** Only fields present in this workspace's dialog are sent, so editing a school enquiry never clears its source or dates. */
+  private admissionPayload(value: Row): EnquiryPayload {
+    const text = (v: unknown): string | null => String(v ?? '').trim() || null;
+    const payload: EnquiryPayload = { studentName: String(value.name || '').trim(), parentName: text(value.parent), countryCode: '+91', phoneNumber: normalizeMobile(String(value.phone || '')), className: text(value.course), message: text(value.message) };
+    if ('previousSchool' in value) payload.previousSchool = text(value.previousSchool);
+    if ('source' in value && ENQUIRY_SOURCE_VALUES[value.source]) payload.source = ENQUIRY_SOURCE_VALUES[value.source];
+    if ('status' in value) payload.status = ENQUIRY_STATUS_VALUES[value.status] || 'new';
+    if ('date' in value && value.date) payload.enquiryDate = ClientManagementComponent.isoDate(value.date);
+    if ('followup' in value) payload.followUpDate = ClientManagementComponent.isoDate(value.followup);
+    return payload;
+  }
+  /** Maps an API enquiry to the row shape the table and dialog already use. `id` is the 6-digit enquiry code. */
+  private admissionRow(enquiry: ApiEnquiry): Row {
+    const day = (value: string | null): string => { const date = value ? new Date(value) : null; return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''; };
+    return {
+      id: Number(enquiry.enquiryCode),
+      code: enquiry.enquiryCode,
+      name: enquiry.studentName,
+      parent: enquiry.parentName || '',
+      phone: enquiry.phoneNumber,
+      course: enquiry.className || '',
+      previousSchool: enquiry.previousSchool || '',
+      source: ENQUIRY_SOURCE_LABELS[enquiry.source] || 'Website',
+      date: day(enquiry.enquiryDate),
+      status: ENQUIRY_STATUS_LABELS[enquiry.status] || 'New',
+      followup: day(enquiry.followUpDate),
+      message: enquiry.message || '',
+      updatedAt: (enquiry as ApiEnquiry & { updatedAt?: string }).updatedAt
+    };
+  }
+  /** Local calendar date as YYYY-MM-DD (toISOString would shift it a day back in IST). */
+  private static isoDate(value: unknown): string | null {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(String(value));
+    if (Number.isNaN(date.getTime())) return null;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
   private configureWorkspaceFields(): void {
     const classes = [...Array.from({ length: 12 }, (_, index) => `Class ${index + 1}`), 'JEE Foundation', 'JEE Preparation', 'NEET Preparation', 'Commerce Entrance'];
     const classGroups = [...Array.from({ length: 12 }, (_, index) => `Class ${index + 1} · ${index % 2 ? 'Evening' : 'Morning'}`), 'JEE · Weekend', 'NEET · Weekend'];

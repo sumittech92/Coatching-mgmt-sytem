@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { SidebarService } from '../../shared/sidebar/sidebar.service'
+import { WebsiteContentService } from '../../core/website-content.service';
 
 @Component({
     selector: 'app-full-layout',
@@ -10,7 +11,7 @@ import { SidebarService } from '../../shared/sidebar/sidebar.service'
 
 export class FullLayoutComponent implements OnInit {
 
-    constructor( public sidebarservice: SidebarService ) {
+    constructor( public sidebarservice: SidebarService, private content: WebsiteContentService ) {
 
     }
         
@@ -25,7 +26,8 @@ export class FullLayoutComponent implements OnInit {
     }
 
     ngOnInit() {
-       
+        // A real Owner's logo and institute name come from their saved website.
+        this.content.loadOwnerWebsite().subscribe();
     }
 
 }

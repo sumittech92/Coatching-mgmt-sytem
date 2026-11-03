@@ -8,16 +8,19 @@ import { MockAuthService } from '../core/mock-auth.service';
 import { TenantContextService } from '../core/tenant-context.service';
 import { AppValidators, normalizeMobile, validationMessage } from '../core/app-validators';
 import { ToastService } from '../core/toast.service';
-import { AuthApiService } from '../core/auth-api.service';
+import { ApiUser, AuthApiService } from '../core/auth-api.service';
+import { formatDate, formatPhone } from '../core/profile-format';
 import { readImageAsDataUrl } from '../core/image-file';
+import { MatDialog } from '@angular/material/dialog';
+import { RecordDialogComponent } from '../client/management/record-dialog.component';
 
 @Component({ selector: 'app-super-admin-page', templateUrl: './super-admin-page.component.html', styleUrls: ['./super-admin-page.component.scss'] })
 export class SuperAdminPageComponent implements OnInit {
   search = ''; statusFilter = ''; typeFilter = ''; pageIndex = 0; pageSize = 5; mode: 'dashboard'|'clients'|'add'|'detail'|'edit'|'users'|'subscriptions'|'reports'|'settings' = 'dashboard'; selected?: MockClient; logo = ''; saving = false; hidePassword = true;
   readonly form = this.fb.group({ name: ['', [AppValidators.required, Validators.maxLength(80)]], type: ['Coaching Institute', AppValidators.required], owner: ['', [AppValidators.required, AppValidators.personName, Validators.maxLength(60)]], email: ['', [AppValidators.required, AppValidators.email, Validators.maxLength(120)]], phone: ['', [AppValidators.required, AppValidators.mobile]], password: [''], address: ['', [AppValidators.required, Validators.maxLength(200)]], color: ['#4871e1'], secondary: ['#1b2052'], modules: [['Students', 'Courses', 'Fees', 'Website'], Validators.required] });
-  constructor(public data: MockDataService, private fb: FormBuilder, private router: Router, private route: ActivatedRoute, private confirm: ConfirmationDialogService, private auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private authApi: AuthApiService) {}
+  constructor(public data: MockDataService, private fb: FormBuilder, private router: Router, private route: ActivatedRoute, private confirm: ConfirmationDialogService, public auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private authApi: AuthApiService, private dialog: MatDialog) {}
   errorFor(name: string, label: string): string { return validationMessage(this.form.get(name), label); }
-  ngOnInit(): void { this.route.paramMap.subscribe(params => { const path = this.router.url.split('?')[0]; const id = Number(params.get('id')); this.mode = path.endsWith('/clients/add') ? 'add' : id ? 'detail' : path.includes('/clients') ? 'clients' : path.includes('/users') ? 'users' : path.includes('/subscriptions') ? 'subscriptions' : path.includes('/reports') ? 'reports' : path.includes('/settings') ? 'settings' : 'dashboard'; this.selected = id ? this.data.clients.find(client => client.id === id) : undefined; if (id && this.router.url.includes('edit=1')) this.mode = 'edit'; this.form.controls.password.setValidators(this.mode === 'add' ? [AppValidators.required, AppValidators.password] : null); this.form.controls.password.updateValueAndValidity(); if (this.selected && (this.mode === 'detail' || this.mode === 'edit')) this.logo = this.selected.logo || ''; this.form.patchValue({ ...this.selected, ...(this.selected ? { phone: normalizeMobile(this.selected.phone) } : {}), secondary: this.selected?.secondary || '#1b2052' }); }); }
+  ngOnInit(): void { this.route.paramMap.subscribe(params => { const path = this.router.url.split('?')[0]; const id = Number(params.get('id')); this.mode = path.endsWith('/clients/add') ? 'add' : id ? 'detail' : path.includes('/clients') ? 'clients' : path.includes('/users') ? 'users' : path.includes('/subscriptions') ? 'subscriptions' : path.includes('/reports') ? 'reports' : path.includes('/settings') ? 'settings' : 'dashboard'; this.selected = id ? this.data.clients.find(client => client.id === id) : undefined; if (id && this.router.url.includes('edit=1')) this.mode = 'edit'; if (this.mode === 'users') this.loadUsers(); this.form.controls.password.setValidators(this.mode === 'add' ? [AppValidators.required, AppValidators.password] : null); this.form.controls.password.updateValueAndValidity(); if (this.selected && (this.mode === 'detail' || this.mode === 'edit')) this.logo = this.selected.logo || ''; this.form.patchValue({ ...this.selected, ...(this.selected ? { phone: normalizeMobile(this.selected.phone) } : {}), secondary: this.selected?.secondary || '#1b2052' }); }); }
   get coachingClients(): MockClient[] { return this.data.clients.filter(item => item.type === 'Coaching Institute'); }
   get educationClients(): MockClient[] { return this.data.clients.filter(item => item.type !== 'Clothing Shop'); }
   get activeEducationCount(): number { return this.educationClients.filter(client => client.status === 'Active').length; }
@@ -55,9 +58,60 @@ export class SuperAdminPageComponent implements OnInit {
     // The backend only knows coaching and school work types.
     const workType = record.type === 'School' ? 'school' : record.type === 'Coaching Institute' ? 'coaching' : undefined;
     this.saving = true;
-    this.authApi.createAdmin(token, { fullName: record.owner, email: record.email.toLowerCase(), password: value.password || '', countryCode: '+91', phoneNumber: record.phone, ...(workType ? { workType } : {}) }).subscribe({
+    this.authApi.createAdmin(token, { fullName: record.owner, email: record.email.toLowerCase(), password: value.password || '', countryCode: '+91', phoneNumber: record.phone, instituteName: record.name, ...(workType ? { workType } : {}) }).subscribe({
       next: () => { this.saving = false; this.data.addClient(record); this.toast.success(`Workspace “${record.name}” created. ${record.owner} can now sign in as Owner.`); this.router.navigate(['/super-admin/clients']); },
       error: (error: Error) => { this.saving = false; this.toast.error(error.message); }
+    });
+  }
+  users: ApiUser[] = []; usersLoading = false; userSearch = ''; userRole = ''; userStatus = '';
+  readonly roleLabels: Record<string, string> = { admin: 'Owner', teacher: 'Teacher', student: 'Student', parent: 'Parent' };
+  get filteredUsers(): ApiUser[] {
+    const q = this.userSearch.trim().toLowerCase();
+    return this.users.filter(user => (!this.userRole || user.role === this.userRole) && (!this.userStatus || (this.userStatus === 'blocked') === user.isBlocked) && (!q || `${user.fullName || ''} ${user.email || ''} ${user.phoneNumber || ''}`.toLowerCase().includes(q)));
+  }
+  get blockedCount(): number { return this.users.filter(user => user.isBlocked).length; }
+  workTypeLabel(user: ApiUser): string { return user.workType === 'school' ? 'School' : user.workType === 'coaching' ? 'Coaching' : '—'; }
+  phoneLabel(user: ApiUser): string { return formatPhone(user.countryCode, user.phoneNumber); }
+  lastSignIn(user: ApiUser): string { return formatDate(user.lastLogin); }
+  loadUsers(): void {
+    const token = this.auth.token;
+    if (!token) return;
+    this.usersLoading = true;
+    this.authApi.listUsers(token).subscribe({
+      next: users => { this.usersLoading = false; this.users = users; },
+      error: (error: Error) => { this.usersLoading = false; this.toast.error(error.message); }
+    });
+  }
+  /** An owner's own domain: once DNS points it at this app, visiting it opens their published website. */
+  editDomain(user: ApiUser, draft?: string): void {
+    const token = this.auth.token;
+    if (!token || user.role !== 'admin') return;
+    const name = user.instituteName || user.fullName || 'this owner';
+    const ref = this.dialog.open(RecordDialogComponent, { width: '520px', maxWidth: 'calc(100vw - 24px)', data: { title: `Website domain · ${name}`, submitLabel: 'Save domain', fields: [{ key: 'customDomain', label: 'Domain', hint: 'e.g. sunriseclasses.in. Leave empty to remove it. The website must be published.' }], record: { customDomain: draft ?? user.customDomain ?? '' }, successMessage: '' } });
+    ref.afterClosed().subscribe(value => {
+      if (!value) return;
+      const domain = String(value.customDomain || '');
+      this.authApi.setUserDomain(token, user._id, domain).subscribe({
+        next: updated => { Object.assign(user, updated); this.toast.success(updated.customDomain ? `${updated.customDomain} now opens ${name}'s website.` : `Domain removed for ${name}.`); },
+        // Reopen with what was typed so it can be corrected.
+        error: (error: Error) => { this.toast.error(error.message); this.editDomain(user, domain); }
+      });
+    });
+  }
+  toggleBlock(user: ApiUser): void {
+    const token = this.auth.token;
+    if (!token) return;
+    const block = !user.isBlocked;
+    const name = user.fullName || user.email || 'this account';
+    this.confirm.confirm(block
+      ? { title: 'Block account?', message: `Block ${name}? They are signed out and cannot sign in until you unblock them.`, confirmLabel: 'Block account', destructive: true }
+      : { title: 'Unblock account?', message: `Unblock ${name}? They can sign in again and their wrong-password count is reset.`, confirmLabel: 'Unblock account' }
+    ).subscribe(ok => {
+      if (!ok) return;
+      this.authApi.setUserBlocked(token, user._id, block).subscribe({
+        next: updated => { Object.assign(user, updated); this.toast.success(`${name} ${block ? 'blocked' : 'unblocked'}.`); },
+        error: (error: Error) => this.toast.error(error.message)
+      });
     });
   }
   get title(): string { return ({ dashboard: 'Platform dashboard', clients: 'Education workspaces', add: 'Add a workspace', detail: 'Client profile', edit: 'Edit client', users: 'Users', subscriptions: 'Subscriptions', reports: 'Reports', settings: 'Settings' } as const)[this.mode]; }

@@ -3651,3 +3651,61 @@ a.footer-enquire mat-icon {
     font-size: 13px
   }
 }
+
+.home-enquiry {
+  padding-top: 70px;
+  padding-bottom: 70px
+}
+
+.site-status {
+  min-height: 55vh;
+  display: grid;
+  place-items: center
+}
+
+.brand-initial {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 11px;
+  background: var(--brand);
+  color: #fff;
+  font: 700 20px Georgia, serif;
+}
+
+.preview-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fff4e0;
+  color: #7a4b00;
+  font-size: 13px;
+  text-align: center;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  a { font-weight: 700; color: inherit; text-decoration: underline; }
+}
+
+.institute-facts {
+  max-width: 1120px;
+  margin: 0 auto 40px;
+  padding: 0 25px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 12px;
+
+  > div {
+    background: #fff;
+    border: 1px solid #e8ebf3;
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+
+  small { display: block; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #8e94a1; }
+  strong { display: block; margin-top: 4px; color: var(--deep); font-size: 15px; }
+}

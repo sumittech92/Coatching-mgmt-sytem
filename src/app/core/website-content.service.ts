@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Observable, catchError, finalize, map, of, shareReplay, tap } from 'rxjs';
 import { TenantContextService } from './tenant-context.service';
+import { MockAuthService } from './mock-auth.service';
+import { WebsiteApiService } from './website-api.service';
 export interface WebsiteProfile {
   settings: Record<string, string>;
   home: Record<string, string>;
@@ -17,10 +20,21 @@ export const DEFAULT_CONTACT_NUMBER = '6392909743';
 const STORAGE_KEY = 'demo-website-contact';
 const DEFAULT_LOGO = 'assets/images/logo.svg';
 type SavedContact = Record<string, { settings: Record<string, string>; contact: Record<string, string>; social: Record<string, string> }>;
+const OBJECT_SECTIONS = ['settings', 'home', 'about', 'contact', 'social'] as const;
+const LIST_SECTIONS = ['courses', 'faculty', 'results', 'gallery', 'updates'] as const;
+/** Real owner's website state from crm-backend. `saved` is false until the first save creates it. */
+export interface OwnerWebsite { ownerId: string; siteSlug: string | null; customDomain: string | null; isPublished: boolean; saved: boolean; }
 
 @Injectable({ providedIn: 'root' })
 export class WebsiteContentService {
-  constructor(private tenant: TenantContextService) {
+  /** The signed-in account's institute website: the Owner's own (editable) or, for teachers and students, their institute's. */
+  private ownerProfile: WebsiteProfile | null = null;
+  ownerSite: OwnerWebsite | null = null;
+  private ownerLoad$: Observable<OwnerWebsite | null> | null = null;
+  /** The institute website a visitor is viewing on /site/<name> (null on the demo websites). */
+  private publicSiteProfile: WebsiteProfile | null = null;
+
+  constructor(private tenant: TenantContextService, private auth: MockAuthService, private api: WebsiteApiService) {
     // Owner edits to contact details survive a reload (no backend for the website yet).
     try {
       const saved: SavedContact = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -31,7 +45,9 @@ export class WebsiteContentService {
     } catch { /* storage unavailable: use defaults */ }
   }
   private readonly coachingProfile: WebsiteProfile = {
-    settings: { name: 'Northstar Academy', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: DEFAULT_CONTACT_NUMBER, email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', whatsapp: DEFAULT_CONTACT_NUMBER },
+    settings: { name: 'Northstar Academy', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: DEFAULT_CONTACT_NUMBER, email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', whatsapp: DEFAULT_CONTACT_NUMBER,
+      established: '2014', registrationNo: 'UDYAM-UP-32-0012345', gstin: '09ABCDE1234F1Z5', boards: 'CBSE, ICSE', classesFrom: 'Class 1', classesTo: 'Class 12', session: 'April – March', feeCycle: 'Monthly',
+      headName: 'Jordan Davis', headTitle: 'Director', headPhone: '9876543210', headEmail: 'jordan@northstar.edu' },
     home: { title: 'Learn well. Do well.', subtitle: 'Classes, kind teachers and help for your child.', image: 'assets/images/coaching/classroom-india.jpg', ctaText: 'See classes', ctaLink: '/courses' },
     about: { description: 'We teach in clear steps. Our teachers help every child learn.', mission: 'Help every child learn well.', vision: 'Help children learn and reach their goals.', experience: 'We have taught for 12 years', statistics: '1,200 students · 24 teachers · 96% happy families' },
     contact: { phone: DEFAULT_CONTACT_NUMBER, email: 'hello@northstar.edu', address: 'Gomti Nagar, Lucknow, Uttar Pradesh (demo address)', map: 'https://maps.example.com/northstar', whatsapp: DEFAULT_CONTACT_NUMBER },
@@ -62,7 +78,9 @@ export class WebsiteContentService {
     ]
   };
   private readonly schoolProfile: WebsiteProfile = {
-    settings: { name: 'Greenfield Public School', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: DEFAULT_CONTACT_NUMBER, email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', whatsapp: DEFAULT_CONTACT_NUMBER },
+    settings: { name: 'Greenfield Public School', logo: 'assets/images/logo.svg', favicon: '', primary: '#2f52da', secondary: '#0a1046', phone: DEFAULT_CONTACT_NUMBER, email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', whatsapp: DEFAULT_CONTACT_NUMBER,
+      established: '1998', board: 'CBSE', affiliationNo: '830412', udise: '29200812345', classesFrom: 'Nursery', classesTo: 'Class 12', session: 'April – March', feeCycle: 'Term-wise',
+      headName: 'Mrs. Kavita Menon', headTitle: 'Principal', headPhone: '9845022110', headEmail: 'principal@greenfieldpublic.edu.in' },
     home: { title: 'Rooted in values. Ready for tomorrow.', subtitle: 'A CBSE-affiliated school from Nursery to Class 12, where caring teachers help every child learn, play and grow.', image: 'assets/images/coaching/students-india.jpg', ctaText: 'See classes offered', ctaLink: '/courses' },
     about: { description: 'Greenfield Public School is a co-educational CBSE school in Bengaluru. We combine strong academics with sports, arts and values, so every child grows with confidence.', mission: 'Give every child a safe, joyful place to learn and discover their strengths.', vision: 'Nurture confident, kind and curious young citizens ready for the world.', experience: 'Serving families in Bengaluru since 1998', statistics: '2,486 students · 148 teachers · Nursery to Class 12 · 100% Class 10 & 12 board pass rate' },
     contact: { phone: DEFAULT_CONTACT_NUMBER, email: 'hello@greenfield.edu', address: 'Indiranagar, Bengaluru, Karnataka', map: 'https://maps.example.com/greenfield', whatsapp: DEFAULT_CONTACT_NUMBER },
@@ -94,7 +112,102 @@ export class WebsiteContentService {
       { title: 'Term 1 parent–teacher meeting', description: 'PTM for all classes on Saturday, 10 October, 9:00 am to 12:30 pm. Report cards will be shared.', type: 'Announcement', date: '24 Sep 2026', status: 'Published' }
     ]
   };
-  get profile(): WebsiteProfile { return this.tenant.current.businessType === 'school' ? this.schoolProfile : this.coachingProfile; }
+  get profile(): WebsiteProfile {
+    if (this.ownerProfile && this.ownerSite?.ownerId === this.auth.user?._id) return this.ownerProfile;
+    return this.tenant.current.businessType === 'school' ? this.schoolProfile : this.coachingProfile;
+  }
+  /** True when the Website page edits go to crm-backend instead of this browser (real Owner accounts only). */
+  get isOwnerWebsite(): boolean { return this.auth.role === 'Owner' && !!this.ownerProfile && this.profile === this.ownerProfile; }
+
+  /**
+   * Loads the signed-in owner's website once per account. Before the first save the owner starts from
+   * the sample template with their own name, phone and email (demo-only details cleared).
+   */
+  loadOwnerWebsite(): Observable<OwnerWebsite | null> {
+    const user = this.auth.user, token = this.auth.token;
+    if (!token || !user) return of(null);
+    if (this.ownerSite?.ownerId === user._id) return of(this.ownerSite);
+    if (this.ownerLoad$) return this.ownerLoad$;
+    if (this.auth.role === 'Teacher' || this.auth.role === 'Student') return this.ownerLoad$ = this.loadMemberWebsite(token, user._id);
+    if (this.auth.role !== 'Owner') return of(null);
+    this.ownerLoad$ = this.api.mine(token).pipe(
+      map(({ website, siteSlug, customDomain }) => {
+        const type = user.workType === 'school' ? 'school' : 'coaching';
+        this.ownerProfile = website ? WebsiteContentService.complete(website, type) : this.starterProfile(type);
+        this.ownerSite = { ownerId: user._id, siteSlug, customDomain, isPublished: !!website?.isPublished, saved: !!website };
+        // Sidebar, receipts and messages use the real institute name instead of the demo one.
+        if (this.ownerProfile.settings['name']) this.tenant.current.businessName = this.ownerProfile.settings['name'];
+        return this.ownerSite;
+      }),
+      catchError(() => of(null)),
+      finalize(() => this.ownerLoad$ = null),
+      shareReplay(1)
+    );
+    return this.ownerLoad$;
+  }
+
+  /** Teachers and students see their institute's logo, name and office contact (read-only). */
+  private loadMemberWebsite(token: string, userId: string): Observable<OwnerWebsite | null> {
+    return this.api.institute(token).pipe(
+      map(({ website, instituteName, workType }) => {
+        this.ownerProfile = website ? WebsiteContentService.complete(website, workType) : this.templateFor(workType);
+        if (!website) this.ownerProfile.settings['name'] = instituteName;
+        this.ownerSite = { ownerId: userId, siteSlug: null, customDomain: null, isPublished: false, saved: !!website };
+        if (instituteName) this.tenant.current.businessName = instituteName;
+        return this.ownerSite;
+      }),
+      catchError(() => of(null)),
+      finalize(() => this.ownerLoad$ = null),
+      shareReplay(1)
+    );
+  }
+
+  /** Saves the owner's whole website to crm-backend. */
+  saveOwnerWebsite(): Observable<void> {
+    const settings = this.ownerProfile!.settings;
+    return this.api.save(this.auth.token!, WebsiteContentService.sectionsOf(this.ownerProfile!)).pipe(
+      tap(() => { if (this.ownerSite) this.ownerSite.saved = true; this.tenant.current.businessName = settings['name']; }),
+      map(() => undefined)
+    );
+  }
+
+  setOwnerPublished(isPublished: boolean): Observable<boolean> {
+    return this.api.setPublished(this.auth.token!, isPublished).pipe(map(website => { if (this.ownerSite) this.ownerSite.isPublished = website.isPublished; return website.isPublished; }));
+  }
+
+  /** Shows a published institute's website (or the demo content again with null). */
+  usePublicProfile(profile: WebsiteProfile | null, type: 'school' | 'coaching' = 'coaching'): void {
+    this.publicSiteProfile = profile ? WebsiteContentService.complete(profile, type) : null;
+  }
+
+  /** Copy of the sample website for a work type. */
+  templateFor(type: string): WebsiteProfile { return JSON.parse(JSON.stringify(this.profileFor(type))) as WebsiteProfile; }
+
+  private starterProfile(type: string): WebsiteProfile {
+    const profile = this.templateFor(type), user = this.auth.user!;
+    const phone = user.phoneNumber || DEFAULT_CONTACT_NUMBER, email = user.email || '';
+    Object.assign(profile.settings, { name: user.instituteName || user.fullName || '', logo: DEFAULT_LOGO, phone, whatsapp: phone, email, address: '' });
+    Object.assign(profile.contact, { phone, whatsapp: phone, email, address: '', map: '' });
+    // Head of institute starts as the Owner; demo-only registration numbers are cleared.
+    Object.assign(profile.settings, { headName: user.fullName || '', headPhone: user.phoneNumber || '', headEmail: email, registrationNo: '', gstin: '', affiliationNo: '', udise: '', established: '' });
+    profile.social = { instagram: '', facebook: '', youtube: '', linkedin: '' };
+    return profile;
+  }
+
+  /** Every section present, so templates never read from a missing one. */
+  private static complete(source: Partial<WebsiteProfile>, type: string): WebsiteProfile {
+    const profile = WebsiteContentService.sectionsOf(source as WebsiteProfile);
+    if (!profile.settings['logo']) profile.settings['logo'] = DEFAULT_LOGO;
+    if (!profile.home['image']) profile.home['image'] = type === 'school' ? 'assets/images/coaching/students-india.jpg' : 'assets/images/coaching/classroom-india.jpg';
+    return profile;
+  }
+
+  private static sectionsOf(source: WebsiteProfile): WebsiteProfile {
+    const profile = {} as Record<string, unknown>;
+    OBJECT_SECTIONS.forEach(key => profile[key] = { ...(source[key] || {}) });
+    LIST_SECTIONS.forEach(key => profile[key] = (source[key] || []).map(item => ({ ...item })));
+    return profile as unknown as WebsiteProfile;
+  }
   profileFor(type: string): WebsiteProfile { return type === 'school' ? this.schoolProfile : this.coachingProfile; }
   /** Number for "Call us" / "Call the office" / support links. */
   get phone(): string { return this.profile.contact['phone'] || this.profile.settings['phone'] || DEFAULT_CONTACT_NUMBER; }
@@ -105,6 +218,7 @@ export class WebsiteContentService {
   setPhone(phone: string): void { this.profile.settings['phone'] = phone; this.profile.contact['phone'] = phone; this.persist(); }
   /** Saves contact details, settings (except unsaved blob images) and social links for the current workspace. */
   persist(): void {
+    if (this.isOwnerWebsite) return;
     try {
       const saved: SavedContact = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
       const settings = Object.fromEntries(Object.entries(this.profile.settings).filter(([, value]) => !String(value).startsWith('blob:')));
@@ -112,7 +226,15 @@ export class WebsiteContentService {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
     } catch { /* storage unavailable: keep in memory */ }
   }
-  get publicProfile(): WebsiteProfile { return this.profile; }
+  get publicProfile(): WebsiteProfile { return this.publicSiteProfile ?? this.profile; }
   /** Logo the owner uploaded for the current workspace; null while the default placeholder is in use. */
-  get customLogo(): string | null { const logo = this.profile.settings['logo']; return logo && logo !== DEFAULT_LOGO ? logo : null; }
+  get customLogo(): string | null { return WebsiteContentService.logoOf(this.profile); }
+  /** Uploaded logo of a website, or null when it still uses the platform placeholder (show the first letter instead). */
+  static logoOf(profile: WebsiteProfile): string | null { const logo = profile.settings['logo']; return logo && logo !== DEFAULT_LOGO ? logo : null; }
+  /** "GSTIN …" for coaching, "<board> affiliation no. …" for schools; shown on receipts and the website footer. */
+  static registrationLine(profile: WebsiteProfile, isSchool: boolean): string {
+    const s = profile.settings;
+    if (isSchool) return s['affiliationNo'] ? `${s['board'] || 'Board'} affiliation no. ${s['affiliationNo']}` : '';
+    return s['gstin'] ? `GSTIN ${s['gstin'].toUpperCase()}` : s['registrationNo'] ? `Reg. no. ${s['registrationNo']}` : '';
+  }
 }

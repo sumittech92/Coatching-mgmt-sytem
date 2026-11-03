@@ -21,13 +21,20 @@ export interface ApiUser {
   workType?: 'coaching' | 'school' | null;
   createdAt?: string;
   lastLogin?: number;
+  /** Wrong passwords in a row; the backend blocks the account at 8. */
+  failedLoginAttempts?: number;
+  /** Owners only: institute / school name and public website address (/site/<siteSlug>). */
+  instituteName?: string | null;
+  siteSlug?: string | null;
+  /** Owner's own domain (set by the Super Admin); visiting it opens their website. */
+  customDomain?: string | null;
 }
 
 interface ApiResponse<T> { success: boolean; message: string; data: T; }
 
 export interface RegisterPayload { fullName: string; email: string; password: string; countryCode: string; phoneNumber: string; role: 'student' | 'teacher'; }
 /** Owner account created by a Super Admin. The backend always saves the role as "admin". */
-export interface CreateAdminPayload { fullName: string; email: string; password: string; countryCode: string; phoneNumber: string; workType?: 'coaching' | 'school'; }
+export interface CreateAdminPayload { fullName: string; email: string; password: string; countryCode: string; phoneNumber: string; workType?: 'coaching' | 'school'; instituteName?: string; }
 // Mobile sign-in: the UI no longer shows a country code, so callers send the default (+91).
 export type LoginPayload = { password: string } & ({ email: string } | { countryCode: string; phoneNumber: string });
 
@@ -61,7 +68,7 @@ export class AuthApiService {
     return this.post('reset-password', { newPassword, confirmPassword }, verifiedToken);
   }
 
-  /** Signed-in password change. Needs POST /auth/change-password on crm-backend (not added yet). */
+  /** Signed-in password change for any role. The session stays signed in. */
   changePassword(accessToken: string, currentPassword: string, newPassword: string, confirmPassword: string): Observable<unknown> {
     return this.post('change-password', { currentPassword, newPassword, confirmPassword }, accessToken);
   }
@@ -69,6 +76,30 @@ export class AuthApiService {
   /** Super Admin only. */
   createAdmin(accessToken: string, payload: CreateAdminPayload): Observable<ApiUser> {
     return this.post('create-admin', { ...payload, role: 'admin' }, accessToken);
+  }
+
+  /** Super Admin only: every Owner, Teacher, Student and Parent account. */
+  listUsers(accessToken: string): Observable<ApiUser[]> {
+    return this.http.get<ApiResponse<ApiUser[]>>(`${this.base}/users`, { headers: new HttpHeaders({ accesstoken: accessToken }) }).pipe(
+      map(response => response.data),
+      catchError((error: HttpErrorResponse) => throwError(() => new Error(AuthApiService.messageFor(error))))
+    );
+  }
+
+  /** Super Admin only. Unblocking also clears the wrong-password count. */
+  /** Super Admin: domain that opens an owner's website ('' removes it). */
+  setUserDomain(accessToken: string, userId: string, customDomain: string): Observable<ApiUser> {
+    return this.http.patch<ApiResponse<ApiUser>>(`${this.base}/users/${userId}/domain`, { customDomain }, { headers: new HttpHeaders({ accesstoken: accessToken }) }).pipe(
+      map(response => response.data),
+      catchError((error: HttpErrorResponse) => throwError(() => new Error(AuthApiService.messageFor(error))))
+    );
+  }
+
+  setUserBlocked(accessToken: string, userId: string, isBlocked: boolean): Observable<ApiUser> {
+    return this.http.patch<ApiResponse<ApiUser>>(`${this.base}/users/${userId}/block`, { isBlocked }, { headers: new HttpHeaders({ accesstoken: accessToken }) }).pipe(
+      map(response => response.data),
+      catchError((error: HttpErrorResponse) => throwError(() => new Error(AuthApiService.messageFor(error))))
+    );
   }
 
   logout(accessToken: string): Observable<unknown> {
