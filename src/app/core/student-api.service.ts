@@ -20,6 +20,9 @@ export interface CreateStudentPayload {
   coachingInfo?: Nullable<{ coachingName: string; className: string; course: string; batchTiming: string; admissionDate: string; schoolName: string; board: string }>;
 }
 
+/** The fields of a crm-backend student profile the Fees and Attendance pages use. `studentCode` is the 6-digit ID. */
+export interface ApiStudentSummary { _id: string; studentCode: string; fullName: string | null; workType: 'school' | 'coaching'; }
+
 interface ApiResponse<T> { success: boolean; message: string; data: T; }
 
 /** Thin client for crm-backend /student routes (Owner / Super Admin token required). */
@@ -28,6 +31,14 @@ export class StudentApiService {
   private readonly base = `${environment.apiUrl}/student`;
 
   constructor(private http: HttpClient) {}
+
+  list(accessToken: string): Observable<ApiStudentSummary[]> {
+    const headers = new HttpHeaders({ accesstoken: accessToken });
+    return this.http.get<ApiResponse<ApiStudentSummary[]>>(this.base, { headers }).pipe(
+      map(response => response.data),
+      catchError((error: HttpErrorResponse) => throwError(() => new Error(AuthApiService.messageFor(error))))
+    );
+  }
 
   create(accessToken: string, payload: CreateStudentPayload): Observable<{ user: ApiUser; student: unknown }> {
     const headers = new HttpHeaders({ accesstoken: accessToken });

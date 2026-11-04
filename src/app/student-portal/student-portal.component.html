@@ -809,4 +809,5 @@
             portal' : 'Student portal'}} <span>Need help? <a [href]="officeTel">Call the office ({{officePhone}})</a></span></footer>
     </div>
     <div class="portal-scrim" [class.visible]="menuOpen" (click)="menuOpen=false"></div>
+    <app-bottom-nav breakpoint="md" [items]="bottomNav" [moreActive]="menuOpen" (more)="menuOpen=!menuOpen"></app-bottom-nav>
 </div>

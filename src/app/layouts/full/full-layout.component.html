@@ -2,3 +2,4 @@
 <app-sidebar></app-sidebar>
 <main class="main-content"><router-outlet></router-outlet></main>
 <div class="mobile-overlay" [class.show]="getSideBarState()" (click)="toggleSidebar()"></div>
+<app-bottom-nav [items]="bottomNav" [moreActive]="getSideBarState()" (more)="toggleSidebar()"></app-bottom-nav>

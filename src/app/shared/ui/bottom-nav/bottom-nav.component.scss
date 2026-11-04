@@ -1,0 +1,25 @@
+:host{display:none}
+@media(max-width:991.98px){:host([data-breakpoint="lg"]){display:block}}
+@media(max-width:900px){:host([data-breakpoint="md"]){display:block}}
+
+.bottom-nav{
+  position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:40;
+  display:flex;align-items:stretch;gap:2px;padding:6px;
+  background:#fff;border:1px solid #eef1f5;border-radius:18px;
+  box-shadow:0 10px 30px -8px #1b2b4a33,0 2px 6px #1b2b4a0f;
+}
+.bottom-nav-item{
+  flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:7px 0 6px;border:0;border-radius:13px;background:transparent;cursor:pointer;
+  color:#5d6b80;text-decoration:none;font:inherit;-webkit-tap-highlight-color:transparent;
+  transition:background .18s ease,color .18s ease;
+}
+.bottom-nav-item:hover{color:#2f5bea}
+.bottom-nav-item.active{background:#eaf0ff;color:#2f5bea}
+.bottom-nav-item.active .bottom-nav-label{font-weight:650}
+.bottom-nav-item:focus-visible{outline:2px solid #3d63f0;outline-offset:1px}
+.bottom-nav-icon{position:relative;display:grid;place-items:center;height:24px}
+.bottom-nav-icon mat-icon{font-size:24px;width:24px;height:24px}
+.bottom-nav-dot{position:absolute;top:0;right:-2px;width:7px;height:7px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 2px #fff}
+.bottom-nav-label{font-size:11px;line-height:1.2;font-weight:550;letter-spacing:-.2px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:360px){.bottom-nav{left:8px;right:8px;padding:5px}.bottom-nav-label{font-size:10px}}

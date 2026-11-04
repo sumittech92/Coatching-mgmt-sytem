@@ -53,3 +53,5 @@
 .portal-logout{position:sticky;bottom:-20px;margin:0 -14px -20px;padding:13px 24px 18px;border-top:1px solid #edf0f3;width:calc(100% + 28px);cursor:pointer;z-index:1}
 .portal-logout:hover{color:#c0392b}
 @media(max-height:700px),(max-width:900px){.portal-sidebar nav{margin-bottom:14px}.student-card{margin:14px 0 10px}}
+/* Phone tab bar: keep content and the menu's Log out button clear of it. */
+@media(max-width:900px){.portal-main{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}.portal-sidebar{padding-bottom:96px}.portal-logout{position:static;margin:8px 0 0;width:100%;padding:12px 10px}}

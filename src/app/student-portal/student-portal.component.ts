@@ -1,3 +1,4 @@
+import { BottomNavItem } from '../shared/ui/bottom-nav/bottom-nav.component';
 import { Component } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -94,6 +95,8 @@ export class StudentPortalComponent {
   get pendingAssignments(): number { return this.assignments.filter(a => a.status === 'Pending').length; }
   readonly calendar = Array.from({ length: 30 }, (_, i) => ({ day: i + 1, status: [3, 10, 17, 22].includes(i + 1) ? 'absent' : [6].includes(i + 1) ? 'leave' : [8, 19].includes(i + 1) ? 'late' : i < 28 ? 'present' : 'future' }));
   constructor(private router: Router, public auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private signOutFlow: SignOutService, private feeSubmissions: FeeSubmissionService, public library: LibraryService, public content: WebsiteContentService) { this.applyApprovedPayments(); this.content.loadOwnerWebsite().subscribe(); this.update(router.url); router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => { this.update(event.urlAfterRedirects); this.menuOpen = false; }); }
+  /** Phone tab bar (both student and parent menus have these pages); "More" opens the full menu. */
+  readonly bottomNav: BottomNavItem[] = [{ label: 'Dashboard', icon: 'home', route: '/student/dashboard' }, { label: 'Profile', icon: 'person', route: '/student/profile' }, { label: 'Attendance', icon: 'schedule', route: '/student/attendance' }, { label: 'Notification', icon: 'notifications', route: '/student/notices', dot: true }];
   get menu(): PortalMenu[] { return this.isParent ? (this.isSchool ? this.schoolParentMenu : this.coachingParentMenu) : this.isSchool ? this.schoolStudentMenu : this.coachingStudentMenu; }
   /** Sections outside the current role/workspace menu show a friendly fallback instead of the wrong content. */
   get activeSection(): string { return this.menu.some(item => item.key === this.section) ? this.section : 'unavailable'; }
