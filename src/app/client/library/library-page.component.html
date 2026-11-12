@@ -5,6 +5,7 @@
     <p>Keep the book catalogue, issue and return books, and handle requests from students.</p>
   </div>
   <div class="head-actions" *ngIf="canEdit">
+    <button mat-stroked-button *ngIf="live" (click)="editSettings()"><mat-icon>tune</mat-icon>Settings</button>
     <button mat-stroked-button (click)="editBook()"><mat-icon>add</mat-icon>Add book</button>
     <button mat-flat-button color="primary" (click)="issueBook()"><mat-icon>outbox</mat-icon>Issue book</button>
   </div>
@@ -13,12 +14,13 @@
 <div class="summary-grid">
   <app-stat-card label="Titles" [value]="library.books.length + ''" [change]="totalCopies + ' copies in all'" icon="local_library"></app-stat-card>
   <app-stat-card label="On loan" [value]="onLoan + ''" [change]="(totalCopies - onLoan) + ' copies on the shelf'" icon="outbox"></app-stat-card>
-  <app-stat-card label="Overdue" [value]="overdue + ''" [change]="'Fine ₹' + finePerDay + ' per day late'" icon="warning_amber" (click)="showOverdue()" class="clickable"></app-stat-card>
+  <app-stat-card label="Overdue" [value]="overdue + ''" [change]="'Fine ₹' + finePerDay + ' per day late · ' + loanDays + '-day loans' + (maxBooks ? ' · ' + maxBooks + ' books each' : '')" icon="warning_amber" (click)="showOverdue()" class="clickable"></app-stat-card>
   <app-stat-card label="Fines due" [value]="'₹' + finesDue.toLocaleString('en-IN')" [change]="openRequests.length + ' book requests waiting'" icon="currency_rupee"></app-stat-card>
 </div>
 
 <mat-card class="library-card">
   <mat-card-content>
+    <app-loading-state *ngIf="loading" label="Loading library…"></app-loading-state>
     <mat-tab-group [(selectedIndex)]="tab" animationDuration="0ms">
       <mat-tab label="Books">
         <div class="toolbar">
@@ -39,7 +41,7 @@
             <thead><tr><th>TITLE</th><th>CATEGORY</th><th>SHELF</th><th>COPIES</th><th>AVAILABLE</th><th class="actions-col"><span class="visually-hidden">Actions</span></th></tr></thead>
             <tbody>
               <tr *ngFor="let book of books">
-                <td class="main-cell"><strong>{{ book.title }}</strong><small>{{ book.author }}<ng-container *ngIf="book.isbn"> · ISBN {{ book.isbn }}</ng-container></small></td>
+                <td class="main-cell"><strong>{{ book.title }}</strong><small>{{ book.author }}<ng-container *ngIf="book.isbn"> · ISBN {{ book.isbn }}</ng-container><ng-container *ngIf="book.accessionNumbers?.length"> · Acc. {{ book.accessionNumbers!.length > 4 ? book.accessionNumbers![0] + ' – ' + book.accessionNumbers![book.accessionNumbers!.length - 1] : book.accessionNumbers!.join(', ') }}</ng-container></small></td>
                 <td>{{ book.category }}</td>
                 <td>{{ book.shelf || '—' }}</td>
                 <td>{{ book.copies }}</td>
@@ -80,12 +82,12 @@
             <thead><tr><th>BOOK</th><th>ISSUED TO</th><th>ISSUED</th><th>DUE</th><th>RETURNED</th><th>FINE</th><th>STATUS</th><th class="actions-col"><span class="visually-hidden">Actions</span></th></tr></thead>
             <tbody>
               <tr *ngFor="let item of loans">
-                <td class="main-cell"><strong>{{ item.title }}</strong></td>
+                <td class="main-cell"><strong>{{ item.title }}</strong><small *ngIf="item.accessionNo">Acc. {{ item.accessionNo }}</small></td>
                 <td>{{ item.member }}<small>{{ item.memberId }} · {{ item.memberType }}</small></td>
                 <td>{{ item.issued }}</td>
                 <td [class.late]="library.status(item) === 'Overdue'">{{ item.due }}</td>
                 <td>{{ item.returned || '—' }}</td>
-                <td [class.late]="library.fineFor(item) && !item.returned">{{ library.fineFor(item) ? '₹' + library.fineFor(item) : '—' }}</td>
+                <td [class.late]="library.fineFor(item) && !item.returned">{{ library.fineFor(item) ? '₹' + library.fineFor(item) : item.waived ? 'Waived' : '—' }}</td>
                 <td><app-status-badge [label]="library.status(item)" [tone]="tone(library.status(item))"></app-status-badge></td>
                 <td class="actions-col">
                   <ng-container *ngIf="canEdit && !item.returned">
@@ -93,6 +95,7 @@
                     <button mat-icon-button [matMenuTriggerFor]="loanMenu" [attr.aria-label]="'More actions for ' + item.title"><mat-icon>more_vert</mat-icon></button>
                     <mat-menu #loanMenu="matMenu">
                       <button mat-menu-item (click)="renew(item)"><mat-icon>update</mat-icon>Renew for {{ loanDays }} days</button>
+                      <button mat-menu-item *ngIf="live && library.fineFor(item)" (click)="returnBook(item, true)"><mat-icon>money_off</mat-icon>Return &amp; waive ₹{{ library.fineFor(item) }} fine</button>
                     </mat-menu>
                   </ng-container>
                 </td>

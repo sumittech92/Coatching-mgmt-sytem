@@ -19,6 +19,7 @@ import { RoleAccessGuard } from '../core/role-access.guard';
 import { AccountSettingsComponent } from './account-settings/account-settings.component';
 import { ModulePageComponent } from '../client/modules/module-page.component';
 import { LibraryPageComponent } from '../client/library/library-page.component';
+import { ReportsPageComponent } from '../client/reports/reports-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -60,8 +61,8 @@ const routes: Routes = [
   { path: 'client/fees/:studentId', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/fees', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/admissions', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
-  { path: 'client/posts', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
-  { path: 'client/gallery', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/posts', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
+  { path: 'client/gallery', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
   { path: 'client/notices', component: ClientManagementComponent },
   { path: 'client/results/add', component: ClientManagementComponent },
   { path: 'client/results/:id', component: ClientManagementComponent },
@@ -79,7 +80,7 @@ const routes: Routes = [
   { path: 'client/overview', redirectTo: 'client/dashboard' },
   { path: 'client/people', redirectTo: 'client/students' },
   { path: 'client/catalog', redirectTo: 'client/courses' },
-  { path: 'client/reports', component: ClientSectionComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  { path: 'client/reports', component: ReportsPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'shop', redirectTo: 'shop/dashboard', pathMatch: 'full' },
   { path: 'shop/dashboard', component: ShopDashboardComponent },
   { path: 'shop/products/add', component: ShopManagementComponent },

@@ -140,7 +140,7 @@
           </div>
           <div>
             <label class="auth-label" for="t-confirm">Confirm password *</label>
-            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>lock_reset</mat-icon><input id="t-confirm" matInput [type]="hide ? 'password' : 'text'" formControlName="confirmPassword" placeholder="Re-enter password" autocomplete="new-password" /></mat-form-field>
+            <mat-form-field appearance="outline" class="auth-field"><mat-icon matPrefix>lock_reset</mat-icon><input id="t-confirm" matInput [type]="hideConfirm ? 'password' : 'text'" formControlName="confirmPassword" placeholder="Re-enter password" autocomplete="new-password" /><button mat-icon-button matSuffix type="button" (click)="hideConfirm = !hideConfirm" [attr.aria-label]="hideConfirm ? 'Show password' : 'Hide password'"><mat-icon>{{hideConfirm ? 'visibility_off' : 'visibility'}}</mat-icon></button></mat-form-field>
           </div>
         </div>
         <div class="strength" *ngIf="form.controls.password.value">

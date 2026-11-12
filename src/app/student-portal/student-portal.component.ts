@@ -8,7 +8,8 @@ import { ToastService } from '../core/toast.service';
 import { SignOutService } from '../core/sign-out.service';
 import { FeeSubmission, FeeSubmissionService } from '../core/fee-submission.service';
 import { WebsiteContentService } from '../core/website-content.service';
-import { FINE_PER_DAY, LOAN_DAYS, LibraryBook, LibraryService } from '../core/library.service';
+import { LibraryBook, LibraryService, LibraryView } from '../core/library.service';
+import { LibraryApiService } from '../core/library-api.service';
 interface PortalFee { month: string; amount: number; paid: number; due: number; status: string; date: string; mode: string; }
 interface PortalMenu { key: string; label: string; icon: string; }
 import { formatDate, formatPhone } from '../core/profile-format';
@@ -76,12 +77,16 @@ export class StudentPortalComponent {
   get pendingTotal(): number { return this.submissions.filter(item => item.status === 'Pending verification').reduce((sum, item) => sum + item.amount, 0); }
   get selectedPayable(): number { const fee = this.fees.find(item => item.month === this.pay.period); return fee ? this.payableFor(fee) : 0; }
   /** Library (students only). */
-  readonly loanDays = LOAN_DAYS;
-  readonly finePerDay = FINE_PER_DAY;
+  /** A signed-in student uses crm-backend; demo and parent sessions use the sample library. */
+  get liveLibrary(): boolean { return !!this.auth.token && this.auth.role === 'Student'; }
+  get library(): LibraryView { return this.liveLibrary ? this.libraryApi : this.demoLibrary; }
+  get loanDays(): number { return this.library.loanDays; }
+  get finePerDay(): number { return this.library.finePerDay; }
+  private get libraryMemberId(): string { return this.liveLibrary ? this.libraryApi.myCode : this.studentId; }
   librarySearch = '';
-  get myLoans() { return this.library.issues.filter(item => item.memberId === this.studentId && !item.returned); }
-  get myReturned() { return this.library.issues.filter(item => item.memberId === this.studentId && item.returned); }
-  get myRequests() { return this.library.requests.filter(item => item.memberId === this.studentId); }
+  get myLoans() { return this.library.issues.filter(item => item.memberId === this.libraryMemberId && !item.returned); }
+  get myReturned() { return this.library.issues.filter(item => item.memberId === this.libraryMemberId && item.returned); }
+  get myRequests() { return this.library.requests.filter(item => item.memberId === this.libraryMemberId); }
   get catalogue(): LibraryBook[] { const q = this.librarySearch.trim().toLowerCase(); return this.library.books.filter(book => !q || `${book.title} ${book.author} ${book.category}`.toLowerCase().includes(q)); }
   get libraryFine(): number { return this.myLoans.reduce((sum, item) => sum + this.library.fineFor(item), 0); }
   requested(book: LibraryBook): boolean { return this.myRequests.some(item => item.bookId === book.id && item.status === 'Requested'); }
@@ -94,7 +99,7 @@ export class StudentPortalComponent {
   get pendingHomework(): number { return this.homework.filter(h => h.status === 'Pending').length; }
   get pendingAssignments(): number { return this.assignments.filter(a => a.status === 'Pending').length; }
   readonly calendar = Array.from({ length: 30 }, (_, i) => ({ day: i + 1, status: [3, 10, 17, 22].includes(i + 1) ? 'absent' : [6].includes(i + 1) ? 'leave' : [8, 19].includes(i + 1) ? 'late' : i < 28 ? 'present' : 'future' }));
-  constructor(private router: Router, public auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private signOutFlow: SignOutService, private feeSubmissions: FeeSubmissionService, public library: LibraryService, public content: WebsiteContentService) { this.applyApprovedPayments(); this.content.loadOwnerWebsite().subscribe(); this.update(router.url); router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => { this.update(event.urlAfterRedirects); this.menuOpen = false; }); }
+  constructor(private router: Router, public auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private signOutFlow: SignOutService, private feeSubmissions: FeeSubmissionService, private demoLibrary: LibraryService, private libraryApi: LibraryApiService, public content: WebsiteContentService) { this.applyApprovedPayments(); if (this.liveLibrary) this.libraryApi.loadMine(this.auth.token!).subscribe({ error: (error: Error) => this.toast.error(error.message) }); this.content.loadOwnerWebsite().subscribe(); this.update(router.url); router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => { this.update(event.urlAfterRedirects); this.menuOpen = false; }); }
   /** Phone tab bar (both student and parent menus have these pages); "More" opens the full menu. */
   readonly bottomNav: BottomNavItem[] = [{ label: 'Dashboard', icon: 'home', route: '/student/dashboard' }, { label: 'Profile', icon: 'person', route: '/student/profile' }, { label: 'Attendance', icon: 'schedule', route: '/student/attendance' }, { label: 'Notification', icon: 'notifications', route: '/student/notices', dot: true }];
   get menu(): PortalMenu[] { return this.isParent ? (this.isSchool ? this.schoolParentMenu : this.coachingParentMenu) : this.isSchool ? this.schoolStudentMenu : this.coachingStudentMenu; }
@@ -205,7 +210,14 @@ export class StudentPortalComponent {
   }
   submissionTone(status: string): 'success' | 'warning' | 'danger' { return status === 'Approved' ? 'success' : status === 'Rejected' ? 'danger' : 'warning'; }
   requestBook(book: LibraryBook): void {
-    const problem = this.library.request(book, this.studentId, this.childName);
+    if (this.liveLibrary) {
+      this.libraryApi.request(this.auth.token!, book).subscribe({
+        next: () => this.toast.success(`Requested “${book.title}”. Collect it from the library once it is issued.`),
+        error: (error: Error) => this.toast.info(error.message)
+      });
+      return;
+    }
+    const problem = this.demoLibrary.request(book, this.studentId, this.childName);
     if (problem) { this.toast.info(problem); return; }
     this.toast.success(`Requested “${book.title}”. Collect it from the library once it is issued.`);
   }

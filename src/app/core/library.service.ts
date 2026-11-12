@@ -1,12 +1,30 @@
 import { Injectable } from '@angular/core';
 import { TenantContextService } from './tenant-context.service';
 
-export interface LibraryBook { id: number; title: string; author: string; isbn: string; category: string; shelf: string; copies: number; }
+export interface LibraryBook { id: number; title: string; author: string; isbn: string; category: string; shelf: string; copies: number;
+  /** API data only: 6-digit code, school accession numbers (all / not on loan) and the server's availability. */
+  code?: string; accessionNumbers?: string[]; freeAccessionNumbers?: string[]; availableCopies?: number; }
 export type IssueStatus = 'Issued' | 'Overdue' | 'Returned';
-export interface LibraryIssue { id: number; bookId: number; title: string; memberId: string; member: string; memberType: 'Student' | 'Teacher'; issued: string; due: string; returned?: string; fine: number; }
+export interface LibraryIssue { id: number; bookId: number; title: string; memberId: string; member: string; memberType: 'Student' | 'Teacher'; issued: string; due: string; returned?: string; fine: number;
+  /** API data only: loan code, school accession no., server status / late days / fine so far, and whether the fine was waived. */
+  code?: string; accessionNo?: string | null; apiStatus?: IssueStatus; lateDays?: number; currentFine?: number; waived?: boolean; }
 export type RequestStatus = 'Requested' | 'Issued' | 'Declined';
-export interface LibraryRequest { id: number; bookId: number; title: string; memberId: string; member: string; requested: string; status: RequestStatus; }
+export interface LibraryRequest { id: number; bookId: number; title: string; memberId: string; member: string; requested: string; status: RequestStatus; code?: string; }
 interface LibraryState { books: LibraryBook[]; issues: LibraryIssue[]; requests: LibraryRequest[]; }
+
+/** What the Library page and the student portal read; implemented by the demo LibraryService and the API-backed LibraryApiService. */
+export interface LibraryView {
+  readonly books: LibraryBook[];
+  readonly issues: LibraryIssue[];
+  readonly requests: LibraryRequest[];
+  readonly loanDays: number;
+  readonly finePerDay: number;
+  issuedCount(bookId: number): number;
+  available(book: LibraryBook): number;
+  status(item: LibraryIssue): IssueStatus;
+  daysLate(item: LibraryIssue): number;
+  fineFor(item: LibraryIssue): number;
+}
 
 /** Days a book may be kept, and the late fine per day. */
 export const LOAN_DAYS = 14;
@@ -56,7 +74,9 @@ function seed(school: boolean): LibraryState {
 
 /** Library catalogue, loans and student requests for the current workspace. Shared by the owner Library page and the student portal. */
 @Injectable({ providedIn: 'root' })
-export class LibraryService {
+export class LibraryService implements LibraryView {
+  readonly loanDays = LOAN_DAYS;
+  readonly finePerDay = FINE_PER_DAY;
   private states: Record<string, LibraryState> = this.load();
 
   constructor(private tenant: TenantContextService) {}

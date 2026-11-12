@@ -1,0 +1,29 @@
+<h2 mat-dialog-title class="dialog-title">{{ album.name }}</h2>
+<p class="dialog-subtitle">{{ album.items.length }} of 50 photos &amp; videos{{ canManage ? ' · Click a photo to open it' : '' }}</p>
+<mat-dialog-content class="dialog-content">
+  <div class="album-tools" *ngIf="canManage">
+    <label class="upload-button" [class.disabled]="uploading || room <= 0">
+      <mat-icon>add_photo_alternate</mat-icon>{{ uploading ? 'Uploading ' + uploaded + ' / ' + uploading + '…' : 'Add photos' }}
+      <input type="file" multiple [accept]="accept" [disabled]="!!uploading || room <= 0" (change)="addPhotos($event)" hidden>
+    </label>
+    <div class="video-add">
+      <input [(ngModel)]="videoLink" placeholder="Paste a YouTube / Drive / Vimeo link" aria-label="Video link" (keydown.enter)="addVideo()">
+      <button mat-stroked-button [disabled]="busy || !videoLink.trim() || room <= 0" (click)="addVideo()"><mat-icon>smart_display</mat-icon>Add video</button>
+    </div>
+  </div>
+  <mat-progress-bar *ngIf="uploading" mode="determinate" [value]="uploaded / uploading * 100"></mat-progress-bar>
+
+  <div class="album-grid" *ngIf="album.items.length; else empty">
+    <figure *ngFor="let item of album.items" [class.cover]="isCover(item)">
+      <img *ngIf="item.kind === 'image'" [src]="item.url" [alt]="item.caption || album.name" loading="lazy" (click)="open(item)">
+      <button *ngIf="item.kind === 'video'" class="video-tile" (click)="open(item)"><mat-icon>play_circle</mat-icon><span>Video link</span></button>
+      <span class="cover-tag" *ngIf="isCover(item)">Cover</span>
+      <figcaption *ngIf="canManage">
+        <button mat-icon-button *ngIf="item.kind === 'image' && !isCover(item)" (click)="makeCover(item)" aria-label="Make cover" matTooltip="Make cover"><mat-icon>star_outline</mat-icon></button>
+        <button mat-icon-button (click)="remove(item)" aria-label="Remove" matTooltip="Remove"><mat-icon>delete_outline</mat-icon></button>
+      </figcaption>
+    </figure>
+  </div>
+  <ng-template #empty><app-empty-state icon="photo_library" title="No photos yet" [description]="canManage ? 'Add photos (JPG, PNG, WebP, GIF · up to 5 MB each) or a video link.' : 'Photos will appear here once they are added.'"></app-empty-state></ng-template>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end"><button mat-flat-button color="primary" [disabled]="!!uploading" (click)="close()">Done</button></mat-dialog-actions>

@@ -4,7 +4,7 @@
     <h1>{{ config.title }}</h1>
     <p>{{ config.description }}</p>
   </div>
-  <button mat-flat-button color="primary" class="add-btn" *ngIf="canEdit && config.action" (click)="open()"><mat-icon>add</mat-icon>{{ config.action }}</button>
+  <button mat-flat-button color="primary" class="add-btn" *ngIf="canCreate && config.action" (click)="open()"><mat-icon>add</mat-icon>{{ config.action }}</button>
 </div>
 
 <div class="summary-row">
@@ -41,7 +41,8 @@
               <button mat-icon-button [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'Actions for ' + (row['name'] || row['title'] || row['student'] || config.singular)"><mat-icon>more_vert</mat-icon></button>
               <mat-menu #rowMenu="matMenu">
                 <button mat-menu-item (click)="view(row)"><mat-icon>visibility</mat-icon>View details</button>
-                <ng-container *ngIf="canEdit">
+                <button mat-menu-item *ngFor="let action of actionsFor(row)" (click)="runAction(row, action)"><mat-icon>{{ action.icon }}</mat-icon>{{ action.label }}</button>
+                <ng-container *ngIf="canEditRow(row)">
                   <button mat-menu-item (click)="open(row)"><mat-icon>edit</mat-icon>Edit</button>
                   <button mat-menu-item class="delete-action" (click)="remove(row)"><mat-icon>delete_outline</mat-icon>Delete</button>
                 </ng-container>
@@ -52,6 +53,7 @@
       </table>
     </div>
 
-    <app-empty-state *ngIf="!filtered.length" [icon]="config.icon" [title]="config.rows.length ? 'No matches' : 'Nothing here yet'" [description]="config.rows.length ? 'Try a different search or filter.' : (canEdit ? 'Use “' + config.action + '” to add the first one.' : 'Items will appear here once they are added.')"></app-empty-state>
+    <app-loading-state *ngIf="loading" [label]="'Loading ' + config.title.toLowerCase() + '…'"></app-loading-state>
+    <app-empty-state *ngIf="!filtered.length && !loading" [icon]="config.icon" [title]="config.rows.length ? 'No matches' : 'Nothing here yet'" [description]="config.rows.length ? 'Try a different search or filter.' : (canCreate ? 'Use “' + config.action + '” to add the first one.' : 'Items will appear here once they are added.')"></app-empty-state>
   </mat-card-content>
 </mat-card>

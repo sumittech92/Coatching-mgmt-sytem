@@ -23,6 +23,7 @@ export class StudentSignupComponent implements OnInit {
   readonly countryCodes = ['+91', '+971', '+966', '+974', '+965', '+968', '+973'];
   workspace: BusinessType = 'coaching';
   hide = true;
+  hideConfirm = true;
   loading = false;
   submitted = false;
   errorMessage = '';

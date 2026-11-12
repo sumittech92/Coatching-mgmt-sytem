@@ -23,5 +23,9 @@ import { AccountSettingsComponent } from './account-settings/account-settings.co
 import { ModulePageComponent } from '../client/modules/module-page.component';
 import { LibraryPageComponent } from '../client/library/library-page.component';
 import { FeeReminderDialogComponent } from '../client/fee-reminder-dialog.component';
-@NgModule({ declarations: [LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
+import { TestDialogComponent } from '../client/modules/test-dialog.component';
+import { MarksDialogComponent } from '../client/modules/marks-dialog.component';
+import { AlbumDialogComponent } from '../client/management/album-dialog.component';
+import { ReportsPageComponent } from '../client/reports/reports-page.component';
+@NgModule({ declarations: [ReportsPageComponent, AlbumDialogComponent, TestDialogComponent, MarksDialogComponent, LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
 export class ComponentsModule {}

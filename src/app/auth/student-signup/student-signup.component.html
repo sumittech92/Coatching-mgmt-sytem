@@ -311,11 +311,20 @@
                 ><input
                   id="s-confirm"
                   matInput
-                  [type]="hide ? 'password' : 'text'"
+                  [type]="hideConfirm ? 'password' : 'text'"
                   formControlName="confirmPassword"
                   placeholder="Re-enter password"
                   autocomplete="new-password"
-              /></mat-form-field>
+                /><button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  (click)="hideConfirm = !hideConfirm"
+                  [attr.aria-label]="hideConfirm ? 'Show password' : 'Hide password'"
+                >
+                  <mat-icon>{{ hideConfirm ? "visibility_off" : "visibility" }}</mat-icon>
+                </button></mat-form-field
+              >
             </div>
           </div>
           <div class="strength" *ngIf="form.controls.password.value">

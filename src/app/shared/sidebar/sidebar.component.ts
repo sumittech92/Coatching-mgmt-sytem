@@ -35,13 +35,13 @@ export class SidebarComponent {
       link('My Dashboard', 'space_dashboard', '/client/dashboard', 'CLASSROOM'), link('My Classes', 'class', '/client/my-classes', 'CLASSROOM'), link('My Subjects', 'menu_book', '/client/my-subjects', 'CLASSROOM'), link("Today's Timetable", 'today', '/client/today', 'CLASSROOM'),
       link('Students', 'groups', '/client/students', 'TEACHING'), link('Attendance', 'event_available', '/client/attendance', 'TEACHING'), link('Homework', 'edit_note', '/client/homework', 'TEACHING'), link('Assignments', 'assignment', '/client/assignments', 'TEACHING'),
       link('Exams', 'quiz', '/client/exams', 'ASSESSMENT'), link('Marks Entry', 'edit_square', '/client/marks', 'ASSESSMENT'), link('Results', 'emoji_events', '/client/results', 'ASSESSMENT'),
-      link('Study Material', 'folder_open', '/client/materials', 'RESOURCES'), link('Library', 'local_library', '/client/library', 'RESOURCES'), link('Notices', 'campaign', '/client/notices', 'RESOURCES'), link('Profile', 'account_circle', '/account/profile', 'ACCOUNT')
+      link('Study Material', 'folder_open', '/client/materials', 'RESOURCES'), link('Library', 'local_library', '/client/library', 'RESOURCES'), link('Notices', 'campaign', '/client/notices', 'RESOURCES'), link('Posts', 'dynamic_feed', '/client/posts', 'RESOURCES'), link('Gallery', 'photo_library', '/client/gallery', 'RESOURCES'), link('Profile', 'account_circle', '/account/profile', 'ACCOUNT')
     ]);
     if (this.auth.role === 'Teacher') return this.stableNavigation('coaching-teacher', [
       link('My Dashboard', 'space_dashboard', '/client/dashboard', 'TEACHING'), link('My Batches', 'view_module', '/client/my-batches', 'TEACHING'), link("Today's Classes", 'today', '/client/today', 'TEACHING'),
       link('Students', 'groups', '/client/students', 'STUDENTS'), link('Attendance', 'event_available', '/client/attendance', 'STUDENTS'), link('Assignments', 'assignment', '/client/assignments', 'STUDENTS'),
       link('Tests', 'quiz', '/client/tests', 'ASSESSMENT'), link('Results / Marks', 'emoji_events', '/client/results', 'ASSESSMENT'),
-      link('Study Material', 'folder_open', '/client/materials', 'RESOURCES'), link('Library', 'local_library', '/client/library', 'RESOURCES'), link('Notices', 'campaign', '/client/notices', 'RESOURCES'), link('My Profile', 'account_circle', '/account/profile', 'ACCOUNT')
+      link('Study Material', 'folder_open', '/client/materials', 'RESOURCES'), link('Library', 'local_library', '/client/library', 'RESOURCES'), link('Notices', 'campaign', '/client/notices', 'RESOURCES'), link('Posts', 'dynamic_feed', '/client/posts', 'RESOURCES'), link('Gallery', 'photo_library', '/client/gallery', 'RESOURCES'), link('My Profile', 'account_circle', '/account/profile', 'ACCOUNT')
     ]);
     if (school) return this.stableNavigation('school-owner', [
       link('Dashboard', 'space_dashboard', '/client/dashboard', 'SCHOOL'),

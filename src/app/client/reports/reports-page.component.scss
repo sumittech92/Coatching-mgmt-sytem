@@ -1,0 +1,35 @@
+:host{display:block}
+.report-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px}
+.report-head h1{margin:9px 0 4px}
+.head-actions{display:flex;gap:8px}
+.head-actions button{height:39px;font-size:12px}
+.report-controls{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.report-tabs{display:flex;flex-wrap:wrap;gap:6px;background:#fff;border:1px solid #e8edf3;border-radius:12px;padding:5px}
+.report-tabs button{display:flex;align-items:center;gap:6px;border:0;background:transparent;border-radius:9px;padding:8px 13px;font-size:12px;font-weight:600;color:#5d6b7d;cursor:pointer}
+.report-tabs button mat-icon{font-size:17px;width:17px;height:17px}
+.report-tabs button.active{background:#4c78f1;color:#fff}
+.range-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.range-select{width:210px;font-size:12px}
+.date-field{width:160px;font-size:12px}
+.report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px}
+.summary-tile{background:#fff;border:1px solid #e8edf3;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.summary-tile small{font-size:12px;color:#8793a1;font-weight:600}
+.summary-tile strong{font-size:clamp(20px, 18.592px + 0.3756vw, 24px);color:#202c3e}
+.summary-tile span{font-size:12px;color:#98a3af}
+.report-card{border:1px solid #e9edf2;border-radius:14px;box-shadow:0 4px 18px #23344d08;margin-bottom:14px}
+.report-card mat-card-content{padding:15px 17px}
+.report-card-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.report-card-head h2{font-size:15px;font-weight:700;color:#263447;margin:0}
+.report-card-head span{font-size:12px;color:#98a3af}
+.report-table{font-size:12px;min-width:560px}
+.report-table th{font-size:12px;letter-spacing:.6px;color:#98a3af;white-space:nowrap}
+.report-table td{color:#697688}
+.report-table td.main-cell{color:#364458;font-weight:650}
+.num{text-align:right}
+.no-rows{font-size:12px;color:#98a3af;margin:8px 0 0}
+.print-title{display:none}
+@media print{
+  .no-print{display:none!important}
+  .print-title{display:block;font-size:16px;font-weight:700;margin-bottom:10px}
+  .report-card{box-shadow:none;break-inside:avoid}
+}

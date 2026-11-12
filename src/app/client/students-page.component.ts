@@ -11,6 +11,8 @@ import { MockAuthService } from "../core/mock-auth.service";
 import { AppValidators, normalizeMobile, validationMessage } from "../core/app-validators";
 import { ToastService } from "../core/toast.service";
 import { StudentApiService, CreateStudentPayload } from "../core/student-api.service";
+import { CourseApiService } from "../core/course-api.service";
+import { ApiBatch, BatchApiService } from "../core/batch-api.service";
 import { ADMISSION_QUOTAS, COACHING_BOARDS, SCHOOL_TERMS } from "../core/workspace-terms";
 
 const notFuture = (control: AbstractControl): ValidationErrors | null => {
@@ -82,7 +84,13 @@ export class StudentsPageComponent implements OnInit {
     private tenant: TenantContextService,
     public auth: MockAuthService,
     private studentApi: StudentApiService,
+    private courseApi: CourseApiService,
+    private batchApi: BatchApiService,
   ) {}
+  /** The owner's active batches / sections from the Batches module; empty until any are added. */
+  apiBatches: ApiBatch[] = [];
+  /** The owner's active courses / classes from the Courses module; empty until any are added. */
+  apiCourseNames: string[] = [];
   get isTeacher(): boolean {
     return this.auth.role === "Teacher";
   }
@@ -93,12 +101,22 @@ export class StudentsPageComponent implements OnInit {
     return this.tenant.terms;
   }
   get courseOptions(): string[] {
-    return this.terms.courseOptions;
+    if (!this.apiCourseNames.length) return this.terms.courseOptions;
+    // Keep a student's existing course selectable even if it was renamed away or made inactive.
+    const current: string[] = this.form.controls.course.value || [];
+    return [...this.apiCourseNames, ...current.filter((name) => !this.apiCourseNames.includes(name))];
   }
   get batchOptions(): string[] {
-    return this.terms.groupOptions;
+    if (!this.apiBatches.length) return this.terms.groupOptions;
+    // Only batches / sections of the chosen course(s) or class(es); all of them until one is chosen.
+    const courses: string[] = this.form.controls.course.value || [];
+    const names = this.apiBatches.filter((batch) => !courses.length || courses.includes(batch.course?.name || "")).map((batch) => batch.name);
+    const current: string[] = this.form.controls.batch.value || [];
+    return [...new Set([...names, ...current])];
   }
   ngOnInit(): void {
+    this.courseApi.activeNames(this.auth.token).subscribe((names) => (this.apiCourseNames = names));
+    this.batchApi.active(this.auth.token).subscribe((batches) => (this.apiBatches = batches));
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get("id"));
       const path = this.router.url;

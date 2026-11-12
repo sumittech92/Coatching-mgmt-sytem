@@ -941,3 +941,10 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
         overflow: visible;
     }
 }
+
+/* Printing a page (e.g. Reports → Print / PDF): only the page content, without the panel's header, sidebar and tab bar. */
+@media print {
+  app-header, app-sidebar, app-bottom-nav, .mobile-overlay { display: none !important; }
+  .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+  body { background: #fff !important; }
+}

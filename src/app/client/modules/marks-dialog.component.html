@@ -1,0 +1,52 @@
+<h2 mat-dialog-title class="dialog-title">Marks · {{ data.test.name }}</h2>
+<p class="dialog-subtitle">
+  {{ groupLabel }}
+</p>
+<mat-dialog-content class="dialog-content">
+  <div class="marks-head">
+    <mat-form-field appearance="outline" class="paper-select" *ngIf="data.test.papers.length > 1">
+      <mat-select [(ngModel)]="paperId" (selectionChange)="load()" aria-label="Subject">
+        <mat-option *ngFor="let paper of data.test.papers" [value]="paper.paperId">{{ paper.subject }} · {{ paper.date | date: 'dd MMM' }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="marks-stats" *ngIf="sheet">
+      <span><strong>{{ sheet.paper.subject }}</strong> · out of {{ sheet.paper.maxMarks }}</span>
+      <span>Entered <strong>{{ entered }}/{{ rows.length }}</strong></span>
+      <span>Average <strong>{{ average }}</strong></span>
+      <span>Highest <strong>{{ highest }}</strong></span>
+    </div>
+  </div>
+  <div class="locked-note" *ngIf="sheet && !sheet.editable">
+    <mat-icon>lock</mat-icon>
+    {{ sheet.resultsPublished ? 'Results are published. Unpublish them to change marks.' : data.test.cancelled ? 'This test is cancelled.' : 'Marks can be entered from the day of the paper, by its teacher or the owner.' }}
+  </div>
+
+  <app-loading-state *ngIf="loading" label="Loading students…"></app-loading-state>
+  <app-empty-state *ngIf="!loading && sheet && !rows.length" icon="groups" title="No students in this test"
+    [description]="school ? 'Add students to this class / section first.' : 'Add students to this batch first.'"></app-empty-state>
+
+  <div class="table-responsive" *ngIf="!loading && rows.length">
+    <table class="table align-middle mb-0 marks-table">
+      <thead><tr><th>STUDENT</th><th>{{ school ? 'CLASS' : 'BATCH' }}</th><th>MARKS</th><th>ABSENT</th><th>REMARKS</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let row of rows">
+          <td><strong>{{ row.name }}</strong><small class="sub">{{ school && row.rollNo ? 'Roll ' + row.rollNo + ' · ' : '' }}{{ row.studentCode }}</small></td>
+          <td>{{ row.group }}</td>
+          <td class="marks-col">
+            <input class="marks-input" type="number" min="0" [max]="maxMarks" [ngModel]="row.marks" (ngModelChange)="marksChanged(row, $event)"
+              [disabled]="!sheet?.editable || row.absent" [class.invalid]="invalid(row)" [attr.aria-label]="'Marks for ' + row.name">
+          </td>
+          <td><mat-checkbox [(ngModel)]="row.absent" (change)="markAbsent(row)" [disabled]="!sheet?.editable" [attr.aria-label]="row.name + ' absent'"></mat-checkbox></td>
+          <td><input class="remarks-input" [(ngModel)]="row.remarks" maxlength="200" [disabled]="!sheet?.editable" placeholder="Optional" [attr.aria-label]="'Remarks for ' + row.name"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button (click)="close()">Close</button>
+  <ng-container *ngIf="sheet?.editable && rows.length">
+    <button mat-stroked-button color="primary" [disabled]="saving" (click)="save(false)">Save</button>
+    <button mat-flat-button color="primary" [disabled]="saving" (click)="save(true)">Save &amp; close</button>
+  </ng-container>
+</mat-dialog-actions>

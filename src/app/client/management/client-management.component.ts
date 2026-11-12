@@ -9,10 +9,17 @@ import { TenantContextService } from '../../core/tenant-context.service';
 import { MockAuthService } from '../../core/mock-auth.service';
 import { ToastService } from '../../core/toast.service';
 import { AppValidators, normalizeMobile, validationMessage } from '../../core/app-validators';
-import { SCHOOL_CLASSES, SCHOOL_DEPARTMENTS, SCHOOL_DESIGNATIONS, SCHOOL_SECTIONS, SCHOOL_SUBJECTS, termsFor } from '../../core/workspace-terms';
+import { COACHING_SUBJECTS, SCHOOL_CLASSES, SCHOOL_DEPARTMENTS, SCHOOL_DESIGNATIONS, SCHOOL_SECTIONS, SCHOOL_SUBJECTS, termsFor } from '../../core/workspace-terms';
 import { ApiTeacher, ApiTeacherStatus, TeacherApiService, TeacherPayload } from '../../core/teacher-api.service';
 import { ApiEnquiry, ApiEnquirySource, ApiEnquiryStatus, AdmissionApiService, EnquiryPayload } from '../../core/admission-api.service';
-import { Observable, map } from 'rxjs';
+import { ApiCourse, ApiFeeFrequency, COACHING_FEE_FREQUENCIES, CourseApiService, CoursePayload, FEE_FREQUENCY_LABELS, SCHOOL_FEE_FREQUENCIES } from '../../core/course-api.service';
+import { ApiBatch, ApiBatchDay, BATCH_DAYS, BatchApiService, BatchPayload } from '../../core/batch-api.service';
+import { ApiResult, TestApiService } from '../../core/test-api.service';
+import { AlbumPayload, ApiAlbum, ApiPost, ApiPostType, MediaApiService, PHOTO_ACCEPT, POST_TYPE_LABELS, PostPayload } from '../../core/media-api.service';
+import { AlbumDialogComponent } from './album-dialog.component';
+import { ApiNotice, ApiNoticeAudience, ApiNoticeType, NOTICE_AUDIENCE_LABELS, NOTICE_STATE_LABELS, NOTICE_TYPE_LABELS, NoticeApiService, NoticePayload } from '../../core/notice-api.service';
+import { ApiMaterial, ApiMaterialFile, MATERIAL_ACCEPT, MATERIAL_TYPE_LABELS, MAX_MATERIAL_BYTES, MaterialApiService, MaterialPayload } from '../../core/material-api.service';
+import { Observable, firstValueFrom, forkJoin, map } from 'rxjs';
 
 interface FeatureConfig { title: string; description: string; singular: string; icon: string; fields: RecordField[]; action: string; }
 type Row = any;
@@ -24,6 +31,15 @@ const ENQUIRY_SOURCE_LABELS: Record<ApiEnquirySource, string> = { website: 'Webs
 const invert = <T extends string>(labels: Record<T, string>) => Object.fromEntries(Object.entries(labels).map(([value, label]) => [label, value])) as Record<string, T>;
 const ENQUIRY_STATUS_VALUES = invert(ENQUIRY_STATUS_LABELS);
 const ENQUIRY_SOURCE_VALUES = invert(ENQUIRY_SOURCE_LABELS);
+const FEE_FREQUENCY_VALUES = invert(FEE_FREQUENCY_LABELS);
+const COURSE_ACCENTS = ['teal', 'blue', 'amber'];
+const MATERIAL_TYPE_VALUES = invert(MATERIAL_TYPE_LABELS);
+const WHOLE_COURSE = 'Whole course (all batches)';
+const NOTICE_TYPE_VALUES = invert(NOTICE_TYPE_LABELS);
+const NOTICE_AUDIENCE_VALUES = invert(NOTICE_AUDIENCE_LABELS);
+const ALL_STUDENTS = 'All students';
+const POST_TYPE_VALUES = invert(POST_TYPE_LABELS);
+const ALBUM_ACCENTS = ['gallery-a', 'gallery-b', 'gallery-c', 'gallery-d'];
 @Component({ selector: 'app-client-management', templateUrl: './client-management.component.html', styleUrls: ['./client-management.component.scss'] })
 export class ClientManagementComponent implements OnInit {
   readonly options = {
@@ -102,6 +118,25 @@ export class ClientManagementComponent implements OnInit {
   apiTeachers?: Row[];
   /** Admission enquiries (including website form submissions) from crm-backend for a real Owner account. */
   apiAdmissions?: Row[];
+  /** Coaching courses / school classes from crm-backend for a real Owner or Teacher account. */
+  apiCourses?: Row[];
+  /** Coaching batches from crm-backend; course and teacher names map to their codes for saving. */
+  apiBatches?: Row[];
+  /** Marks entered against tests (published and draft) from crm-backend. */
+  apiResults?: Row[];
+  /** Study materials from crm-backend; batch / section labels map to their codes for saving. */
+  apiMaterials?: Row[];
+  private batchCodes = new Map<string, string>();
+  /** Notices from crm-backend. */
+  apiNotices?: Row[];
+  /** Posts and gallery albums from crm-backend. */
+  apiPosts?: Row[];
+  apiAlbums?: Row[];
+  private courseCodes = new Map<string, string>();
+  /** Add / edit teacher pick lists: subjects (standard + the owner's course subjects) and real courses or sections. */
+  private teacherSubjectOptions: string[] = [];
+  private teacherClassOptions: string[] = [];
+  private teacherCodes = new Map<string, string>();
   loading = false;
   selectedDate = '2026-09-28'; selectedBatch = 'All batches'; selectedTeacher = 'All teachers'; attendanceView: 'daily'|'monthly' = 'daily';
   readonly featureData: Record<string, Row[]> = {
@@ -165,10 +200,19 @@ export class ClientManagementComponent implements OnInit {
     results: { title: 'Results', description: 'Record and publish student exam performance.', singular: 'result', icon: 'assignment_turned_in', action: 'Add result', fields: [{ key: 'student', label: 'Students', type: 'multiselect', options: ['Aarav Sharma', 'Meera Kapoor', 'Diya Iyer', 'Rohan Verma'], required: true }, { key: 'course', label: 'Course', type: 'select', options: ['Class 12 Science', 'Class 11 Science', 'Class 10 Foundation'] }, { key: 'batch', label: 'Batch', type: 'select', options: ['Physics · Morning', 'Chemistry · Evening', 'Foundation · Afternoon'] }, { key: 'exam', label: 'Exam name', required: true }, { key: 'examDate', label: 'Exam date', type: 'date' }, { key: 'subject', label: 'Subject', type: 'select', options: ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English'] }, { key: 'marks', label: 'Marks obtained', type: 'number', required: true }, { key: 'total', label: 'Maximum marks', type: 'number', required: true }, { key: 'grade', label: 'Grade' }, { key: 'resultStatus', label: 'Status', type: 'select', options: ['Published', 'Draft'], required: true }] },
     materials: { title: 'Study materials', description: 'Organize and share learning resources with your classes.', singular: 'material', icon: 'folder_open', action: 'Upload material', fields: [{ key: 'title', label: 'Title', required: true }, { key: 'description', label: 'Description', type: 'textarea' }, { key: 'course', label: 'Course', type: 'select', options: ['Class 12 Science', 'Class 11 Science', 'Class 10 Foundation'] }, { key: 'batch', label: 'Batch', type: 'select', options: ['Physics · Morning', 'Chemistry · Evening', 'Foundation · Afternoon'] }, { key: 'subject', label: 'Subject', type: 'select', options: ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'English'] }, { key: 'type', label: 'Material type', type: 'select', options: ['PDF', 'Notes', 'Assignment', 'Video', 'Question Paper'], required: true }, { key: 'file', label: 'File', type: 'file', required: true }, { key: 'date', label: 'Publish date', type: 'date' }, { key: 'status', label: 'Status', type: 'select', options: ['Published', 'Draft'], required: true }] }
   };
-  constructor(private route: ActivatedRoute, public router: Router, private dialog: MatDialog, private confirm: ConfirmationDialogService, private mockData: MockDataService, private tenant: TenantContextService, public auth: MockAuthService, private toast: ToastService, private teacherApi: TeacherApiService, private admissionApi: AdmissionApiService) {}
+  constructor(private route: ActivatedRoute, public router: Router, private dialog: MatDialog, private confirm: ConfirmationDialogService, private mockData: MockDataService, private tenant: TenantContextService, public auth: MockAuthService, private toast: ToastService, private teacherApi: TeacherApiService, private admissionApi: AdmissionApiService, private courseApi: CourseApiService, private batchApi: BatchApiService, private testApi: TestApiService, private materialApi: MaterialApiService, private noticeApi: NoticeApiService, private mediaApi: MediaApiService) {}
   get isTeacher(): boolean { return this.auth.role === 'Teacher'; }
   get useTeacherApi(): boolean { return this.key === 'teachers' && !this.isShop && !!this.auth.token; }
   get useAdmissionApi(): boolean { return this.key === 'admissions' && !this.isShop && !!this.auth.token; }
+  get useCourseApi(): boolean { return this.key === 'courses' && !this.isShop && !!this.auth.token; }
+  get usePostApi(): boolean { return this.key === 'posts' && !this.isShop && !!this.auth.token; }
+  get useGalleryApi(): boolean { return this.key === 'gallery' && !this.isShop && !!this.auth.token; }
+  get useNoticeApi(): boolean { return this.key === 'notices' && !this.isShop && !!this.auth.token; }
+  get useMaterialApi(): boolean { return this.key === 'materials' && !this.isShop && !!this.auth.token; }
+  /** Live rows say whether this user may change them (teachers: their own batches); demo rows follow the role. */
+  canManageRow(row: Row): boolean { return row.canManage ?? !this.isTeacher; }
+  get useResultApi(): boolean { return this.key === 'results' && !this.isShop && !!this.auth.token; }
+  get useBatchApi(): boolean { return this.key === 'batches' && !this.isShop && !!this.auth.token; }
   ngOnInit(): void {
     this.isShop = this.router.url.startsWith('/shop/');
     this.key = this.route.snapshot.url[1]?.path || this.route.snapshot.url[0]?.path || 'teachers';
@@ -180,25 +224,47 @@ export class ClientManagementComponent implements OnInit {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (this.useTeacherApi) this.loadTeachers(id);
     else if (this.useAdmissionApi) this.loadAdmissions();
+    else if (this.useCourseApi) this.loadCourses(id);
+    else if (this.useBatchApi) this.loadBatches(id);
+    else if (this.useResultApi) this.loadResults();
+    else if (this.useMaterialApi) this.loadMaterials();
+    else if (this.useNoticeApi) this.loadNotices();
+    else if (this.usePostApi) this.loadPosts();
+    else if (this.useGalleryApi) this.loadAlbums();
     else if (id) this.detail = this.rows.find(row => row.id === id);
-    if (this.key === 'batches' && !this.isShop && this.auth.token) this.loadTeacherOptions();
+    if (!this.isShop && this.auth.token && !this.useBatchApi && this.config.fields.some(field => field.key === 'course')) this.loadCourseOptions();
+    if (!this.isShop && this.auth.token && this.config.fields.some(field => field.key === 'batch')) this.loadBatchOptions();
   }
-  get rows(): Row[] { if (this.key === 'teachers' && this.apiTeachers) return this.apiTeachers; if (this.key === 'admissions' && this.apiAdmissions) return this.apiAdmissions; if (this.key === 'courses' && !this.isShop) return this.isSchool ? this.schoolClasses : this.coachingCourses; if (this.isSchool && this.schoolData[this.key]) return this.schoolData[this.key]; return this.isShop && this.shopSocialData[this.key] ? this.shopSocialData[this.key] : this.featureData[this.key] || []; }
+  get rows(): Row[] { if (this.key === 'teachers' && this.apiTeachers) return this.apiTeachers; if (this.key === 'admissions' && this.apiAdmissions) return this.apiAdmissions; if (this.key === 'courses' && this.apiCourses) return this.apiCourses; if (this.key === 'batches' && this.apiBatches) return this.apiBatches; if (this.key === 'results' && this.apiResults) return this.apiResults; if (this.key === 'materials' && this.apiMaterials) return this.apiMaterials; if (this.key === 'notices' && this.apiNotices) return this.apiNotices; if (this.key === 'posts' && this.apiPosts) return this.apiPosts; if (this.key === 'gallery' && this.apiAlbums) return this.apiAlbums; if (this.key === 'courses' && !this.isShop) return this.isSchool ? this.schoolClasses : this.coachingCourses; if (this.isSchool && this.schoolData[this.key]) return this.schoolData[this.key]; return this.isShop && this.shopSocialData[this.key] ? this.shopSocialData[this.key] : this.featureData[this.key] || []; }
   get filtered(): Row[] {
     const query = this.search.trim().toLowerCase();
     return this.rows.filter(row => (!query || Object.values(row).join(' ').toLowerCase().includes(query)) && (!this.filter || String(row.status || '').toLowerCase() === this.filter.toLowerCase() || String(row.resultStatus || '').toLowerCase() === this.filter.toLowerCase() || String(row.type || '').toLowerCase() === this.filter.toLowerCase() || String(row.subjects || '').toLowerCase().includes(this.filter.toLowerCase()) || String(row.department || '').toLowerCase() === this.filter.toLowerCase()) && this.inDateRange(row.date || row.joining || row.examDate));
   }
   openRecord(row?: Row, draft?: Row): void {
-    if (this.isTeacher && !['results', 'materials'].includes(this.key)) return;
+    if (this.isTeacher && !['results', 'materials', 'notices', 'posts', 'gallery'].includes(this.key)) return;
+    if (this.isTeacher && ['posts', 'gallery'].includes(this.key) && (!this.auth.token || (row && !row.canManage))) return;
+    if (this.isTeacher && this.key === 'notices' && (!this.useNoticeApi || (row && !row.canManage))) return;
+    if (this.isTeacher && this.key === 'notices' && !row && !this.batchCodes.size) { this.toast.warning('You can post notices once you are assigned a batch.'); return; }
+    // Results come from marks entered against a test or exam.
+    if (this.useResultApi) { this.toast.info(`Results come from ${this.isSchool ? 'exams' : 'tests'}: open one and choose “Enter marks”.`); this.router.navigate([this.testsRoute]); return; }
+    if (this.useMaterialApi && !this.courseCodes.size) { this.toast.warning(`Add a ${this.isSchool ? 'class' : 'course'} first, then add its study materials.`); return; }
+    if (this.useBatchApi && !this.courseCodes.size) { this.toast.warning(`Add a ${this.isSchool ? 'class' : 'course'} first, then create its batches.`); this.router.navigate(['/client/courses']); return; }
     const record = draft || (row ? { ...row, ...(row.phone ? { phone: normalizeMobile(String(row.phone)) } : {}) } : undefined);
     const ref = this.dialog.open(RecordDialogComponent, { width: '640px', maxWidth: 'calc(100vw - 24px)', data: { title: `${row ? 'Edit' : 'Add'} ${this.config.singular}`, submitLabel: row ? 'Save changes' : this.config.action, fields: this.dialogFields(row), record, successMessage: '' } });
     ref.afterClosed().subscribe(async value => {
       if (!value) { if (this.router.url.endsWith('/add')) this.router.navigate([`${this.isShop ? '/shop' : '/client'}/${this.key}`]); return; }
       // Cross-field checks the shared dialog can't express: reopen with the entered values so nothing is lost.
-      const problem = this.recordProblem(value) || await this.mediaProblem(value.media, true) || await this.mediaProblem(value.file, false);
+      const problem = this.recordProblem(value) || (this.usePostApi ? '' : await this.mediaProblem(value.media, true)) || (this.useMaterialApi ? '' : await this.mediaProblem(value.file, false));
+      // (Posts: the photo is resized and checked against 5 MB when it is uploaded.)
       if (problem) { this.toast.error(problem); this.openRecord(row, value); return; }
       if (this.useTeacherApi) { this.saveTeacher(value, row); return; }
       if (this.useAdmissionApi) { this.saveAdmission(value, row); return; }
+      if (this.useCourseApi) { this.saveCourse(value, row); return; }
+      if (this.useBatchApi) { this.saveBatch(value, row); return; }
+      if (this.useMaterialApi) { this.saveMaterial(value, row); return; }
+      if (this.useNoticeApi) { this.saveNotice(value, row); return; }
+      if (this.usePostApi) { this.savePost(value, row); return; }
+      if (this.useGalleryApi) { this.saveAlbum(value, row); return; }
       this.config.fields.forEach(field => { if (field.type === 'date' && value[field.key] instanceof Date) value[field.key] = (value[field.key] as Date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); });
       const normalized: Row = { ...value, id: row?.id || Date.now() };
       if (normalized.phone) normalized.phone = normalizeMobile(String(normalized.phone));
@@ -237,19 +303,19 @@ export class ClientManagementComponent implements OnInit {
     if (!src.startsWith('blob:')) return mediaOnly && !/^(assets\/|https?:|data:)/.test(src) ? 'Please choose an image or video file.' : '';
     try { const blob = await (await fetch(src)).blob(); return blob.size > MAX_MEDIA_BYTES ? 'File must be 10 MB or smaller.' : ''; } catch { return ''; }
   }
-  viewRow(row: Row): void { this.dialog.open(RecordDialogComponent, { width: '660px', maxWidth: 'calc(100vw - 24px)', data: { title: `${this.singularLabel} details`, submitLabel: 'Done', fields: this.useAdmissionApi ? this.admissionFields(row) : this.config.fields, record: row, readonly: true } }); }
+  viewRow(row: Row): void { this.dialog.open(RecordDialogComponent, { width: '660px', maxWidth: 'calc(100vw - 24px)', data: { title: `${this.singularLabel} details`, submitLabel: 'Done', fields: this.useAdmissionApi ? this.admissionFields(row) : this.useCourseApi ? this.courseFields() : this.useBatchApi ? this.batchFields() : this.useMaterialApi ? this.materialFields() : this.useNoticeApi ? this.noticeFields() : this.usePostApi ? this.postFields() : this.useGalleryApi ? this.albumFields() : this.config.fields, record: row, readonly: true } }); }
   followUp(row: Row): void { if (this.isTeacher) return; if (this.useAdmissionApi) { this.followUpApi(row); return; } const ref = this.dialog.open(RecordDialogComponent, { width: '560px', maxWidth: 'calc(100vw - 24px)', data: { title: `Schedule follow-up · ${row.name}`, submitLabel: 'Save follow-up', fields: [{ key: 'followup', label: 'Follow-up date and time', type: 'text', required: true }, { key: 'notes', label: 'Follow-up notes', type: 'textarea' }], record: { followup: row.followup }, successMessage: `Follow-up saved for ${row.name}.` } }); ref.afterClosed().subscribe(value => { if (value) row.followup = value.followup; }); }
-  download(row: Row): void { const blob = new Blob([`Demo study material: ${row.title}\n${row.description || ''}\nFile reference: ${row.file || ''}`], { type: 'text/plain' }); const anchor = document.createElement('a'); anchor.href = URL.createObjectURL(blob); anchor.download = (row.file || `${row.title}.txt`).split('/').pop(); anchor.click(); URL.revokeObjectURL(anchor.href); this.toast.success(`Downloading “${row.title}”.`); }
+  download(row: Row): void { if (row.url) { window.open(row.url, '_blank', 'noopener'); return; } const blob = new Blob([`Demo study material: ${row.title}\n${row.description || ''}\nFile reference: ${row.file || ''}`], { type: 'text/plain' }); const anchor = document.createElement('a'); anchor.href = URL.createObjectURL(blob); anchor.download = (row.file || `${row.title}.txt`).split('/').pop(); anchor.click(); URL.revokeObjectURL(anchor.href); this.toast.success(`Downloading “${row.title}”.`); }
   preview(media: string): void { if (media) window.open(media, '_blank', 'noopener'); }
-  uploadMedia(row: Row): void { if (this.isTeacher) return; const ref = this.dialog.open(RecordDialogComponent, { width: '560px', maxWidth: 'calc(100vw - 24px)', data: { title: `Upload media · ${row.name}`, submitLabel: 'Add to album', fields: [{ key: 'media', label: 'Photo or video file', type: 'file', required: true, hint: 'Images or videos up to 10 MB' }], successMessage: '' } }); ref.afterClosed().subscribe(async value => { if (!value?.media) return; const problem = await this.mediaProblem(value.media, true); if (problem) { this.toast.error(problem); return; } row.media = value.media; row.count = (Number(row.count) || 0) + 1; this.toast.success(`Media added to “${row.name}”.`); }); }
+  uploadMedia(row: Row): void { if (this.useGalleryApi) { this.openAlbum(row); return; } if (this.isTeacher) return; const ref = this.dialog.open(RecordDialogComponent, { width: '560px', maxWidth: 'calc(100vw - 24px)', data: { title: `Upload media · ${row.name}`, submitLabel: 'Add to album', fields: [{ key: 'media', label: 'Photo or video file', type: 'file', required: true, hint: 'Images or videos up to 10 MB' }], successMessage: '' } }); ref.afterClosed().subscribe(async value => { if (!value?.media) return; const problem = await this.mediaProblem(value.media, true); if (problem) { this.toast.error(problem); return; } row.media = value.media; row.count = (Number(row.count) || 0) + 1; this.toast.success(`Media added to “${row.name}”.`); }); }
   private inDateRange(value: string): boolean { if (!value || (!this.startDate && !this.endDate)) return true; const date = new Date(value); const from = this.startDate ? new Date(this.startDate instanceof Date ? this.startDate.getTime() : this.startDate) : undefined; const to = this.endDate ? new Date(this.endDate instanceof Date ? this.endDate.getTime() : this.endDate) : undefined; return !Number.isNaN(date.getTime()) && (!from || date >= from) && (!to || date <= to); }
-  remove(row: Row): void { if (this.isTeacher) return; this.confirm.confirm({ title: `Delete ${this.config.singular}?`, message: `Delete “${row.name || row.title || row.student}” from this workspace? ${this.useTeacherApi ? 'Their sign-in account is closed too. This action' : this.useAdmissionApi ? 'This action' : 'This mock action'} cannot be undone.`, confirmLabel: `Delete ${this.config.singular}`, destructive: true }).subscribe(ok => { if (ok && this.useTeacherApi) { this.deleteTeacher(row); return; } if (ok && this.useAdmissionApi) { this.deleteAdmission(row); return; } if (ok) { const collection = this.rows; const index = collection.indexOf(row); if (index >= 0) collection.splice(index, 1); this.toast.success(`${this.singularLabel} “${row.name || row.title || row.student}” deleted.`); } }); }
-  toggleStatus(row: Row): void { if (this.isTeacher) return; if (row.status || !row.resultStatus) row.status = row.status === 'Published' ? 'Draft' : row.status === 'Draft' ? 'Published' : row.status === 'Active' ? 'Inactive' : 'Active'; if (row.resultStatus) row.resultStatus = row.resultStatus === 'Published' ? 'Draft' : 'Published'; const state = row.resultStatus || row.status; this.toast.success(`“${row.name || row.title || row.student}” ${state === 'Published' ? 'published' : state === 'Draft' ? 'moved to drafts' : `marked ${String(state).toLowerCase()}`}.`); }
-  togglePin(row: Row): void { if (this.isTeacher) return; row.pinned = !row.pinned; this.toast.success(row.pinned ? `“${row.title || row.name}” pinned to the top.` : `“${row.title || row.name}” unpinned.`); }
+  remove(row: Row): void { if (this.isTeacher) return; this.confirm.confirm({ title: `Delete ${this.config.singular}?`, message: `Delete “${row.name || row.title || row.student}” from this workspace? ${this.useTeacherApi ? 'Their sign-in account is closed too. This action' : this.useAdmissionApi || this.useCourseApi || this.useBatchApi || this.useMaterialApi || this.useNoticeApi || this.usePostApi || this.useGalleryApi ? 'This action' : 'This mock action'} cannot be undone.`, confirmLabel: `Delete ${this.config.singular}`, destructive: true }).subscribe(ok => { if (ok && this.useTeacherApi) { this.deleteTeacher(row); return; } if (ok && this.useAdmissionApi) { this.deleteAdmission(row); return; } if (ok && this.useCourseApi) { this.deleteCourse(row); return; } if (ok && this.useBatchApi) { this.deleteBatch(row); return; } if (ok && this.useMaterialApi) { this.deleteMaterial(row); return; } if (ok && this.useNoticeApi) { this.deleteNotice(row); return; } if (ok && (this.usePostApi || this.useGalleryApi)) { this.deleteMedia(row); return; } if (ok) { const collection = this.rows; const index = collection.indexOf(row); if (index >= 0) collection.splice(index, 1); this.toast.success(`${this.singularLabel} “${row.name || row.title || row.student}” deleted.`); } }); }
+  toggleStatus(row: Row): void { if (this.usePostApi) { this.updatePost(row, { status: row.status === 'Draft' ? 'published' : 'draft' }, row.status === 'Draft' ? `“${row.title}” published.` : `“${row.title}” moved to drafts.`); return; } if (this.useGalleryApi) { this.updateAlbum(row, { status: row.status === 'Draft' ? 'published' : 'draft' }, row.status === 'Draft' ? `“${row.name}” published.` : `“${row.name}” moved to drafts.`); return; } if (this.useNoticeApi) { this.updateNotice(row, { status: row.status === 'Draft' ? 'published' : 'draft' }, row.status === 'Draft' ? `“${row.title}” published.` : `“${row.title}” moved to drafts.`); return; } if (this.isTeacher) return; if (this.useCourseApi) { this.toggleCourseStatus(row); return; } if (this.useBatchApi) { this.toggleBatchStatus(row); return; } if (this.useMaterialApi) { this.toggleMaterialStatus(row); return; } if (row.status || !row.resultStatus) row.status = row.status === 'Published' ? 'Draft' : row.status === 'Draft' ? 'Published' : row.status === 'Active' ? 'Inactive' : 'Active'; if (row.resultStatus) row.resultStatus = row.resultStatus === 'Published' ? 'Draft' : 'Published'; const state = row.resultStatus || row.status; this.toast.success(`“${row.name || row.title || row.student}” ${state === 'Published' ? 'published' : state === 'Draft' ? 'moved to drafts' : `marked ${String(state).toLowerCase()}`}.`); }
+  togglePin(row: Row): void { if (this.usePostApi) { if (!row.canManage) return; this.updatePost(row, { pinned: !row.pinned }, row.pinned ? `“${row.title}” unpinned.` : `“${row.title}” pinned to the top.`); return; } if (this.useNoticeApi) { this.updateNotice(row, { pinned: !row.pinned }, row.pinned ? `“${row.title}” unpinned.` : `“${row.title}” pinned to the top.`); return; } if (this.isTeacher) return; row.pinned = !row.pinned; this.toast.success(row.pinned ? `“${row.title || row.name}” pinned to the top.` : `“${row.title || row.name}” unpinned.`); }
   convert(row: Row): void { if (this.useAdmissionApi) { this.convertApi(row); return; } this.confirm.confirm({ title: 'Convert inquiry to student?', message: `Create a student record for ${row.name}? This will add a mock student to the directory.`, confirmLabel: 'Convert to student' }).subscribe(ok => { if (ok) { row.status = 'Joined'; const student = this.mockData.addStudent({ name: row.name, father: row.parent || '', mother: '', phone: normalizeMobile(String(row.phone || '')), email: '', course: row.course, batch: this.isSchool ? 'Section A' : row.course.includes('12') ? 'Physics · Morning' : 'Chemistry · Evening', admission: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), dob: '', gender: '', address: '', city: '', state: '', pincode: '', monthlyFee: 0, discount: 0, feeStatus: 'Pending' }); this.toast.success(`${row.name} added to students.`); this.router.navigate(['/client/students', student.id]); } }); }
   addChild(): void { this.openRecord(); }
   initials(name: string): string { return name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(); }
-  get filters(): string[] { if (this.key === 'teachers') return this.isSchool ? SCHOOL_DEPARTMENTS : this.options.subjects; if (this.key === 'admissions') return ['New', 'Contacted', 'Interested', 'Joined', 'Rejected']; if (this.key === 'posts') return ['Image', 'Video', 'Text', 'Announcement', 'Published', 'Draft']; if (this.key === 'notices') return ['General', 'Holiday', 'Exam', 'Fee Reminder', this.isSchool ? 'PTM' : 'New Batch', 'Important', 'Published', 'Draft']; if (this.key === 'materials') return ['PDF', 'Notes', 'Assignment', 'Video', 'Question Paper', 'Published', 'Draft']; if (this.key === 'gallery') return ['Published', 'Draft']; if (this.key === 'results') return ['Published', 'Draft']; return ['Active', 'Inactive']; }
+  get filters(): string[] { if (this.key === 'teachers') return this.isSchool ? SCHOOL_DEPARTMENTS : this.options.subjects; if (this.key === 'admissions') return ['New', 'Contacted', 'Interested', 'Joined', 'Rejected']; if (this.key === 'posts') return ['Image', 'Video', 'Text', 'Announcement', 'Published', 'Draft']; if (this.key === 'notices') return ['General', 'Holiday', 'Exam', 'Fee Reminder', this.isSchool ? 'PTM' : 'New Batch', 'Important', 'Published', ...(this.apiNotices ? ['Scheduled', 'Expired'] : []), 'Draft']; if (this.key === 'materials') return ['PDF', 'Notes', 'Assignment', 'Video', 'Question Paper', 'Published', 'Draft']; if (this.key === 'gallery') return ['Published', 'Draft']; if (this.key === 'results') return ['Published', 'Draft']; return ['Active', 'Inactive']; }
   get filterLabel(): string { return this.key === 'teachers' ? (this.isSchool ? 'Department' : 'Subject') : this.key === 'admissions' ? (this.isSchool ? 'Admission status' : 'Enquiry status') : ['posts','notices','materials'].includes(this.key) ? 'Type / status' : 'Status'; }
   get cardMode(): boolean { return ['courses', 'posts', 'gallery', 'materials'].includes(this.key); }
   get statusTone(): 'success'|'warning'|'danger'|'neutral'|'info' { return 'success'; }
@@ -264,22 +330,32 @@ export class ClientManagementComponent implements OnInit {
       },
       error: (error: Error) => { this.loading = false; this.apiTeachers = []; this.toast.error(error.message); }
     });
-  }
-  /** Batches pick their teachers from the owner's real teacher list when it is available. */
-  private loadTeacherOptions(): void {
-    this.teacherApi.list(this.auth.token!).subscribe({
-      next: teachers => {
-        const names = teachers.map(teacher => teacher.fullName || '').filter(Boolean);
-        if (names.length) this.config.fields = this.config.fields.map(field => field.key === 'teacher' ? { ...field, options: names } : field);
+    // Pick lists for the form; on error the form keeps free-text entry.
+    forkJoin({ courses: this.courseApi.list(this.auth.token!), batches: this.batchApi.list(this.auth.token!, { status: 'active' }) }).subscribe({
+      next: ({ courses, batches }) => {
+        const active = courses.filter(course => course.status === 'active');
+        this.teacherSubjectOptions = [...new Set([...(this.isSchool ? SCHOOL_SUBJECTS : COACHING_SUBJECTS), ...active.flatMap(course => course.subjects)])];
+        this.teacherClassOptions = this.isSchool ? batches.map(batch => BatchApiService.label(batch)) : active.map(course => course.name);
       },
-      error: () => { /* Keep the sample teacher names. */ }
+      error: () => { /* keep free-text subjects / classes */ }
     });
   }
   /** The backend assigns the employee ID, and a new teacher needs a password to sign in with. */
   private dialogFields(row?: Row): RecordField[] {
     if (this.useAdmissionApi) return this.admissionFields(row);
+    if (this.useCourseApi) return this.courseFields();
+    if (this.useBatchApi) return this.batchFields();
+    if (this.useMaterialApi) return this.materialFields();
+    if (this.useNoticeApi) return this.noticeFields();
+    if (this.usePostApi) return this.postFields();
+    if (this.useGalleryApi) return this.albumFields();
     if (!this.useTeacherApi) return this.config.fields;
-    const fields = this.config.fields.filter(field => field.key !== 'employeeId');
+    // Subjects and classes are picked from lists so names match exactly (school subject teachers enter marks by subject).
+    const keep = (key: string, options: string[]): string[] => [...new Set([...options, ...String(row?.[key] || '').split(',').map((item: string) => item.trim()).filter(Boolean)])];
+    const fields = this.config.fields.filter(field => field.key !== 'employeeId').map<RecordField>(field =>
+      field.key === 'subjects' && this.teacherSubjectOptions.length ? { ...field, type: 'multiselect', options: keep('subjects', this.teacherSubjectOptions), hint: undefined }
+      : field.key === 'classes' && this.teacherClassOptions.length ? { ...field, label: this.isSchool ? 'Classes / sections taught' : 'Courses taught', type: 'multiselect', options: keep('classes', this.teacherClassOptions), hint: undefined }
+      : field);
     if (row) return fields;
     const after = fields.findIndex(field => field.key === 'email') + 1;
     return [...fields.slice(0, after), { key: 'password', label: 'Login password', type: 'password', required: true, hint: 'The teacher signs in with their email or phone and this password.' }, ...fields.slice(after)];
@@ -440,6 +516,533 @@ export class ClientManagementComponent implements OnInit {
     const date = value instanceof Date ? value : new Date(String(value));
     if (Number.isNaN(date.getTime())) return null;
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+  /** Active courses from the API, totals for the summary cards (sample numbers in demo sessions). */
+  get activeCourseOrBatchCount(): number { return this.rows.filter(row => row.status === 'Active').length; }
+  get enrolledTotal(): string { return this.apiCourses ? this.apiCourses.reduce((sum, row) => sum + (Number(row.enrolled) || 0), 0).toLocaleString('en-IN') : this.isSchool ? '1,486' : '426'; }
+  private loadCourses(id: number): void {
+    this.loading = true;
+    this.courseApi.list(this.auth.token!).subscribe({
+      next: courses => {
+        this.loading = false;
+        this.apiCourses = courses.map((course, index) => this.courseRow(course, index));
+        if (id) this.detail = this.apiCourses.find(row => row.id === id);
+      },
+      error: (error: Error) => { this.loading = false; this.apiCourses = []; this.toast.error(error.message); }
+    });
+  }
+  /** Course / class pickers in other modules list the owner's real active courses once any exist. */
+  private loadCourseOptions(): void {
+    this.courseApi.activeNames(this.auth.token).subscribe(names => {
+      if (names.length) this.config.fields = this.config.fields.map(field => field.key === 'course' ? { ...field, options: names } : field);
+    });
+  }
+  /** The fee is an amount plus how often it is charged; the choices differ for coaching and school. */
+  private courseFields(): RecordField[] {
+    const frequencies = (this.isSchool ? SCHOOL_FEE_FREQUENCIES : COACHING_FEE_FREQUENCIES).map(value => FEE_FREQUENCY_LABELS[value]);
+    return this.config.fields.flatMap<RecordField>(field => field.key !== 'fee' ? [field] : [
+      { key: 'feeAmount', label: 'Fee amount (₹)', type: 'number', required: true, hint: this.isSchool ? 'e.g. 18500' : 'e.g. 4500' },
+      { key: 'feeFrequency', label: 'Fee charged', type: 'select', options: frequencies, required: true }
+    ]);
+  }
+  private coursePayload(value: Row): CoursePayload {
+    const text = (v: unknown): string | null => String(v ?? '').trim() || null;
+    const fallback: ApiFeeFrequency = this.isSchool ? 'perTerm' : 'monthly';
+    return {
+      name: String(value.name || '').trim(),
+      description: text(value.description),
+      duration: text(value.duration),
+      feeAmount: Number(value.feeAmount) || 0,
+      feeFrequency: FEE_FREQUENCY_VALUES[value.feeFrequency] || fallback,
+      subjects: String(value.subjects || '').split(',').map(item => item.trim()).filter(Boolean),
+      status: value.status === 'Inactive' ? 'inactive' : 'active'
+    };
+  }
+  private saveCourse(value: Row, row?: Row): void {
+    const token = this.auth.token!;
+    const payload = this.coursePayload(value);
+    const request = row ? this.courseApi.update(token, row.code, payload) : this.courseApi.create(token, payload);
+    request.subscribe({
+      next: course => {
+        const saved = this.courseRow(course, row ? this.apiCourses?.indexOf(row) ?? 0 : this.apiCourses?.length ?? 0);
+        if (row) Object.assign(row, saved); else this.apiCourses?.push(saved);
+        this.toast.success(`${this.singularLabel} “${saved.name}” ${row ? 'updated' : 'added'}.`);
+        if (this.router.url.endsWith('/add')) this.router.navigate(['/client/courses']);
+      },
+      // Reopen with the entered values so nothing is lost.
+      error: (error: Error) => { this.toast.error(error.message); this.openRecord(row, value); }
+    });
+  }
+  private toggleCourseStatus(row: Row): void {
+    const status = row.status === 'Active' ? 'inactive' : 'active';
+    this.courseApi.update(this.auth.token!, row.code, { status }).subscribe({
+      next: course => { Object.assign(row, this.courseRow(course, this.apiCourses?.indexOf(row) ?? 0)); this.toast.success(`“${row.name}” marked ${status}.`); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  private deleteCourse(row: Row): void {
+    this.courseApi.remove(this.auth.token!, row.code).subscribe({
+      next: () => {
+        this.apiCourses = this.apiCourses?.filter(item => item !== row);
+        this.toast.success(`${this.singularLabel} “${row.name}” deleted.`);
+        if (this.detail === row) this.router.navigate(['/client/courses']);
+      },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  /** Maps an API course to the card / dialog row shape. `id` is the 6-digit course code. */
+  private courseRow(course: ApiCourse, index: number): Row {
+    return {
+      id: Number(course.courseCode),
+      code: course.courseCode,
+      name: course.name,
+      description: course.description || '',
+      duration: course.duration || '—',
+      fee: CourseApiService.feeLabel(course.feeAmount, course.feeFrequency),
+      feeAmount: course.feeAmount,
+      feeFrequency: FEE_FREQUENCY_LABELS[course.feeFrequency],
+      subjects: course.subjects.join(', '),
+      status: course.status === 'inactive' ? 'Inactive' : 'Active',
+      enrolled: course.enrolled ?? 0,
+      accent: COURSE_ACCENTS[Math.max(0, index) % COURSE_ACCENTS.length]
+    };
+  }
+  /** Students in active batches, against total seats where a capacity is set (sample numbers in demo sessions). */
+  get batchStudentTotal(): string { return this.apiBatches ? this.apiBatches.filter(row => row.status === 'Active').reduce((sum, row) => sum + (Number(row.students) || 0), 0).toLocaleString('en-IN') : '93'; }
+  get activeBatchCount(): number { return this.activeCourseOrBatchCount; }
+  overCapacity(row: Row): boolean { return !!row.capacity && Number(row.students) > Number(row.capacity); }
+  /** Batches need the owner's courses and teachers (names to codes) as well as the batches themselves. */
+  private loadBatches(id: number): void {
+    const token = this.auth.token!;
+    this.loading = true;
+    forkJoin({ batches: this.batchApi.list(token), courses: this.courseApi.list(token), teachers: this.teacherApi.list(token) }).subscribe({
+      next: ({ batches, courses, teachers }) => {
+        this.loading = false;
+        this.courseCodes = new Map(courses.map(course => [course.name, course.courseCode]));
+        this.teacherCodes = new Map(teachers.filter(teacher => teacher.fullName).map(teacher => [teacher.fullName!, teacher.teacherCode]));
+        this.apiBatches = batches.map(batch => this.batchRow(batch));
+        if (id) this.detail = this.apiBatches.find(row => row.id === id);
+      },
+      error: (error: Error) => { this.loading = false; this.apiBatches = []; this.toast.error(error.message); }
+    });
+  }
+  /** Batch / section pickers in other modules (Results, Materials) list the real active batches once any exist. */
+  private loadBatchOptions(): void {
+    this.batchApi.active(this.auth.token).subscribe(batches => {
+      const names = batches.map(batch => BatchApiService.label(batch));
+      if (names.length) this.config.fields = this.config.fields.map(field => field.key === 'batch' ? { ...field, options: names } : field);
+    });
+  }
+  /** Structured schedule: days picked from Mon–Sun plus a start and end time. */
+  private batchFields(): RecordField[] {
+    const status = this.config.fields.find(field => field.key === 'status')!;
+    return [
+      { key: 'name', label: 'Batch name', required: true, hint: 'e.g. Physics · Morning' },
+      { key: 'course', label: 'Course', type: 'select', options: [...this.courseCodes.keys()], required: true },
+      { key: 'teacher', label: 'Teachers', type: 'multiselect', options: [...this.teacherCodes.keys()] },
+      { key: 'dayList', label: 'Days', type: 'multiselect', options: [...BATCH_DAYS], required: true },
+      { key: 'startTime', label: 'Start time', type: 'time', required: true },
+      { key: 'endTime', label: 'End time', type: 'time', required: true },
+      { key: 'start', label: 'Start date', type: 'date', required: true },
+      { key: 'end', label: 'End date', type: 'date' },
+      { key: 'room', label: 'Room', hint: 'e.g. Room 204' },
+      { key: 'capacity', label: 'Student capacity', type: 'number' },
+      status
+    ];
+  }
+  private batchPayload(value: Row): BatchPayload {
+    const list = (text: unknown): string[] => String(text || '').split(',').map(item => item.trim()).filter(Boolean);
+    const capacity = Number(value.capacity);
+    return {
+      name: String(value.name || '').trim(),
+      courseCode: this.courseCodes.get(value.course) || '',
+      teacherCodes: list(value.teacher).map(name => this.teacherCodes.get(name)).filter((code): code is string => !!code),
+      days: list(value.dayList) as ApiBatchDay[],
+      startTime: value.startTime || null,
+      endTime: value.endTime || null,
+      startDate: ClientManagementComponent.isoDate(value.start),
+      endDate: ClientManagementComponent.isoDate(value.end),
+      room: String(value.room || '').trim() || null,
+      capacity: capacity > 0 ? capacity : null,
+      status: value.status === 'Inactive' ? 'inactive' : 'active'
+    };
+  }
+  private saveBatch(value: Row, row?: Row): void {
+    const token = this.auth.token!;
+    const payload = this.batchPayload(value);
+    if (value.startTime && value.endTime && value.endTime <= value.startTime) { this.toast.error('End time must be after the start time.'); this.openRecord(row, value); return; }
+    const request = row ? this.batchApi.update(token, row.code, payload) : this.batchApi.create(token, payload);
+    request.subscribe({
+      next: batch => {
+        const saved = this.batchRow(batch);
+        if (row) Object.assign(row, saved); else this.apiBatches?.push(saved);
+        this.toast.success(`${this.singularLabel} “${saved.name}” ${row ? 'updated' : 'added'}.`);
+        if (this.overCapacity(saved)) this.toast.warning(`“${saved.name}” has ${saved.students} students but room for ${saved.capacity}.`);
+        if (this.router.url.endsWith('/add')) this.router.navigate(['/client/batches']);
+      },
+      // Reopen with the entered values so nothing is lost (e.g. a teacher or room clash).
+      error: (error: Error) => { this.toast.error(error.message); this.openRecord(row, value); }
+    });
+  }
+  private toggleBatchStatus(row: Row): void {
+    const status = row.status === 'Active' ? 'inactive' : 'active';
+    this.batchApi.update(this.auth.token!, row.code, { status }).subscribe({
+      next: batch => { Object.assign(row, this.batchRow(batch)); this.toast.success(`“${row.name}” marked ${status}.`); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  private deleteBatch(row: Row): void {
+    this.batchApi.remove(this.auth.token!, row.code).subscribe({
+      next: () => {
+        this.apiBatches = this.apiBatches?.filter(item => item !== row);
+        this.toast.success(`${this.singularLabel} “${row.name}” deleted.`);
+        if (this.detail === row) this.router.navigate(['/client/batches']);
+      },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  /** Maps an API batch to the card / table / dialog row shape. `id` is the 6-digit batch code. */
+  private batchRow(batch: ApiBatch): Row {
+    const day = (value: string | null): string => value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
+    return {
+      id: Number(batch.batchCode),
+      code: batch.batchCode,
+      name: batch.name,
+      course: batch.course?.name || '—',
+      teacher: batch.teachers.map(teacher => teacher.fullName).filter(Boolean).join(', ') || '—',
+      days: BatchApiService.daysLabel(batch.days),
+      dayList: batch.days.join(', '),
+      startTime: batch.startTime || '',
+      endTime: batch.endTime || '',
+      timing: batch.startTime && batch.endTime ? `${BatchApiService.clock(batch.startTime)} – ${BatchApiService.clock(batch.endTime)}` : '—',
+      start: day(batch.startDate),
+      end: day(batch.endDate),
+      room: batch.room || '—',
+      capacity: batch.capacity ?? '',
+      students: batch.students ?? 0,
+      status: batch.status === 'inactive' ? 'Inactive' : 'Active'
+    };
+  }
+  private loadMaterials(): void {
+    const token = this.auth.token!;
+    this.loading = true;
+    forkJoin({ materials: this.materialApi.list(token), courses: this.courseApi.list(token), batches: this.batchApi.list(token, { status: 'active' }) }).subscribe({
+      next: ({ materials, courses, batches }) => {
+        this.loading = false;
+        this.courseCodes = new Map(courses.filter(course => course.status === 'active').map(course => [course.name, course.courseCode]));
+        this.batchCodes = new Map(batches.map(batch => [BatchApiService.label(batch), batch.batchCode]));
+        this.apiMaterials = materials.map(material => this.materialRow(material));
+      },
+      error: (error: Error) => { this.loading = false; this.apiMaterials = []; this.toast.error(error.message); }
+    });
+  }
+  /** Course (school: class), optional batch (school: sections), subject, and a file or a link. */
+  private materialFields(): RecordField[] {
+    const subject = this.config.fields.find(field => field.key === 'subject')!;
+    const groups = [...this.batchCodes.keys()];
+    return [
+      { key: 'title', label: 'Title', required: true },
+      { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'course', label: this.isSchool ? 'Class' : 'Course', type: 'select', options: [...this.courseCodes.keys()], required: true },
+      this.isSchool
+        ? { key: 'batch', label: 'Sections', type: 'multiselect', options: groups, hint: 'Leave empty for the whole class' }
+        : { key: 'batch', label: 'Batch', type: 'select', options: [WHOLE_COURSE, ...groups] },
+      { ...subject, required: false },
+      { key: 'type', label: 'Material type', type: 'select', options: Object.values(MATERIAL_TYPE_LABELS), required: true },
+      { key: 'file', label: 'File', type: 'file', accept: MATERIAL_ACCEPT, hint: 'PDF, Word, PowerPoint, Excel or image · up to 25 MB' },
+      { key: 'link', label: 'Link', hint: 'For videos (YouTube, Google Drive, Vimeo), or instead of a file' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Published', 'Draft'], required: true }
+    ];
+  }
+  private async saveMaterial(value: Row, row?: Row): Promise<void> {
+    const token = this.auth.token!;
+    const type = MATERIAL_TYPE_VALUES[value.type] || 'pdf';
+    const picked: File | undefined = value.fileFile;
+    const link = String(value.link || '').trim();
+    const problem = picked && picked.size > MAX_MATERIAL_BYTES ? 'Files must be 25 MB or smaller.'
+      : link && !/^https?:\/\//i.test(link) ? 'Link must start with http:// or https://'
+      : type === 'video' && !link ? 'Add the video link (YouTube, Google Drive, Vimeo…). Videos are not uploaded.'
+      : type !== 'video' && !picked && !link && !row?.fileInfo ? 'Upload a file or add a link.' : '';
+    if (problem) { this.toast.error(problem); this.openRecord(row, value); return; }
+    const groups = String(value.batch || '').split(',').map(item => item.trim()).filter(item => item && item !== WHOLE_COURSE);
+    const payload: MaterialPayload = {
+      title: String(value.title || '').trim(), description: String(value.description || '').trim() || null,
+      courseCode: this.courseCodes.get(value.course) || '', batchCodes: groups.map(label => this.batchCodes.get(label)).filter((code): code is string => !!code),
+      subject: value.subject || null, type, link: link || null, status: value.status === 'Draft' ? 'draft' : 'published'
+    };
+    try {
+      let file: ApiMaterialFile | undefined;
+      if (picked && type !== 'video') { this.toast.info(`Uploading “${picked.name}”…`); file = await firstValueFrom(this.materialApi.upload(token, picked)); }
+      if (file) payload.file = file; else if (link || type === 'video') payload.file = null;
+      const material = await firstValueFrom(row ? this.materialApi.update(token, row.code, payload) : this.materialApi.create(token, payload));
+      const saved = this.materialRow(material);
+      if (row) Object.assign(row, saved); else this.apiMaterials?.unshift(saved);
+      this.toast.success(`${this.singularLabel} “${saved.title}” ${row ? 'updated' : 'added'}.`);
+      if (this.router.url.endsWith('/add')) this.router.navigate(['/client/materials']);
+    } catch (error) {
+      this.toast.error((error as Error).message);
+      this.openRecord(row, { ...value, fileFile: undefined });
+    }
+  }
+  private toggleMaterialStatus(row: Row): void {
+    const status = row.status === 'Published' ? 'draft' : 'published';
+    this.materialApi.update(this.auth.token!, row.code, { status }).subscribe({
+      next: material => { Object.assign(row, this.materialRow(material)); this.toast.success(`“${row.title}” ${status === 'published' ? 'published' : 'moved to drafts'}.`); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  private deleteMaterial(row: Row): void {
+    this.materialApi.remove(this.auth.token!, row.code).subscribe({
+      next: () => { this.apiMaterials = this.apiMaterials?.filter(item => item !== row); this.toast.success(`${this.singularLabel} “${row.title}” deleted.`); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  /** Maps an API material to the card / table / dialog row shape. `id` is the 6-digit material code. */
+  private materialRow(material: ApiMaterial): Row {
+    const host = (url: string): string => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Link'; } };
+    const groups = material.batches.map(batch => material.workType === 'school' && material.course ? `${material.course.name} · ${batch.name}` : batch.name);
+    return {
+      id: Number(material.materialCode), code: material.materialCode, title: material.title, description: material.description || '',
+      course: material.course?.name || '—', batch: this.isSchool ? groups.join(', ') : groups[0] || WHOLE_COURSE,
+      subject: material.subject || '—', type: MATERIAL_TYPE_LABELS[material.type] || 'PDF',
+      file: material.file ? material.file.name : material.link ? host(material.link) : '', fileInfo: material.file,
+      link: material.link || '', url: material.file?.url || material.link || '',
+      size: material.file ? MaterialApiService.sizeLabel(material.file.size) : 'Link',
+      date: new Date(material.publishedAt || material.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      status: material.status === 'draft' ? 'Draft' : 'Published', canManage: material.canManage
+    };
+  }
+  private loadNotices(): void {
+    const token = this.auth.token!;
+    this.loading = true;
+    forkJoin({ notices: this.noticeApi.list(token), courses: this.courseApi.list(token), batches: this.batchApi.list(token, { status: 'active' }) }).subscribe({
+      next: ({ notices, courses, batches }) => {
+        this.loading = false;
+        this.courseCodes = new Map(courses.filter(course => course.status === 'active').map(course => [course.name, course.courseCode]));
+        // Teachers address only their own batches / sections; the backend checks this too.
+        this.batchCodes = new Map(batches.map(batch => [BatchApiService.label(batch), batch.batchCode]));
+        this.apiNotices = notices.map(notice => this.noticeRow(notice));
+      },
+      error: (error: Error) => { this.loading = false; this.apiNotices = []; this.toast.error(error.message); }
+    });
+  }
+  /** Audience, optional course / batches for student notices, pin and (owner) website display. */
+  private noticeFields(): RecordField[] {
+    const types = Object.entries(NOTICE_TYPE_LABELS).filter(([value]) => this.isSchool ? value !== 'newBatch' : value !== 'ptm').map(([, label]) => label);
+    const audiences = this.isTeacher ? [NOTICE_AUDIENCE_LABELS.students] : Object.values(NOTICE_AUDIENCE_LABELS);
+    return [
+      { key: 'title', label: 'Notice title', required: true },
+      { key: 'description', label: 'Notice details', type: 'textarea', required: true },
+      { key: 'type', label: 'Notice type', type: 'select', options: types, required: true },
+      { key: 'audience', label: 'Send to', type: 'select', options: audiences, required: true },
+      { key: 'course', label: this.isSchool ? 'Class (students only)' : 'Course (students only)', type: 'select', options: [ALL_STUDENTS, ...this.courseCodes.keys()] },
+      { key: 'batch', label: this.isSchool ? 'Sections (students only)' : 'Batches (students only)', type: 'multiselect', options: [...this.batchCodes.keys()], hint: 'Leave empty for every batch of the course' },
+      { key: 'date', label: 'Publish date', type: 'date', hint: 'Later dates stay hidden until then' },
+      { key: 'expires', label: 'Expiry date', type: 'date', hint: 'Hidden from students after this date' },
+      { key: 'pinnedLabel', label: 'Pin to top', type: 'select', options: ['No', 'Yes'] },
+      ...(this.isTeacher ? [] : [{ key: 'websiteLabel', label: 'Show on website', type: 'select' as const, options: ['No', 'Yes'] }]),
+      { key: 'status', label: 'Status', type: 'select', options: ['Published', 'Draft'], required: true }
+    ];
+  }
+  private saveNotice(value: Row, row?: Row): void {
+    const audience: ApiNoticeAudience = NOTICE_AUDIENCE_VALUES[value.audience] || (this.isTeacher ? 'students' : 'everyone');
+    const groups = String(value.batch || '').split(',').map(item => item.trim()).filter(Boolean);
+    if (this.isTeacher && !groups.length) { this.toast.error(`Choose the ${this.isSchool ? 'sections' : 'batches'} this notice is for.`); this.openRecord(row, value); return; }
+    const payload: NoticePayload = {
+      title: String(value.title || '').trim(), description: String(value.description || '').trim(),
+      type: (NOTICE_TYPE_VALUES[value.type] || 'general') as ApiNoticeType, audience,
+      courseCode: audience === 'students' && value.course && value.course !== ALL_STUDENTS ? this.courseCodes.get(value.course) || null : null,
+      batchCodes: audience === 'students' ? groups.map(label => this.batchCodes.get(label)).filter((code): code is string => !!code) : [],
+      publishDate: ClientManagementComponent.isoDate(value.date), expiryDate: ClientManagementComponent.isoDate(value.expires),
+      pinned: value.pinnedLabel === 'Yes', status: value.status === 'Draft' ? 'draft' : 'published',
+      ...(this.isTeacher ? {} : { showOnWebsite: value.websiteLabel === 'Yes' })
+    };
+    const token = this.auth.token!;
+    (row ? this.noticeApi.update(token, row.code, payload) : this.noticeApi.create(token, payload)).subscribe({
+      next: notice => {
+        const saved = this.noticeRow(notice);
+        if (row) Object.assign(row, saved); else this.apiNotices?.unshift(saved);
+        this.toast.success(`${this.singularLabel} “${saved.title}” ${row ? 'updated' : 'posted'}.`);
+        if (this.router.url.endsWith('/add')) this.router.navigate(['/client/notices']);
+      },
+      error: (error: Error) => { this.toast.error(error.message); this.openRecord(row, value); }
+    });
+  }
+  private updateNotice(row: Row, payload: Partial<NoticePayload>, message: string): void {
+    this.noticeApi.update(this.auth.token!, row.code, payload).subscribe({
+      next: notice => { Object.assign(row, this.noticeRow(notice)); this.toast.success(message); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  private deleteNotice(row: Row): void {
+    this.noticeApi.remove(this.auth.token!, row.code).subscribe({
+      next: () => { this.apiNotices = this.apiNotices?.filter(item => item !== row); this.toast.success(`${this.singularLabel} “${row.title}” deleted.`); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  /** Maps an API notice to the notice card / dialog row shape. `status` shows the date-based state. */
+  private noticeRow(notice: ApiNotice): Row {
+    const day = (value: string | null): string => value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
+    const groups = notice.batches.map(batch => notice.workType === 'school' && notice.course ? `${notice.course.name} · ${batch.name}` : batch.name);
+    const audience = notice.audience === 'students' ? (groups.length ? groups.join(', ') : notice.course?.name ? `${notice.course.name} students` : 'All students') : NOTICE_AUDIENCE_LABELS[notice.audience];
+    return {
+      id: Number(notice.noticeCode), code: notice.noticeCode, title: notice.title, description: notice.description,
+      type: NOTICE_TYPE_LABELS[notice.type] || 'General', audience: NOTICE_AUDIENCE_LABELS[notice.audience], audienceLabel: audience,
+      course: notice.course?.name || ALL_STUDENTS, batch: groups.join(', '),
+      date: day(notice.publishDate), expires: day(notice.expiryDate) || '—',
+      pinned: notice.pinned, pinnedLabel: notice.pinned ? 'Yes' : 'No', showOnWebsite: notice.showOnWebsite, websiteLabel: notice.showOnWebsite ? 'Yes' : 'No',
+      status: NOTICE_STATE_LABELS[notice.state], canManage: notice.canManage
+    };
+  }
+  private loadPosts(): void {
+    this.loading = true;
+    this.mediaApi.posts(this.auth.token!).subscribe({
+      next: posts => { this.loading = false; this.apiPosts = posts.map(post => this.postRow(post)); },
+      error: (error: Error) => { this.loading = false; this.apiPosts = []; this.toast.error(error.message); }
+    });
+  }
+  private loadAlbums(): void {
+    this.loading = true;
+    this.mediaApi.albums(this.auth.token!).subscribe({
+      next: albums => { this.loading = false; this.apiAlbums = albums.map((album, index) => this.albumRow(album, index)); },
+      error: (error: Error) => { this.loading = false; this.apiAlbums = []; this.toast.error(error.message); }
+    });
+  }
+  private websiteField(label: string): RecordField[] { return this.isTeacher ? [] : [{ key: 'websiteLabel', label, type: 'select', options: ['No', 'Yes'] }]; }
+  /** Image posts carry an uploaded photo; video posts a link (videos are not uploaded). */
+  private postFields(): RecordField[] {
+    return [
+      { key: 'title', label: 'Title', required: true },
+      { key: 'description', label: 'Description', type: 'textarea', required: true },
+      { key: 'type', label: 'Post type', type: 'select', options: Object.values(POST_TYPE_LABELS), required: true },
+      { key: 'media', label: 'Photo (image posts)', type: 'file', accept: PHOTO_ACCEPT, hint: 'JPG, PNG, WebP or GIF · resized automatically' },
+      { key: 'videoLink', label: 'Video link (video posts)', hint: 'YouTube, Google Drive or Vimeo' },
+      { key: 'date', label: 'Publish date', type: 'date' },
+      { key: 'pinnedLabel', label: 'Pin to top', type: 'select', options: ['No', 'Yes'] },
+      ...this.websiteField('Show on website'),
+      { key: 'status', label: 'Status', type: 'select', options: ['Published', 'Draft'], required: true }
+    ];
+  }
+  private albumFields(): RecordField[] {
+    return [
+      { key: 'name', label: 'Album name', required: true },
+      { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'date', label: 'Date', type: 'date' },
+      ...this.websiteField('Show photos on website'),
+      { key: 'status', label: 'Status', type: 'select', options: ['Published', 'Draft'], required: true }
+    ];
+  }
+  private async savePost(value: Row, row?: Row): Promise<void> {
+    const token = this.auth.token!;
+    const type = (POST_TYPE_VALUES[value.type] || 'text') as ApiPostType;
+    const picked: File | undefined = value.mediaFile;
+    const videoLink = String(value.videoLink || '').trim();
+    const problem = type === 'video' && !/^https?:\/\//i.test(videoLink) ? 'Add the video link (starting with https://). Videos are not uploaded.'
+      : type === 'image' && !picked && !row?.media ? 'Choose a photo for an image post.'
+      : picked && !picked.type.startsWith('image/') ? 'Choose a JPG, PNG, WebP or GIF photo.' : '';
+    if (problem) { this.toast.error(problem); this.openRecord(row, { ...value, mediaFile: undefined }); return; }
+    const payload: PostPayload = {
+      title: String(value.title || '').trim(), description: String(value.description || '').trim(), type,
+      videoLink: type === 'video' ? videoLink : null, publishDate: ClientManagementComponent.isoDate(value.date),
+      pinned: value.pinnedLabel === 'Yes', status: value.status === 'Draft' ? 'draft' : 'published',
+      ...(this.isTeacher ? {} : { showOnWebsite: value.websiteLabel === 'Yes' })
+    };
+    try {
+      if (picked && type !== 'video') payload.imageUrl = (await firstValueFrom(this.mediaApi.uploadPhoto(token, picked))).url;
+      else if (type === 'text' || type === 'video') payload.imageUrl = null;
+      const post = await firstValueFrom(row ? this.mediaApi.updatePost(token, row.code, payload) : this.mediaApi.createPost(token, payload));
+      const saved = this.postRow(post);
+      if (row) Object.assign(row, saved); else this.apiPosts?.unshift(saved);
+      this.toast.success(`Post “${saved.title}” ${row ? 'updated' : 'shared'}.`);
+      if (this.router.url.endsWith('/add')) this.router.navigate(['/client/posts']);
+    } catch (error) {
+      this.toast.error((error as Error).message);
+      this.openRecord(row, { ...value, mediaFile: undefined });
+    }
+  }
+  private saveAlbum(value: Row, row?: Row): void {
+    const payload: AlbumPayload = {
+      name: String(value.name || '').trim(), description: String(value.description || '').trim() || null, date: ClientManagementComponent.isoDate(value.date),
+      status: value.status === 'Draft' ? 'draft' : 'published', ...(this.isTeacher ? {} : { showOnWebsite: value.websiteLabel === 'Yes' })
+    };
+    const token = this.auth.token!;
+    (row ? this.mediaApi.updateAlbum(token, row.code, payload) : this.mediaApi.createAlbum(token, payload)).subscribe({
+      next: album => {
+        const saved = this.albumRow(album, row ? this.apiAlbums?.indexOf(row) ?? 0 : this.apiAlbums?.length ?? 0);
+        if (row) { Object.assign(row, saved); this.toast.success(`Album “${saved.name}” updated.`); return; }
+        this.apiAlbums?.unshift(saved);
+        this.toast.success(`Album “${saved.name}” created. Add its photos now.`);
+        this.openAlbum(saved);
+      },
+      error: (error: Error) => { this.toast.error(error.message); this.openRecord(row, value); }
+    });
+  }
+  /** Live albums open the photo manager; demo albums preview their cover. */
+  openAlbum(row: Row): void {
+    if (!this.useGalleryApi) { this.preview(row.media); return; }
+    this.dialog.open(AlbumDialogComponent, { width: '860px', maxWidth: 'calc(100vw - 24px)', data: { album: row.album } }).afterClosed().subscribe((album?: ApiAlbum) => {
+      if (album) Object.assign(row, this.albumRow(album, this.apiAlbums?.indexOf(row) ?? 0));
+    });
+  }
+  private updatePost(row: Row, payload: Partial<PostPayload>, message: string): void {
+    this.mediaApi.updatePost(this.auth.token!, row.code, payload).subscribe({
+      next: post => { Object.assign(row, this.postRow(post)); this.toast.success(message); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  private updateAlbum(row: Row, payload: Partial<AlbumPayload>, message: string): void {
+    this.mediaApi.updateAlbum(this.auth.token!, row.code, payload).subscribe({
+      next: album => { Object.assign(row, this.albumRow(album, this.apiAlbums?.indexOf(row) ?? 0)); this.toast.success(message); },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  private deleteMedia(row: Row): void {
+    const posts = this.usePostApi;
+    (posts ? this.mediaApi.removePost(this.auth.token!, row.code) : this.mediaApi.removeAlbum(this.auth.token!, row.code)).subscribe({
+      next: () => {
+        if (posts) this.apiPosts = this.apiPosts?.filter(item => item !== row); else this.apiAlbums = this.apiAlbums?.filter(item => item !== row);
+        this.toast.success(`${posts ? 'Post' : 'Album'} “${row.title || row.name}” deleted.`);
+      },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  private static dayLabel(value: string): string { return new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }); }
+  private postRow(post: ApiPost): Row {
+    return {
+      id: Number(post.postCode), code: post.postCode, title: post.title, description: post.description, type: POST_TYPE_LABELS[post.type] || 'Text',
+      media: post.imageUrl || '', videoLink: post.videoLink || '', date: ClientManagementComponent.dayLabel(post.publishDate),
+      status: post.state === 'draft' ? 'Draft' : post.state === 'scheduled' ? 'Scheduled' : 'Published',
+      pinned: post.pinned, pinnedLabel: post.pinned ? 'Yes' : 'No', showOnWebsite: post.showOnWebsite, websiteLabel: post.showOnWebsite ? 'Yes' : 'No',
+      author: post.authorName || '', canManage: post.canManage
+    };
+  }
+  private albumRow(album: ApiAlbum, index: number): Row {
+    return {
+      id: Number(album.albumCode), code: album.albumCode, album, name: album.name, description: album.description || '',
+      date: ClientManagementComponent.dayLabel(album.date), status: album.status === 'draft' ? 'Draft' : 'Published',
+      media: album.coverUrl || '', count: album.items.length, accent: ALBUM_ACCENTS[Math.max(0, index) % ALBUM_ACCENTS.length],
+      showOnWebsite: album.showOnWebsite, websiteLabel: album.showOnWebsite ? 'Yes' : 'No', canManage: album.canManage
+    };
+  }
+  get testsRoute(): string { return this.isSchool ? '/client/exams' : '/client/tests'; }
+  private loadResults(): void {
+    this.loading = true;
+    this.config = { ...this.config, action: this.isSchool ? 'Enter exam marks' : 'Enter test marks' };
+    this.testApi.results(this.auth.token!).subscribe({
+      next: results => { this.loading = false; this.apiResults = results.map((result, index) => this.resultRow(result, index)); },
+      error: (error: Error) => { this.loading = false; this.apiResults = []; this.toast.error(error.message); }
+    });
+  }
+  /** Maps an API result (one student, one paper) to the results table row. */
+  private resultRow(result: ApiResult, index: number): Row {
+    return {
+      id: index + 1, code: result.testCode, student: result.student || result.studentCode, studentCode: result.studentCode,
+      course: result.course, batch: result.batch, exam: result.term ? `${result.exam} (${result.term})` : result.exam,
+      examDate: new Date(result.examDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }),
+      subject: result.subject, marks: result.absent ? 'AB' : result.marks, total: result.total,
+      percentage: result.absent ? '—' : `${result.percentage}%`, grade: result.grade, passed: result.passed,
+      resultStatus: result.published ? 'Published' : 'Draft'
+    };
   }
   private configureWorkspaceFields(): void {
     const classes = [...Array.from({ length: 12 }, (_, index) => `Class ${index + 1}`), 'JEE Foundation', 'JEE Preparation', 'NEET Preparation', 'Commerce Entrance'];

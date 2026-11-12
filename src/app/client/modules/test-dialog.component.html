@@ -1,0 +1,89 @@
+<h2 mat-dialog-title class="dialog-title">{{ data.test ? 'Edit' : 'Schedule' }} {{ school ? 'exam' : 'test' }}</h2>
+<p class="dialog-subtitle">{{ school ? 'Pick the class and sections, then add the date sheet.' : 'Pick the batch and subject for this test.' }}</p>
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="form" class="row g-2">
+    <div class="col-md-6">
+      <label class="field-label">{{ school ? 'Exam name' : 'Test name' }} *</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <input matInput formControlName="name" [placeholder]="school ? 'e.g. Term 1 – Mid-term' : 'e.g. Chapter 4 test'">
+        <mat-error>Enter a name (up to 80 characters).</mat-error>
+      </mat-form-field>
+    </div>
+
+    <ng-container *ngIf="school; else coachingGroup">
+      <div class="col-md-6">
+        <label class="field-label">Term</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="term"><mat-option *ngFor="let term of terms" [value]="term">{{ term }}</mat-option></mat-select>
+        </mat-form-field>
+      </div>
+      <div class="col-md-6">
+        <label class="field-label">Class *</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="courseCode" placeholder="Select class" (selectionChange)="classChanged()">
+            <mat-option *ngFor="let course of data.courses" [value]="course.courseCode">{{ course.name }}</mat-option>
+          </mat-select>
+          <mat-error>Choose the class.</mat-error>
+        </mat-form-field>
+      </div>
+      <div class="col-md-6">
+        <label class="field-label">Sections</label>
+        <app-multi-select [options]="sectionNames" [ngModel]="chosenSectionNames" [ngModelOptions]="{ standalone: true }" (ngModelChange)="sectionsChanged($event)" placeholder="All sections" searchPlaceholder="Search sections"></app-multi-select>
+        <small class="field-help">Leave empty for every section of the class.</small>
+      </div>
+    </ng-container>
+    <ng-template #coachingGroup>
+      <div class="col-md-6">
+        <label class="field-label">Batch *</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="batchCode" placeholder="Select batch">
+            <mat-option *ngFor="let batch of data.batches" [value]="batch.batchCode">{{ batchLabel(batch) }}</mat-option>
+          </mat-select>
+          <mat-error>Choose the batch.</mat-error>
+        </mat-form-field>
+      </div>
+    </ng-template>
+
+    <div class="col-12" *ngIf="school"><h3 class="sheet-title">Date sheet</h3></div>
+    <ng-container formArrayName="papers">
+      <div class="col-12 paper-row" *ngFor="let paper of papers.controls; let i = index" [formGroupName]="i">
+        <div class="row g-2 align-items-start">
+          <div class="col-md-4">
+            <label class="field-label">Subject *</label>
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-select formControlName="subject" placeholder="Select subject"><mat-option *ngFor="let subject of subjects" [value]="subject">{{ subject }}</mat-option></mat-select>
+              <mat-error>Choose the subject.</mat-error>
+            </mat-form-field>
+          </div>
+          <div class="col-md-3">
+            <label class="field-label">Date *</label>
+            <mat-form-field appearance="outline" class="w-100">
+              <input matInput [matDatepicker]="picker" formControlName="date" placeholder="DD/MM/YYYY">
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle><mat-datepicker #picker></mat-datepicker>
+              <mat-error>Pick the date.</mat-error>
+            </mat-form-field>
+          </div>
+          <div class="col-md-2 col-6">
+            <label class="field-label">Max marks *</label>
+            <mat-form-field appearance="outline" class="w-100"><input matInput type="number" formControlName="maxMarks"><mat-error>1 – 1000</mat-error></mat-form-field>
+          </div>
+          <div class="col-md-2 col-6">
+            <label class="field-label">Pass marks</label>
+            <mat-form-field appearance="outline" class="w-100"><input matInput type="number" formControlName="passMarks" [placeholder]="school ? '33%' : '40%'"></mat-form-field>
+          </div>
+          <div class="col-md-1 remove-col" *ngIf="school">
+            <button mat-icon-button type="button" [disabled]="papers.length === 1" (click)="removePaper(i)" aria-label="Remove subject"><mat-icon>delete_outline</mat-icon></button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+    <div class="col-12" *ngIf="school"><button mat-stroked-button type="button" (click)="addPaper()"><mat-icon>add</mat-icon>Add subject</button></div>
+    <div class="col-12" *ngIf="data.test?.status === 'completed' || (data.test?.papers?.[0]?.entered || 0) > 0">
+      <small class="field-help">Removing a subject also removes the marks entered for it.</small>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()">{{ data.test ? 'Save changes' : school ? 'Schedule exam' : 'Schedule test' }}</button>
+</mat-dialog-actions>

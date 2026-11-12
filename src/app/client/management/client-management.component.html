@@ -7,7 +7,7 @@
   <button
     mat-flat-button
     color="primary"
-    *ngIf="!isTeacher || key === 'results' || key === 'materials'"
+    *ngIf="!isTeacher || key === 'results' || key === 'materials' || (key === 'notices' && useNoticeApi) || usePostApi || useGalleryApi"
     (click)="openRecord()"
   >
     <mat-icon>add</mat-icon>{{ config.action }}
@@ -70,7 +70,7 @@
               ? 'Admission enquiries'
               : 'Open enquiries'
     "
-    [value]="rows.length.toString()"
+    [value]="(key === 'courses' || key === 'batches' ? activeCourseOrBatchCount : rows.length).toString()"
     [change]="
       key === 'teachers'
         ? isSchool
@@ -92,15 +92,15 @@
   ><app-stat-card
     *ngIf="key === 'courses'"
     label="Enrolled students"
-    [value]="isSchool ? '1,486' : '426'"
+    [value]="enrolledTotal"
     [change]="isSchool ? 'Across Nursery – Class 12' : 'Across active courses'"
     icon="groups"
   ></app-stat-card
   ><app-stat-card
     *ngIf="key === 'batches'"
     label="Students in batches"
-    value="93"
-    change="Across 3 active batches"
+    [value]="batchStudentTotal"
+    [change]="'Across ' + activeBatchCount + ' active batch' + (activeBatchCount === 1 ? '' : 'es')"
     icon="groups"
   ></app-stat-card
   ><app-stat-card
@@ -240,7 +240,7 @@
             ><strong>{{ row.fee }}</strong>
           </div>
           <div class="course-subjects">
-            <span *ngFor="let subject of row.subjects.split(', ')">{{ subject }}</span>
+            <ng-container *ngFor="let subject of row.subjects.split(', ')"><span *ngIf="subject">{{ subject }}</span></ng-container>
           </div>
           <div class="course-foot">
             <span><mat-icon>groups</mat-icon>{{ row.enrolled }} enrolled</span
@@ -251,6 +251,14 @@
         ></mat-card
       >
     </div>
+    <app-loading-state *ngIf="key === 'courses' && loading" [label]="'Loading ' + config.title.toLowerCase() + '…'"></app-loading-state>
+    <app-empty-state
+      *ngIf="key === 'courses' && !loading && !filtered.length"
+      [icon]="config.icon"
+      [title]="rows.length ? 'No ' + config.title.toLowerCase() + ' found' : 'No ' + config.title.toLowerCase() + ' yet'"
+      [description]="rows.length ? 'Try changing your search or filters.' : 'Add your first ' + config.singular + ' to start enrolling students.'"
+      ><button mat-flat-button color="primary" *ngIf="!isTeacher" (click)="openRecord()">{{ config.action }}</button></app-empty-state
+    >
     <div class="batch-grid" *ngIf="key === 'batches' && view === 'cards'">
       <mat-card class="batch-card" *ngFor="let row of filtered"
         ><mat-card-content
@@ -261,6 +269,8 @@
               ><button mat-menu-item (click)="viewRow(row)"><mat-icon>visibility</mat-icon>View details</button
               ><button mat-menu-item *ngIf="!isTeacher" (click)="openRecord(row)">
                 <mat-icon>edit</mat-icon>Edit batch</button
+              ><button mat-menu-item *ngIf="!isTeacher" (click)="toggleStatus(row)">
+                <mat-icon>pause_circle</mat-icon>{{ row.status === "Active" ? "Deactivate" : "Activate" }}</button
               ><button mat-menu-item *ngIf="!isTeacher" (click)="remove(row)">
                 <mat-icon>delete_outline</mat-icon>Delete
               </button></mat-menu
@@ -275,12 +285,20 @@
             ><span><mat-icon>meeting_room</mat-icon>{{ row.room }}</span>
           </div>
           <div class="batch-card-foot">
-            <span><mat-icon>groups</mat-icon>{{ row.students }} students</span
+            <span [class.text-danger]="overCapacity(row)" [title]="overCapacity(row) ? 'More students than capacity' : ''"><mat-icon>groups</mat-icon>{{ row.students }}{{ row.capacity ? ' / ' + row.capacity : '' }} students</span
             ><button mat-button (click)="viewRow(row)">Details <mat-icon>arrow_forward</mat-icon></button>
           </div></mat-card-content
         ></mat-card
       >
     </div>
+    <app-loading-state *ngIf="key === 'batches' && view === 'cards' && loading" [label]="'Loading ' + config.title.toLowerCase() + '…'"></app-loading-state>
+    <app-empty-state
+      *ngIf="key === 'batches' && view === 'cards' && !loading && !filtered.length"
+      [icon]="config.icon"
+      [title]="rows.length ? 'No batches found' : 'No batches yet'"
+      [description]="rows.length ? 'Try changing your search or filters.' : 'Create a batch to set its teachers, days and timing.'"
+      ><button mat-flat-button color="primary" *ngIf="!isTeacher" (click)="openRecord()">{{ config.action }}</button></app-empty-state
+    >
     <div class="material-grid" *ngIf="key === 'materials' && view === 'cards'">
       <mat-card class="material-card" *ngFor="let row of filtered"
         ><mat-card-content
@@ -303,10 +321,10 @@
             ><mat-menu #materialMenu="matMenu"
               ><button mat-menu-item (click)="viewRow(row)"><mat-icon>preview</mat-icon>Preview</button
               ><button mat-menu-item (click)="download(row)"><mat-icon>download</mat-icon>Download</button
-              ><button mat-menu-item *ngIf="!isTeacher" (click)="openRecord(row)"><mat-icon>edit</mat-icon>Edit</button
-              ><button mat-menu-item *ngIf="!isTeacher" (click)="toggleStatus(row)">
+              ><button mat-menu-item *ngIf="canManageRow(row)" (click)="openRecord(row)"><mat-icon>edit</mat-icon>Edit</button
+              ><button mat-menu-item *ngIf="canManageRow(row)" (click)="toggleStatus(row)">
                 <mat-icon>visibility</mat-icon>{{ row.status === "Published" ? "Unpublish" : "Publish" }}</button
-              ><button mat-menu-item *ngIf="!isTeacher" (click)="remove(row)">
+              ><button mat-menu-item *ngIf="canManageRow(row)" (click)="remove(row)">
                 <mat-icon>delete_outline</mat-icon>Delete
               </button></mat-menu
             >
@@ -321,6 +339,14 @@
         ></mat-card
       >
     </div>
+    <app-loading-state *ngIf="key === 'materials' && view === 'cards' && loading" [label]="'Loading ' + config.title.toLowerCase() + '…'"></app-loading-state>
+    <app-empty-state
+      *ngIf="key === 'materials' && view === 'cards' && !loading && !filtered.length"
+      [icon]="config.icon"
+      [title]="rows.length ? 'No materials found' : 'No study materials yet'"
+      [description]="rows.length ? 'Try changing your search or filters.' : 'Upload notes, PDFs and question papers, or share video links.'"
+      ><button mat-flat-button color="primary" (click)="openRecord()">{{ config.action }}</button></app-empty-state
+    >
     <div
       class="table-responsive"
       *ngIf="
@@ -408,7 +434,7 @@
               </td>
               <td>{{ row.room }}</td>
               <td>
-                <span class="student-count">{{ row.students }}</span>
+                <span class="student-count" [class.text-danger]="overCapacity(row)">{{ row.students }}{{ row.capacity ? ' / ' + row.capacity : '' }}</span>
               </td>
               <td><app-status-badge [label]="row.status" tone="success"></app-status-badge></td></ng-container
             ><ng-container *ngIf="key === 'admissions'"
@@ -450,8 +476,8 @@
               </td>
               <td>{{ row.marks }} / {{ row.total }}</td>
               <td>
-                <strong class="main-cell">{{ row.percentage }}</strong
-                ><small class="sub-cell">Grade {{ row.grade }}</small>
+                <strong class="main-cell" [class.text-danger]="row.passed === false">{{ row.percentage }}</strong
+                ><small class="sub-cell">Grade {{ row.grade }}{{ row.passed === false ? ' · Below pass marks' : '' }}</small>
               </td>
               <td>
                 <app-status-badge
@@ -481,20 +507,22 @@
               <button mat-icon-button [matMenuTriggerFor]="rowMenu"><mat-icon>more_horiz</mat-icon></button
               ><mat-menu #rowMenu="matMenu"
                 ><button mat-menu-item (click)="viewRow(row)"><mat-icon>visibility</mat-icon>View details</button
-                ><button mat-menu-item *ngIf="key === 'materials'" (click)="preview(row.file)">
+                ><button mat-menu-item *ngIf="key === 'materials'" (click)="preview(row.url || row.file)">
                   <mat-icon>preview</mat-icon>Preview file</button
-                ><button mat-menu-item *ngIf="!isTeacher" (click)="openRecord(row)">
+                ><button mat-menu-item *ngIf="canManageRow(row) && !useResultApi" (click)="openRecord(row)">
                   <mat-icon>edit</mat-icon>Edit</button
+                ><button mat-menu-item *ngIf="useResultApi" [routerLink]="testsRoute">
+                  <mat-icon>quiz</mat-icon>Open {{ isSchool ? 'exams' : 'tests' }}</button
                 ><button mat-menu-item *ngIf="key === 'admissions'" (click)="followUp(row)">
                   <mat-icon>event</mat-icon>Schedule follow-up</button
                 ><button mat-menu-item *ngIf="key === 'admissions' && row.status !== 'Joined'" (click)="convert(row)">
                   <mat-icon>person_add</mat-icon>Convert to student</button
                 ><button mat-menu-item *ngIf="key === 'materials'" (click)="download(row)">
                   <mat-icon>download</mat-icon>Download</button
-                ><button mat-menu-item *ngIf="key === 'results' || key === 'materials'" (click)="toggleStatus(row)">
+                ><button mat-menu-item *ngIf="((key === 'results' && !useResultApi) || key === 'materials') && canManageRow(row)" (click)="toggleStatus(row)">
                   <mat-icon>visibility</mat-icon
                   >{{ (row.resultStatus || row.status) === "Published" ? "Unpublish" : "Publish" }}</button
-                ><button mat-menu-item *ngIf="!isTeacher" (click)="remove(row)">
+                ><button mat-menu-item *ngIf="canManageRow(row) && !useResultApi" (click)="remove(row)">
                   <mat-icon>delete_outline</mat-icon>Delete
                 </button></mat-menu
               >
@@ -543,16 +571,16 @@
               [label]="row.status"
               [tone]="row.status === 'Published' ? 'success' : 'neutral'"
             ></app-status-badge></strong
-          ><small>{{ row.date }} · {{ row.type }}</small></span
+          ><small>{{ row.date }} · {{ row.type }}{{ row.author ? ' · ' + row.author : '' }}{{ row.showOnWebsite ? ' · On website' : '' }}</small></span
         ><mat-icon *ngIf="row.pinned" class="pin-icon">push_pin</mat-icon
         ><button mat-icon-button [matMenuTriggerFor]="postMenu"><mat-icon>more_horiz</mat-icon></button
         ><mat-menu #postMenu="matMenu"
-          ><button mat-menu-item *ngIf="!isTeacher" (click)="openRecord(row)"><mat-icon>edit</mat-icon>Edit post</button
-          ><button mat-menu-item *ngIf="!isTeacher" (click)="togglePin(row)">
+          ><button mat-menu-item *ngIf="canManageRow(row)" (click)="openRecord(row)"><mat-icon>edit</mat-icon>Edit post</button
+          ><button mat-menu-item *ngIf="canManageRow(row)" (click)="togglePin(row)">
             <mat-icon>push_pin</mat-icon>{{ row.pinned ? "Unpin" : "Pin post" }}</button
-          ><button mat-menu-item *ngIf="!isTeacher" (click)="toggleStatus(row)">
-            <mat-icon>visibility</mat-icon>{{ row.status === "Published" ? "Unpublish" : "Publish" }}</button
-          ><button mat-menu-item *ngIf="!isTeacher" (click)="remove(row)">
+          ><button mat-menu-item *ngIf="canManageRow(row)" (click)="toggleStatus(row)">
+            <mat-icon>visibility</mat-icon>{{ row.status === "Draft" ? "Publish" : "Unpublish" }}</button
+          ><button mat-menu-item *ngIf="canManageRow(row)" (click)="remove(row)">
             <mat-icon>delete_outline</mat-icon>Delete
           </button></mat-menu
         >
@@ -563,35 +591,42 @@
         <video *ngIf="row.type === 'Video' && row.media.startsWith('data:video')" controls [src]="row.media"></video
         ><img *ngIf="row.type !== 'Video' || !row.media.startsWith('data:video')" [src]="row.media" [alt]="row.title" />
       </div>
-      <div class="post-kind" *ngIf="!row.media">
+      <a class="post-kind" *ngIf="!row.media && row.videoLink" [href]="row.videoLink" target="_blank" rel="noopener">
+        <mat-icon>smart_display</mat-icon><span>WATCH VIDEO</span>
+      </a>
+      <div class="post-kind" *ngIf="!row.media && !row.videoLink">
         <mat-icon>{{ row.type === "Announcement" ? "campaign" : "edit_note" }}</mat-icon
         ><span>{{ row.type === "Announcement" ? "NEWS FROM YOUR STORE" : "COMMUNITY UPDATE" }}</span>
       </div>
       <div class="post-footer">
-        <span><mat-icon>visibility</mat-icon>{{ row.views || 0 }} views</span
-        ><button mat-button (click)="togglePin(row)">
+        <span *ngIf="!usePostApi"><mat-icon>visibility</mat-icon>{{ row.views || 0 }} views</span
+        ><span *ngIf="usePostApi"><mat-icon>person_outline</mat-icon>{{ row.author || brandName }}</span
+        ><button mat-button *ngIf="canManageRow(row)" (click)="togglePin(row)">
           <mat-icon>{{ row.pinned ? "push_pin" : "push_pin" }}</mat-icon
           >{{ row.pinned ? "Pinned" : "Pin post" }}
         </button>
       </div></mat-card-content
     ></mat-card
   >
+  <app-loading-state *ngIf="loading" label="Loading posts…"></app-loading-state>
+  <app-empty-state *ngIf="usePostApi && !loading && !filtered.length" icon="campaign" [title]="rows.length ? 'No posts found' : 'No posts yet'"
+    [description]="rows.length ? 'Try changing your search or filters.' : 'Share news, photos and announcements with your community.'"></app-empty-state>
 </div>
 <div class="gallery-grid" *ngIf="key === 'gallery' && !detail">
   <mat-card class="album-card" *ngFor="let row of filtered"
-    ><div class="album-cover" [ngClass]="row.accent" (click)="preview(row.media)">
-      <img [src]="row.media" [alt]="row.name" /><span class="media-count"
+    ><div class="album-cover" [ngClass]="row.accent" (click)="openAlbum(row)">
+      <img *ngIf="row.media" [src]="row.media" [alt]="row.name" /><span class="media-count"
         ><mat-icon>photo_library</mat-icon>{{ row.count }} items</span
       ><button mat-icon-button [matMenuTriggerFor]="albumMenu" (click)="$event.stopPropagation()">
         <mat-icon>more_horiz</mat-icon></button
       ><mat-menu #albumMenu="matMenu"
         ><button mat-menu-item (click)="viewRow(row)"><mat-icon>visibility</mat-icon>Preview album</button
-        ><button mat-menu-item *ngIf="!isTeacher" (click)="openRecord(row)"><mat-icon>edit</mat-icon>Edit album</button
-        ><button mat-menu-item *ngIf="!isTeacher" (click)="uploadMedia(row)">
-          <mat-icon>add_photo_alternate</mat-icon>Upload media</button
-        ><button mat-menu-item *ngIf="!isTeacher" (click)="toggleStatus(row)">
+        ><button mat-menu-item *ngIf="canManageRow(row)" (click)="openRecord(row)"><mat-icon>edit</mat-icon>Edit album</button
+        ><button mat-menu-item *ngIf="canManageRow(row)" (click)="uploadMedia(row)">
+          <mat-icon>add_photo_alternate</mat-icon>{{ useGalleryApi ? 'Manage photos' : 'Upload media' }}</button
+        ><button mat-menu-item *ngIf="canManageRow(row)" (click)="toggleStatus(row)">
           <mat-icon>language</mat-icon>{{ row.status === "Published" ? "Unpublish" : "Publish" }}</button
-        ><button mat-menu-item *ngIf="!isTeacher" (click)="remove(row)">
+        ><button mat-menu-item *ngIf="canManageRow(row)" (click)="remove(row)">
           <mat-icon>delete_outline</mat-icon>Delete
         </button></mat-menu
       >
@@ -607,9 +642,9 @@
           [tone]="row.status === 'Published' ? 'success' : 'neutral'"
         ></app-status-badge>
       </div>
-      <small class="album-date">{{ row.date }} · {{ row.count }} photos & videos</small></mat-card-content
+      <small class="album-date">{{ row.date }} · {{ row.count }} photos & videos{{ row.showOnWebsite ? ' · On website' : '' }}</small></mat-card-content
     ></mat-card
-  ><button class="upload-tile" (click)="openRecord()">
+  ><button class="upload-tile" *ngIf="!isTeacher || useGalleryApi" (click)="openRecord()">
     <span><mat-icon>add_photo_alternate</mat-icon></span
     ><strong>Create an album</strong><small>Organize photos and videos</small>
   </button>
@@ -639,24 +674,27 @@
           <mat-icon *ngIf="row.pinned" class="pin-icon">push_pin</mat-icon
           ><app-status-badge
             [label]="row.status"
-            [tone]="row.status === 'Published' ? 'success' : 'neutral'"
+            [tone]="row.status === 'Published' ? 'success' : row.status === 'Scheduled' ? 'info' : row.status === 'Expired' ? 'warning' : 'neutral'"
           ></app-status-badge>
         </div>
         <p>{{ row.description }}</p>
-        <small>Published {{ row.date }} · Expires {{ row.expires }}</small>
+        <small>{{ row.status === 'Scheduled' ? 'Publishes' : 'Published' }} {{ row.date }} · Expires {{ row.expires }}<ng-container *ngIf="row.audienceLabel"> · For {{ row.audienceLabel }}</ng-container><ng-container *ngIf="row.showOnWebsite"> · On website</ng-container></small>
       </div>
       <button mat-icon-button [matMenuTriggerFor]="noticeMenu"><mat-icon>more_horiz</mat-icon></button
       ><mat-menu #noticeMenu="matMenu"
         ><button mat-menu-item (click)="viewRow(row)"><mat-icon>visibility</mat-icon>View details</button
-        ><button mat-menu-item *ngIf="!isTeacher" (click)="openRecord(row)"><mat-icon>edit</mat-icon>Edit</button
-        ><button mat-menu-item *ngIf="!isTeacher" (click)="togglePin(row)">
+        ><button mat-menu-item *ngIf="canManageRow(row)" (click)="openRecord(row)"><mat-icon>edit</mat-icon>Edit</button
+        ><button mat-menu-item *ngIf="canManageRow(row)" (click)="togglePin(row)">
           <mat-icon>push_pin</mat-icon>{{ row.pinned ? "Unpin" : "Pin notice" }}</button
-        ><button mat-menu-item *ngIf="!isTeacher" (click)="toggleStatus(row)">
-          <mat-icon>visibility</mat-icon>{{ row.status === "Published" ? "Unpublish" : "Publish" }}</button
-        ><button mat-menu-item *ngIf="!isTeacher" (click)="remove(row)">
+        ><button mat-menu-item *ngIf="canManageRow(row)" (click)="toggleStatus(row)">
+          <mat-icon>visibility</mat-icon>{{ row.status === "Draft" ? "Publish" : "Unpublish" }}</button
+        ><button mat-menu-item *ngIf="canManageRow(row)" (click)="remove(row)">
           <mat-icon>delete_outline</mat-icon>Delete
         </button></mat-menu
       ></mat-card-content
     ></mat-card
   >
+  <app-loading-state *ngIf="loading" label="Loading notices…"></app-loading-state>
+  <app-empty-state *ngIf="!loading && !filtered.length" icon="campaign" [title]="rows.length ? 'No notices found' : 'No notices yet'"
+    [description]="rows.length ? 'Try changing your search or filters.' : 'Post a notice for students, parents or teachers.'"></app-empty-state>
 </div>

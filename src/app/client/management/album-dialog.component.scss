@@ -1,0 +1,20 @@
+:host{display:block}
+.dialog-title{font-size:clamp(18px, 17.296px + 0.1878vw, 20px);font-weight:700;color:#263447;margin:0;padding:23px 24px 6px}
+.dialog-subtitle{font-size:12px;color:#8290a0;margin:0;padding:0 24px 14px}
+.dialog-content{min-width:min(760px,84vw);max-height:70vh;overflow:auto;padding:4px 24px 12px}
+.dialog-actions{padding:14px 24px 22px}
+.album-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+.upload-button{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:8px;background:#4c78f1;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+.upload-button.disabled{opacity:.6;cursor:default}
+.upload-button mat-icon{font-size:18px;width:18px;height:18px}
+.video-add{display:flex;gap:8px;flex:1;min-width:260px}
+.video-add input{flex:1;height:38px;border:1px solid #d9e0e8;border-radius:8px;padding:0 10px;font-size:12px}
+.album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:12px}
+figure{position:relative;margin:0;border-radius:10px;overflow:hidden;background:#f2f5f8;aspect-ratio:1;border:2px solid transparent}
+figure.cover{border-color:#4c78f1}
+figure img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.video-tile{width:100%;height:100%;border:0;background:#263447;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;cursor:pointer}
+.video-tile mat-icon{font-size:34px;width:34px;height:34px}
+.cover-tag{position:absolute;top:6px;left:6px;background:#4c78f1;color:#fff;font-size:12px;padding:1px 8px;border-radius:10px}
+figcaption{position:absolute;right:2px;bottom:2px;display:flex;background:#ffffffd9;border-radius:8px}
+mat-progress-bar{margin-bottom:8px}
