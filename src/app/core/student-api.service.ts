@@ -18,6 +18,8 @@ export interface CreateStudentPayload {
   status?: ApiStudentStatus;
   /** Agreed fee (coaching: per month, school: per term) and discount / concession. */
   feePlan?: { amount: number | null; discount: number };
+  /** Family portal login on the parent mobile (password needed for a new parent account). */
+  parentLogin?: { enabled: boolean; password?: string | null };
   parentsInfo?: Nullable<{ fatherName: string; motherName: string; countryCode: string; phoneNumber: string }>;
   address?: Nullable<{ addressLine: string; city: string; state: string; pincode: string }>;
   schoolInfo?: Nullable<{ schoolName: string; board: string; className: string; section: string; admissionDate: string; rollNumber: string; currentTerm: string; admissionCategory: string }>;
@@ -26,7 +28,8 @@ export interface CreateStudentPayload {
 
 export type ApiStudentStatus = 'active' | 'inactive';
 export type ApiFeeStatus = 'paid' | 'pending' | 'overdue';
-export type UpdateStudentPayload = Partial<Omit<CreateStudentPayload, 'password'>>;
+/** Password is optional on update: the owner sets a new login password. */
+export type UpdateStudentPayload = Partial<CreateStudentPayload>;
 
 /** The fields of a crm-backend student profile the Fees and Attendance pages use. `studentCode` is the 6-digit ID. */
 export interface ApiStudentSummary { _id: string; studentCode: string; fullName: string | null; workType: 'school' | 'coaching'; }
@@ -50,6 +53,8 @@ export interface ApiStudent extends ApiStudentSummary {
   coachingInfo?: { coachingName: string | null; className: string | null; course: string | null; batchTiming: string | null; admissionDate: string | null; schoolName: string | null; board: string | null };
   /** Present / late out of marked days, or null before any attendance is taken. */
   attendance: number | null;
+  /** Parent login account, when the owner gave the parent one. */
+  parentId?: string | null;
   feeStatus?: ApiFeeStatus;
   feeDue?: number;
   createdAt?: string;

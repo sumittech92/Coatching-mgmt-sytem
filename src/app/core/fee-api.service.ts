@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthApiService } from './auth-api.service';
+import { PaymentDetails, PortalFeeSubmission, PortalSubmissionStatus } from './portal-api.service';
 
 export type ApiFeeStatus = 'Paid' | 'Partial' | 'Pending' | 'Overdue';
 export interface ApiFeePayment { id: string; receiptNo: string; amount: number; discount: number; mode: string; date: string; reference: string | null; note?: string | null; }
@@ -63,6 +64,25 @@ export class FeeApiService {
 
   update(accessToken: string, id: string, payload: UpdateFeePayload): Observable<ApiFee> {
     return this.request(this.http.patch<ApiResponse<ApiFee>>(`${this.base}/${id}`, payload, { headers: this.headers(accessToken) }));
+  }
+
+  /** Payments students / parents reported from the portal. */
+  submissions(accessToken: string, status?: PortalSubmissionStatus): Observable<PortalFeeSubmission[]> {
+    return this.request(this.http.get<ApiResponse<PortalFeeSubmission[]>>(`${this.base}/submissions`, { headers: this.headers(accessToken), params: status ? { status } : {} }));
+  }
+  /** Records the payment (with a receipt) and marks the submission approved. */
+  approveSubmission(accessToken: string, id: string): Observable<{ submission: PortalFeeSubmission; fee: ApiFee }> {
+    return this.request(this.http.post<ApiResponse<{ submission: PortalFeeSubmission; fee: ApiFee }>>(`${this.base}/submissions/${id}/approve`, {}, { headers: this.headers(accessToken) }));
+  }
+  rejectSubmission(accessToken: string, id: string, reason?: string): Observable<PortalFeeSubmission> {
+    return this.request(this.http.post<ApiResponse<PortalFeeSubmission>>(`${this.base}/submissions/${id}/reject`, { reason: reason || null }, { headers: this.headers(accessToken) }));
+  }
+  /** UPI / bank details shown in the portal's Pay fees form. */
+  paymentDetails(accessToken: string): Observable<PaymentDetails> {
+    return this.request(this.http.get<ApiResponse<PaymentDetails>>(`${this.base}/settings`, { headers: this.headers(accessToken) }));
+  }
+  savePaymentDetails(accessToken: string, details: Partial<PaymentDetails>): Observable<PaymentDetails> {
+    return this.request(this.http.put<ApiResponse<PaymentDetails>>(`${this.base}/settings`, details, { headers: this.headers(accessToken) }));
   }
 
   remove(accessToken: string, id: string): Observable<unknown> {

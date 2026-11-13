@@ -10,8 +10,24 @@ import { FeeSubmission, FeeSubmissionService } from '../core/fee-submission.serv
 import { WebsiteContentService } from '../core/website-content.service';
 import { LibraryBook, LibraryService, LibraryView } from '../core/library.service';
 import { LibraryApiService } from '../core/library-api.service';
+import { forkJoin, of, switchMap, catchError } from 'rxjs';
+import { BatchApiService } from '../core/batch-api.service';
+import { dayLabel } from '../core/api-client';
+import { PaymentDetails, PortalApiService, PortalAttendance, PortalClass, PortalFeeSubmission, PortalFees, PortalMaterial, PortalMe, PortalNotice, PortalResult, PortalSubject, PortalSyllabus, PortalTask, PortalTest, PortalUpdate } from '../core/portal-api.service';
+import { ApiPeriod } from '../core/timetable-api.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ReceiptPreviewComponent, ReceiptData } from '../shared/ui/receipt-preview/receipt-preview.component';
 interface PortalFee { month: string; amount: number; paid: number; due: number; status: string; date: string; mode: string; }
 interface PortalMenu { key: string; label: string; icon: string; }
+/** A homework / assignment row (demo rows have only the first fields). */
+interface PortalTaskRow { subject: string; title: string; given: string; due: string; status: string; file?: string; taskCode?: string; fileUrl?: string; attachment?: { url: string; name: string } | null; remark?: string | null; canSubmit?: boolean; }
+const DAY_NAMES: Record<string, string> = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' };
+const DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const MATERIAL_LABELS: Record<string, string> = { pdf: 'PDF', notes: 'Notes', assignment: 'Assignment', video: 'Video', questionPaper: 'Question Paper' };
+const NOTICE_LABELS: Record<string, string> = { general: 'General', holiday: 'Holiday', exam: 'Exam', feeReminder: 'Fee reminder', newBatch: 'New batch', ptm: 'PTM', important: 'Important' };
+const NOTICE_TONES: Record<string, string> = { exam: 'amber', holiday: 'blue', feeReminder: 'rose', important: 'rose' };
+const SUBMISSION_LABELS: Record<string, FeeSubmission['status']> = { pending: 'Pending verification', approved: 'Approved', rejected: 'Rejected' };
+const SUBJECT_ICONS: Record<string, string> = { english: 'translate', hindi: 'translate', sanskrit: 'translate', mathematics: 'calculate', science: 'science', physics: 'science', chemistry: 'science', biology: 'biotech', 'social science': 'public', 'computer science': 'computer', 'physical education': 'sports_soccer', 'art & craft': 'palette', evs: 'eco' };
 import { formatDate, formatPhone } from '../core/profile-format';
 @Component({ selector: 'app-student-portal', templateUrl: './student-portal.component.html', styleUrls: ['./student-portal.component.scss'] })
 export class StudentPortalComponent {
@@ -33,14 +49,14 @@ export class StudentPortalComponent {
   private readonly coachingUpdates = [{ title: 'New batch admissions are open', body: 'Our new academic batches are now enrolling.', date: '26 Sep 2026', type: 'Announcement' }, { title: 'Celebrating our students', body: 'A proud moment for learners across the academy.', date: '24 Sep 2026', type: 'Community' }];
   private readonly schoolUpdates = [{ title: 'Science exhibition this Friday', body: 'Class 6–10 student projects on display in the school auditorium.', date: '26 Sep 2026', type: 'School event' }, { title: 'Inter-school debate winners', body: 'Congratulations to our Class 9 team for winning the inter-school debate.', date: '24 Sep 2026', type: 'Community' }];
   /** Coaching: My Batch. */
-  readonly batch = { name: 'JEE Main 2027 · Morning Batch A', course: 'Class 12 Science (PCM)', timing: '7:00 am – 9:30 am', days: 'Monday – Saturday', room: 'Room 3, First floor', classmates: 32, startDate: '06 Apr 2026', coordinator: 'Mr. Anil Kapoor', teachers: [{ name: 'Mr. Rajesh Verma', subject: 'Physics', initials: 'RV' }, { name: 'Ms. Sunita Iyer', subject: 'Chemistry', initials: 'SI' }, { name: 'Mr. Anil Kapoor', subject: 'Mathematics', initials: 'AK' }] };
-  readonly batchSchedule = [{ day: 'Monday', first: 'Physics · Rotational motion', second: 'Mathematics · Integration' }, { day: 'Tuesday', first: 'Chemistry · Chemical bonding', second: 'Physics · Problem practice' }, { day: 'Wednesday', first: 'Mathematics · Differential equations', second: 'Chemistry · Organic basics' }, { day: 'Thursday', first: 'Physics · Gravitation', second: 'Mathematics · DPP discussion' }, { day: 'Friday', first: 'Chemistry · Equilibrium', second: 'Doubt clearing session' }, { day: 'Saturday', first: 'Weekly test (7:00 – 8:30 am)', second: 'Test analysis' }];
+  private readonly demoBatch = { name: 'JEE Main 2027 · Morning Batch A', course: 'Class 12 Science (PCM)', timing: '7:00 am – 9:30 am', days: 'Monday – Saturday', room: 'Room 3, First floor', classmates: 32, startDate: '06 Apr 2026', coordinator: 'Mr. Anil Kapoor', teachers: [{ name: 'Mr. Rajesh Verma', subject: 'Physics', initials: 'RV' }, { name: 'Ms. Sunita Iyer', subject: 'Chemistry', initials: 'SI' }, { name: 'Mr. Anil Kapoor', subject: 'Mathematics', initials: 'AK' }] };
+  private readonly demoBatchSchedule = [{ day: 'Monday', first: 'Physics · Rotational motion', second: 'Mathematics · Integration' }, { day: 'Tuesday', first: 'Chemistry · Chemical bonding', second: 'Physics · Problem practice' }, { day: 'Wednesday', first: 'Mathematics · Differential equations', second: 'Chemistry · Organic basics' }, { day: 'Thursday', first: 'Physics · Gravitation', second: 'Mathematics · DPP discussion' }, { day: 'Friday', first: 'Chemistry · Equilibrium', second: 'Doubt clearing session' }, { day: 'Saturday', first: 'Weekly test (7:00 – 8:30 am)', second: 'Test analysis' }];
   /** School: My Class, subjects and timetable. */
-  readonly schoolClass = { name: 'Class 9', section: 'Section A', rollNo: 14, classTeacher: 'Ms. Priya Nair', classTeacherSubject: 'English', room: 'Room 204, Block B', classmates: 38, monitor: 'Kabir Malhotra', session: '2026–27', timing: '7:50 am – 2:10 pm' };
-  readonly subjects = [{ name: 'English', teacher: 'Ms. Priya Nair', book: 'Beehive & Moments', chapters: '6 of 11 chapters', progress: 55, icon: 'translate' }, { name: 'Hindi', teacher: 'Mrs. Kavita Joshi', book: 'Kshitij & Kritika', chapters: '5 of 10 chapters', progress: 50, icon: 'record_voice_over' }, { name: 'Mathematics', teacher: 'Mr. Suresh Menon', book: 'NCERT Mathematics', chapters: '5 of 12 chapters', progress: 42, icon: 'calculate' }, { name: 'Science', teacher: 'Dr. Anjali Gupta', book: 'NCERT Science', chapters: '6 of 12 chapters', progress: 48, icon: 'science' }, { name: 'Social Science', teacher: 'Mr. Rohit Bansal', book: 'History, Geography, Civics, Economics', chapters: '9 of 20 chapters', progress: 45, icon: 'public' }, { name: 'Computer Science', teacher: 'Ms. Farah Khan', book: 'Computer Applications', chapters: '4 of 8 units', progress: 50, icon: 'computer' }, { name: 'Sanskrit', teacher: 'Mr. Hari Prasad', book: 'Shemushi', chapters: '4 of 10 chapters', progress: 40, icon: 'auto_stories' }];
-  readonly timetableDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  readonly periods = [{ label: 'Period 1', time: '8:00 – 8:40' }, { label: 'Period 2', time: '8:40 – 9:20' }, { label: 'Period 3', time: '9:20 – 10:00' }, { label: 'Period 4', time: '10:00 – 10:40' }, { label: 'Lunch', time: '10:40 – 11:10' }, { label: 'Period 5', time: '11:10 – 11:50' }, { label: 'Period 6', time: '11:50 – 12:30' }, { label: 'Period 7', time: '12:30 – 1:10' }, { label: 'Period 8', time: '1:10 – 1:50' }];
-  readonly timetable: Record<string, string[]> = {
+  private readonly demoSchoolClass = { name: 'Class 9', section: 'Section A', rollNo: 14, classTeacher: 'Ms. Priya Nair', classTeacherSubject: 'English', room: 'Room 204, Block B', classmates: 38, monitor: 'Kabir Malhotra', session: '2026–27', timing: '7:50 am – 2:10 pm' };
+  private readonly demoSubjects = [{ name: 'English', teacher: 'Ms. Priya Nair', book: 'Beehive & Moments', chapters: '6 of 11 chapters', progress: 55, icon: 'translate' }, { name: 'Hindi', teacher: 'Mrs. Kavita Joshi', book: 'Kshitij & Kritika', chapters: '5 of 10 chapters', progress: 50, icon: 'record_voice_over' }, { name: 'Mathematics', teacher: 'Mr. Suresh Menon', book: 'NCERT Mathematics', chapters: '5 of 12 chapters', progress: 42, icon: 'calculate' }, { name: 'Science', teacher: 'Dr. Anjali Gupta', book: 'NCERT Science', chapters: '6 of 12 chapters', progress: 48, icon: 'science' }, { name: 'Social Science', teacher: 'Mr. Rohit Bansal', book: 'History, Geography, Civics, Economics', chapters: '9 of 20 chapters', progress: 45, icon: 'public' }, { name: 'Computer Science', teacher: 'Ms. Farah Khan', book: 'Computer Applications', chapters: '4 of 8 units', progress: 50, icon: 'computer' }, { name: 'Sanskrit', teacher: 'Mr. Hari Prasad', book: 'Shemushi', chapters: '4 of 10 chapters', progress: 40, icon: 'auto_stories' }];
+  private readonly demoTimetableDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  private readonly demoPeriods = [{ label: 'Period 1', time: '8:00 – 8:40' }, { label: 'Period 2', time: '8:40 – 9:20' }, { label: 'Period 3', time: '9:20 – 10:00' }, { label: 'Period 4', time: '10:00 – 10:40' }, { label: 'Lunch', time: '10:40 – 11:10' }, { label: 'Period 5', time: '11:10 – 11:50' }, { label: 'Period 6', time: '11:50 – 12:30' }, { label: 'Period 7', time: '12:30 – 1:10' }, { label: 'Period 8', time: '1:10 – 1:50' }];
+  private readonly demoTimetable: Record<string, string[]> = {
     Monday: ['English', 'Mathematics', 'Science', 'Hindi', 'Lunch break', 'Social Science', 'Computer Science', 'Sanskrit', 'Physical Education'],
     Tuesday: ['Mathematics', 'English', 'Hindi', 'Science', 'Lunch break', 'Sanskrit', 'Social Science', 'Art & Craft', 'Library'],
     Wednesday: ['Science', 'Mathematics', 'English', 'Social Science', 'Lunch break', 'Hindi', 'Computer Science', 'Science Lab', 'Science Lab'],
@@ -48,19 +64,19 @@ export class StudentPortalComponent {
     Friday: ['Mathematics', 'Social Science', 'Science', 'English', 'Lunch break', 'Hindi', 'Computer Lab', 'Computer Lab', 'Music'],
     Saturday: ['English', 'Mathematics', 'Science', 'Social Science', 'Lunch break', 'Club activity', '—', '—', '—']
   };
-  readonly homework = [{ subject: 'Mathematics', title: 'Exercise 2.3 · Q1 to Q5 (Polynomials)', given: '26 Sep 2026', due: '29 Sep 2026', status: 'Pending' }, { subject: 'Science', title: 'Draw and label the structure of an atom', given: '25 Sep 2026', due: '30 Sep 2026', status: 'Pending' }, { subject: 'English', title: 'Write a diary entry on your weekend (120 words)', given: '24 Sep 2026', due: '28 Sep 2026', status: 'Pending' }, { subject: 'Hindi', title: 'Learn the poem “Gram Shree” for recitation', given: '23 Sep 2026', due: '27 Sep 2026', status: 'Submitted' }, { subject: 'Social Science', title: 'Map work: mark major rivers of India', given: '22 Sep 2026', due: '26 Sep 2026', status: 'Submitted' }];
+  private readonly demoHomework = [{ subject: 'Mathematics', title: 'Exercise 2.3 · Q1 to Q5 (Polynomials)', given: '26 Sep 2026', due: '29 Sep 2026', status: 'Pending' }, { subject: 'Science', title: 'Draw and label the structure of an atom', given: '25 Sep 2026', due: '30 Sep 2026', status: 'Pending' }, { subject: 'English', title: 'Write a diary entry on your weekend (120 words)', given: '24 Sep 2026', due: '28 Sep 2026', status: 'Pending' }, { subject: 'Hindi', title: 'Learn the poem “Gram Shree” for recitation', given: '23 Sep 2026', due: '27 Sep 2026', status: 'Submitted' }, { subject: 'Social Science', title: 'Map work: mark major rivers of India', given: '22 Sep 2026', due: '26 Sep 2026', status: 'Submitted' }];
   private readonly coachingAssignments = [{ title: 'Rotational motion · Problem set 6', subject: 'Physics', given: '24 Sep 2026', due: '30 Sep 2026', status: 'Pending', file: '' }, { title: 'Chemical bonding worksheet', subject: 'Chemistry', given: '23 Sep 2026', due: '01 Oct 2026', status: 'Pending', file: '' }, { title: 'Integration · DPP 14', subject: 'Mathematics', given: '21 Sep 2026', due: '27 Sep 2026', status: 'Submitted', file: 'integration-dpp-14.pdf' }, { title: 'Electrostatics · Previous year JEE questions', subject: 'Physics', given: '15 Sep 2026', due: '22 Sep 2026', status: 'Submitted', file: 'electrostatics-pyq.pdf' }];
   private readonly schoolAssignments = [{ title: 'Science project · Model of an atom', subject: 'Science', given: '20 Sep 2026', due: '05 Oct 2026', status: 'Pending', file: '' }, { title: 'Essay · My favourite festival (250 words)', subject: 'English', given: '22 Sep 2026', due: '01 Oct 2026', status: 'Pending', file: '' }, { title: 'Social Science · Project on disaster management', subject: 'Social Science', given: '18 Sep 2026', due: '08 Oct 2026', status: 'Pending', file: '' }, { title: 'Polynomials worksheet', subject: 'Mathematics', given: '15 Sep 2026', due: '22 Sep 2026', status: 'Submitted', file: 'polynomials-worksheet.pdf' }];
   /** Coaching: tests. */
-  readonly upcomingTests = [{ name: 'Weekly Test 15', subject: 'Physics · Rotational motion', date: 'Sat, 03 Oct 2026', time: '7:00 – 8:30 am', marks: 100, mode: 'Offline · OMR' }, { name: 'JEE Main Mock Test 5', subject: 'Full syllabus · PCM', date: 'Sun, 11 Oct 2026', time: '9:00 am – 12:00 pm', marks: 300, mode: 'Online · CBT' }, { name: 'Chapter Test', subject: 'Chemistry · Chemical bonding', date: 'Sat, 17 Oct 2026', time: '7:00 – 8:00 am', marks: 60, mode: 'Offline · Written' }];
-  readonly pastTests = [{ name: 'Weekly Test 14', subject: 'Mathematics', date: '26 Sep 2026', marks: '82 / 100', rank: '6 / 32', percentage: 82 }, { name: 'Unit Test 3', subject: 'Physics', date: '18 Sep 2026', marks: '88 / 100', rank: '4 / 32', percentage: 88 }, { name: 'JEE Main Mock Test 4', subject: 'Full syllabus · PCM', date: '13 Sep 2026', marks: '196 / 300', rank: '5 / 32', percentage: 65 }, { name: 'Unit Test 2', subject: 'Chemistry', date: '20 Aug 2026', marks: '91 / 100', rank: '2 / 32', percentage: 91 }];
+  private readonly demoUpcomingTests = [{ name: 'Weekly Test 15', subject: 'Physics · Rotational motion', date: 'Sat, 03 Oct 2026', time: '7:00 – 8:30 am', marks: 100, mode: 'Offline · OMR' }, { name: 'JEE Main Mock Test 5', subject: 'Full syllabus · PCM', date: 'Sun, 11 Oct 2026', time: '9:00 am – 12:00 pm', marks: 300, mode: 'Online · CBT' }, { name: 'Chapter Test', subject: 'Chemistry · Chemical bonding', date: 'Sat, 17 Oct 2026', time: '7:00 – 8:00 am', marks: 60, mode: 'Offline · Written' }];
+  private readonly demoPastTests = [{ name: 'Weekly Test 14', subject: 'Mathematics', date: '26 Sep 2026', marks: '82 / 100', rank: '6 / 32', percentage: 82 }, { name: 'Unit Test 3', subject: 'Physics', date: '18 Sep 2026', marks: '88 / 100', rank: '4 / 32', percentage: 88 }, { name: 'JEE Main Mock Test 4', subject: 'Full syllabus · PCM', date: '13 Sep 2026', marks: '196 / 300', rank: '5 / 32', percentage: 65 }, { name: 'Unit Test 2', subject: 'Chemistry', date: '20 Aug 2026', marks: '91 / 100', rank: '2 / 32', percentage: 91 }];
   /** School: exams. */
-  readonly examSchedule = [{ name: 'Unit Test 1', period: '20 – 26 Jul 2026', marks: '40 marks per subject', status: 'Completed' }, { name: 'Unit Test 2', period: '14 – 19 Sep 2026', marks: '40 marks per subject', status: 'Completed' }, { name: 'Term 1 (Half-yearly)', period: '12 – 23 Oct 2026', marks: '80 + 20 internal', status: 'Upcoming' }, { name: 'Unit Test 3', period: '07 – 12 Dec 2026', marks: '40 marks per subject', status: 'Scheduled' }, { name: 'Term 2 (Annual)', period: '22 Feb – 10 Mar 2027', marks: '80 + 20 internal', status: 'Scheduled' }];
-  readonly dateSheet = [{ date: 'Mon, 12 Oct 2026', subject: 'English', time: '9:00 am – 12:00 pm', syllabus: 'Beehive Ch 1–6, Moments Ch 1–4, Grammar, Writing' }, { date: 'Wed, 14 Oct 2026', subject: 'Mathematics', time: '9:00 am – 12:00 pm', syllabus: 'Number systems, Polynomials, Coordinate geometry, Linear equations, Euclid’s geometry' }, { date: 'Fri, 16 Oct 2026', subject: 'Science', time: '9:00 am – 12:00 pm', syllabus: 'Matter, Atoms & molecules, Cell, Tissues, Motion, Force' }, { date: 'Mon, 19 Oct 2026', subject: 'Social Science', time: '9:00 am – 12:00 pm', syllabus: 'French Revolution, India – size & location, Physical features, Democracy, Story of Palampur' }, { date: 'Wed, 21 Oct 2026', subject: 'Hindi', time: '9:00 am – 12:00 pm', syllabus: 'Kshitij Ch 1–5, Kritika Ch 1–2, Vyakaran' }, { date: 'Fri, 23 Oct 2026', subject: 'Sanskrit / Computer Science', time: '9:00 – 11:00 am', syllabus: 'Shemushi Ch 1–4 / Units 1–4' }];
-  private pendingSubmission: { title: string; status: string; file: string } | null = null;
+  private readonly demoExamSchedule = [{ name: 'Unit Test 1', period: '20 – 26 Jul 2026', marks: '40 marks per subject', status: 'Completed' }, { name: 'Unit Test 2', period: '14 – 19 Sep 2026', marks: '40 marks per subject', status: 'Completed' }, { name: 'Term 1 (Half-yearly)', period: '12 – 23 Oct 2026', marks: '80 + 20 internal', status: 'Upcoming' }, { name: 'Unit Test 3', period: '07 – 12 Dec 2026', marks: '40 marks per subject', status: 'Scheduled' }, { name: 'Term 2 (Annual)', period: '22 Feb – 10 Mar 2027', marks: '80 + 20 internal', status: 'Scheduled' }];
+  private readonly demoDateSheet = [{ date: 'Mon, 12 Oct 2026', subject: 'English', time: '9:00 am – 12:00 pm', syllabus: 'Beehive Ch 1–6, Moments Ch 1–4, Grammar, Writing' }, { date: 'Wed, 14 Oct 2026', subject: 'Mathematics', time: '9:00 am – 12:00 pm', syllabus: 'Number systems, Polynomials, Coordinate geometry, Linear equations, Euclid’s geometry' }, { date: 'Fri, 16 Oct 2026', subject: 'Science', time: '9:00 am – 12:00 pm', syllabus: 'Matter, Atoms & molecules, Cell, Tissues, Motion, Force' }, { date: 'Mon, 19 Oct 2026', subject: 'Social Science', time: '9:00 am – 12:00 pm', syllabus: 'French Revolution, India – size & location, Physical features, Democracy, Story of Palampur' }, { date: 'Wed, 21 Oct 2026', subject: 'Hindi', time: '9:00 am – 12:00 pm', syllabus: 'Kshitij Ch 1–5, Kritika Ch 1–2, Vyakaran' }, { date: 'Fri, 23 Oct 2026', subject: 'Sanskrit / Computer Science', time: '9:00 – 11:00 am', syllabus: 'Shemushi Ch 1–4 / Units 1–4' }];
+  private pendingSubmission: PortalTaskRow | null = null;
   private static readonly ALLOWED_FILE_TYPES = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
   private static readonly MAX_FILE_BYTES = 10 * 1024 * 1024;
-  get fees(): PortalFee[] { return this.isSchool ? this.schoolFees : this.coachingFees; }
+  get fees(): PortalFee[] { return this.live ? this.liveFees : this.isSchool ? this.schoolFees : this.coachingFees; }
   /** Fee payment form (student or parent submits; the office verifies). */
   readonly payModes = ['UPI', 'Card', 'Net banking', 'Bank Transfer', 'Cash at office'];
   payOpen = false;
@@ -69,7 +85,7 @@ export class StudentPortalComponent {
   private static readonly PROOF_TYPES = ['pdf', 'jpg', 'jpeg', 'png'];
   private static readonly MAX_PROOF_BYTES = 5 * 1024 * 1024;
   get workspace(): string { return this.tenant.current.businessType; }
-  get submissions(): FeeSubmission[] { return this.feeSubmissions.forStudent(this.workspace, this.studentId); }
+  get submissions(): FeeSubmission[] { return this.live ? this.liveSubmissions : this.feeSubmissions.forStudent(this.workspace, this.studentId); }
   get payablePeriods(): PortalFee[] { return this.fees.filter(fee => this.payableFor(fee) > 0); }
   pendingFor(period: string): number { return this.submissions.filter(item => item.period === period && item.status === 'Pending verification').reduce((sum, item) => sum + item.amount, 0); }
   /** Due amount not already covered by a payment waiting for verification. */
@@ -91,15 +107,16 @@ export class StudentPortalComponent {
   get libraryFine(): number { return this.myLoans.reduce((sum, item) => sum + this.library.fineFor(item), 0); }
   requested(book: LibraryBook): boolean { return this.myRequests.some(item => item.bookId === book.id && item.status === 'Requested'); }
   hasBook(book: LibraryBook): boolean { return this.myLoans.some(item => item.bookId === book.id); }
-  get results() { return this.isSchool ? this.schoolResults : this.coachingResults; }
-  get materials() { return this.isSchool ? this.schoolMaterials : this.coachingMaterials; }
-  get notices() { return this.isSchool ? this.schoolNotices : this.coachingNotices; }
-  get updates() { return this.isSchool ? this.schoolUpdates : this.coachingUpdates; }
-  get assignments() { return this.isSchool ? this.schoolAssignments : this.coachingAssignments; }
-  get pendingHomework(): number { return this.homework.filter(h => h.status === 'Pending').length; }
+  get results() { return this.live ? this.view.results : this.isSchool ? this.schoolResults : this.coachingResults; }
+  get materials() { return this.live ? this.view.materials : this.isSchool ? this.schoolMaterials : this.coachingMaterials; }
+  get notices() { return this.live ? this.view.notices : this.isSchool ? this.schoolNotices : this.coachingNotices; }
+  get updates() { return this.live ? this.view.updates : this.isSchool ? this.schoolUpdates : this.coachingUpdates; }
+  get assignments(): PortalTaskRow[] { return this.live ? this.view.assignments : this.isSchool ? this.schoolAssignments : this.coachingAssignments; }
+  get homework(): PortalTaskRow[] { return this.live ? this.view.homework : this.demoHomework; }
+  get pendingHomework(): number { return this.homework.filter(h => h.status === 'Pending' || h.status === 'Due' || h.status === 'Overdue').length; }
   get pendingAssignments(): number { return this.assignments.filter(a => a.status === 'Pending').length; }
-  readonly calendar = Array.from({ length: 30 }, (_, i) => ({ day: i + 1, status: [3, 10, 17, 22].includes(i + 1) ? 'absent' : [6].includes(i + 1) ? 'leave' : [8, 19].includes(i + 1) ? 'late' : i < 28 ? 'present' : 'future' }));
-  constructor(private router: Router, public auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private signOutFlow: SignOutService, private feeSubmissions: FeeSubmissionService, private demoLibrary: LibraryService, private libraryApi: LibraryApiService, public content: WebsiteContentService) { this.applyApprovedPayments(); if (this.liveLibrary) this.libraryApi.loadMine(this.auth.token!).subscribe({ error: (error: Error) => this.toast.error(error.message) }); this.content.loadOwnerWebsite().subscribe(); this.update(router.url); router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => { this.update(event.urlAfterRedirects); this.menuOpen = false; }); }
+  private readonly demoCalendar = Array.from({ length: 30 }, (_, i) => ({ day: i + 1, status: [3, 10, 17, 22].includes(i + 1) ? 'absent' : [6].includes(i + 1) ? 'leave' : [8, 19].includes(i + 1) ? 'late' : i < 28 ? 'present' : 'future' }));
+  constructor(private router: Router, public auth: MockAuthService, private tenant: TenantContextService, private toast: ToastService, private signOutFlow: SignOutService, private feeSubmissions: FeeSubmissionService, private demoLibrary: LibraryService, private libraryApi: LibraryApiService, public content: WebsiteContentService, private portalApi: PortalApiService, private dialog: MatDialog) { if (!this.live) this.applyApprovedPayments(); if (this.liveLibrary) this.libraryApi.loadMine(this.auth.token!).subscribe({ error: (error: Error) => this.toast.error(error.message) }); this.content.loadOwnerWebsite().subscribe(); this.update(router.url); router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => { this.update(event.urlAfterRedirects); this.menuOpen = false; }); if (this.live) { this.loadSeenNotices(); this.load(); } }
   /** Phone tab bar (both student and parent menus have these pages); "More" opens the full menu. */
   readonly bottomNav: BottomNavItem[] = [{ label: 'Dashboard', icon: 'home', route: '/student/dashboard' }, { label: 'Profile', icon: 'person', route: '/student/profile' }, { label: 'Attendance', icon: 'schedule', route: '/student/attendance' }, { label: 'Notification', icon: 'notifications', route: '/student/notices', dot: true }];
   get menu(): PortalMenu[] { return this.isParent ? (this.isSchool ? this.schoolParentMenu : this.coachingParentMenu) : this.isSchool ? this.schoolStudentMenu : this.coachingStudentMenu; }
@@ -113,8 +130,8 @@ export class StudentPortalComponent {
    * parents, address and academic details have no read API yet, so they show "—". Demo sessions keep sample data.
    */
   get profile(): { name: string; studentId: string; placement: string; group: string; details: { label: string; value: string; wide?: boolean }[] } {
-    const user = this.auth.user;
-    if (this.auth.isDemo || !user) {
+    const student = this.me?.student;
+    if (!this.live || !student) {
       return {
         name: this.childName, studentId: this.studentId, placement: this.academicPlacement, group: this.groupPlacement,
         details: [
@@ -126,59 +143,360 @@ export class StudentPortalComponent {
         ]
       };
     }
-    // A parent's own login does not include the child's record, so a parent sees their own registered details.
-    const name = this.auth.displayName || '—';
+    const parents = student.parentsInfo;
+    const address = student.address;
     return {
-      name, studentId: '—', placement: '—', group: '—',
+      name: student.fullName || '—', studentId: student.studentCode, placement: student.placement, group: this.groupPlacement,
       details: [
-        { label: 'Full name', value: name }, { label: 'Role', value: this.isParent ? 'Parent' : 'Student' },
-        { label: 'Phone', value: formatPhone(user.countryCode, user.phoneNumber) }, { label: 'Email', value: user.email || '—' },
-        { label: 'Registered on', value: formatDate(user.createdAt) }, { label: 'Last sign-in', value: formatDate(user.lastLogin) },
-        { label: 'Date of birth', value: '—' }, { label: 'Gender', value: '—' }, { label: 'Admission date', value: '—' },
-        { label: 'Father', value: '—' }, { label: 'Mother', value: '—' }, { label: this.isSchool ? 'Guardian contact' : 'Parent contact', value: '—' },
-        { label: 'Address', value: '—', wide: true }
+        { label: 'Full name', value: student.fullName || '—' }, { label: 'Date of birth', value: formatDate(student.dateOfBirth) },
+        { label: 'Gender', value: student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : '—' },
+        { label: 'Phone', value: formatPhone(student.countryCode, student.phoneNumber) }, { label: 'Email', value: student.email || '—' },
+        { label: 'Admission date', value: formatDate(student.admissionDate) },
+        { label: 'Father', value: parents?.fatherName || '—' }, { label: 'Mother', value: parents?.motherName || '—' },
+        { label: this.isSchool ? 'Guardian contact' : 'Parent contact', value: formatPhone(parents?.countryCode, parents?.phoneNumber) },
+        { label: 'Address', value: [address?.addressLine, address?.city, address?.state, address?.pincode].filter(Boolean).join(', ') || '—', wide: true }
       ]
     };
   }
-  get childName(): string { return this.isSchool ? 'Ishita Rao' : 'Aarav Sharma'; }
-  get firstName(): string { return (this.isParent ? (this.isSchool ? 'Meera Rao' : 'Neha Sharma') : this.displayName).split(' ')[0]; }
+  get childName(): string { return this.live ? this.me?.student.fullName || '—' : this.isSchool ? 'Ishita Rao' : 'Aarav Sharma'; }
+  get firstName(): string { return (this.isParent ? (this.live ? this.displayName : this.isSchool ? 'Meera Rao' : 'Neha Sharma') : this.displayName).split(' ')[0]; }
   get childFirstName(): string { return this.childName.split(' ')[0]; }
-  get studentId(): string { return this.isSchool ? 'GPS-2601' : 'NS-2401'; }
-  get academicPlacement(): string { return this.isSchool ? 'Class 9 · Section A' : 'Class 12 Science'; }
-  get groupPlacement(): string { return this.isSchool ? 'Roll no. 14 · Class teacher: Ms. Priya Nair' : 'JEE Main 2027 · Morning Batch A'; }
+  get studentId(): string { return this.live ? this.me?.student.studentCode || '—' : this.isSchool ? 'GPS-2601' : 'NS-2401'; }
+  get academicPlacement(): string { return this.live ? this.me?.student.placement || '—' : this.isSchool ? 'Class 9 · Section A' : 'Class 12 Science'; }
+  get groupPlacement(): string {
+    if (!this.live) return this.isSchool ? 'Roll no. 14 · Class teacher: Ms. Priya Nair' : 'JEE Main 2027 · Morning Batch A';
+    const roll = this.me?.student.rollNumber;
+    return this.isSchool ? [roll ? `Roll no. ${roll}` : '', this.schoolClass.classTeacher !== '—' ? `Class teacher: ${this.schoolClass.classTeacher}` : ''].filter(Boolean).join(' · ') || '—' : this.me?.student.course || '—';
+  }
   get childDateOfBirth(): string { return this.isSchool ? '12 May 2012' : '14 February 2009'; }
   get childGender(): string { return this.isSchool ? 'Female' : 'Male'; }
   get childPhone(): string { return this.isSchool ? '98765 20001' : '98765 10001'; }
   get childEmail(): string { return this.isSchool ? 'ishita.r@email.com' : 'aarav.s@email.com'; }
   get otherGuardian(): string { return this.isSchool ? 'Arun Rao' : 'Vikram Sharma'; }
-  get latestAssessment(): string { return this.isSchool ? 'Unit Test 2' : 'Unit Test 3'; }
-  get latestSubject(): string { return this.isSchool ? 'Mathematics' : 'Physics'; }
-  get paymentDescription(): string { return this.isSchool ? 'Term 2 fee balance · due Oct 5' : 'September balance · due Oct 5'; }
+  /** Latest published result (dashboard card and Results banner). */
+  get latestResult(): { percentage: number; exam: string; subject: string; date: string; grade: string } | null {
+    if (!this.live) return { percentage: 88, exam: this.isSchool ? 'Unit Test 2' : 'Unit Test 3', subject: this.isSchool ? 'Mathematics' : 'Physics', date: 'September 18, 2026', grade: 'A' };
+    const latest = this.portal.results[0];
+    return latest ? { percentage: Math.round(latest.percentage), exam: latest.exam, subject: latest.subject, date: dayLabel(latest.date), grade: latest.grade } : null;
+  }
+  get latestAssessment(): string { return this.latestResult?.exam || '—'; }
+  get latestSubject(): string { return this.latestResult?.subject || '—'; }
+  get paymentDescription(): string {
+    if (!this.live) return this.isSchool ? 'Term 2 fee balance · due Oct 5' : 'September balance · due Oct 5';
+    const next = this.portal.fees?.fees.filter(fee => fee.due > 0).sort((a, b) => String(a.dueDate || '9').localeCompare(String(b.dueDate || '9')))[0];
+    return next ? `${next.period} balance${next.dueDate ? ' · due ' + dayLabel(next.dueDate) : ''}` : 'Nothing due';
+  }
   get officePhone(): string { return this.content.phone; }
   get officeTel(): string { return WebsiteContentService.telLink(this.content.phone); }
   get officeWhatsapp(): string { return WebsiteContentService.whatsappLink(this.content.whatsapp); }
   get instituteName(): string { return this.tenant.current.businessName; }
-  get attendanceRate(): number { return this.isSchool ? 94 : 96; }
-  get attendanceDays(): number { return this.isSchool ? 22 : 24; }
+  /** Attendance in view: the chosen month on the Attendance page, this month elsewhere. */
+  private get shownAttendance(): PortalAttendance | undefined { return this.section === 'attendance' && this.pageAttendance ? this.pageAttendance : this.portal.attendance; }
+  private get shownMonth(): Date { const [year, month] = (this.section === 'attendance' ? this.attendanceMonth : StudentPortalComponent.monthKey(new Date())).split('-').map(Number); return new Date(year, month - 1, 1); }
+  get attendanceRate(): number { return this.live ? this.shownAttendance?.percent ?? 0 : this.isSchool ? 94 : 96; }
+  /** Days present or late in the month shown. */
+  get attendanceDays(): number { return this.live ? (this.shownAttendance?.present ?? 0) + (this.shownAttendance?.late ?? 0) : this.isSchool ? 22 : 24; }
+  /** Days attendance was taken in the month shown. */
+  get markedDays(): number { return this.live ? this.shownAttendance?.records.length ?? 0 : 25; }
+  get absentDays(): number { return this.live ? this.shownAttendance?.absent ?? 0 : 1; }
+  get leaveDays(): number { return this.live ? this.shownAttendance?.leave ?? 0 : 0; }
+  get absentDates(): string {
+    if (!this.live) return 'September 12';
+    const dates = (this.shownAttendance?.records || []).filter(record => record.status === 'absent').map(record => new Date(record.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' }));
+    return dates.join(', ') || 'No absences';
+  }
+  get attendanceVerdict(): string { const rate = this.attendanceRate; return !this.markedDays ? 'Not taken yet' : rate >= 90 ? 'Excellent' : rate >= 75 ? 'Good' : 'Needs attention'; }
+  get monthLabel(): string { return this.live ? this.shownMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : 'September 2026'; }
+  /** Earliest month to browse: the admission month, or a year back when it is not recorded. */
+  private get firstMonth(): string {
+    const admitted = this.me?.student.admissionDate;
+    if (admitted) return admitted.slice(0, 7);
+    const yearBack = new Date(); yearBack.setMonth(yearBack.getMonth() - 11);
+    return StudentPortalComponent.monthKey(yearBack);
+  }
+  get canPrevMonth(): boolean { return this.attendanceMonth > this.firstMonth; }
+  get canNextMonth(): boolean { return this.attendanceMonth < StudentPortalComponent.monthKey(new Date()); }
+  /** Attendance page: step to the previous (-1) or next (+1) month. */
+  changeMonth(step: number): void {
+    if ((step < 0 && !this.canPrevMonth) || (step > 0 && !this.canNextMonth)) return;
+    const [year, month] = this.attendanceMonth.split('-').map(Number);
+    const target = StudentPortalComponent.monthKey(new Date(year, month - 1 + step, 1));
+    this.attendanceMonth = target;
+    if (target === StudentPortalComponent.monthKey(new Date())) { this.pageAttendance = undefined; return; }
+    this.portalApi.attendance(this.auth.token!, target, this.childCode).subscribe({
+      next: data => { if (this.attendanceMonth === target) this.pageAttendance = data; },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
+  get todayLabel(): string { return (this.live ? new Date() : new Date(2026, 8, 28)).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase(); }
+  get greeting(): string { if (!this.live) return 'Good morning'; const hour = new Date().getHours(); return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'; }
+  // ---------- Live data (signed-in student or parent) ----------
+  /** Real accounts read crm-backend; demo sessions keep the sample content above. */
+  get live(): boolean { return !!this.auth.token && (this.auth.role === 'Student' || this.auth.role === 'Parent'); }
+  loading = false;
+  me?: PortalMe;
+  private childCode?: string;
+  /** Month shown on the Attendance page (YYYY-MM) and its records; the dashboard keeps this month. */
+  attendanceMonth = StudentPortalComponent.monthKey(new Date());
+  private pageAttendance?: PortalAttendance;
+  private static monthKey(date: Date): string { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
+  private proofFile?: File;
+  readonly portal: { classInfo?: PortalClass; subjects: PortalSubject[]; timetable: ApiPeriod[]; attendance?: PortalAttendance; fees?: PortalFees; tests: PortalTest[]; results: PortalResult[]; materials: PortalMaterial[]; notices: PortalNotice[]; updates: PortalUpdate[]; tasks: PortalTask[]; syllabus: PortalSyllabus[] } = { subjects: [], timetable: [], tests: [], results: [], materials: [], notices: [], updates: [], tasks: [], syllabus: [] };
+  /** Live data in the row shapes the template uses. */
+  readonly view: { results: { exam: string; date: string; subject: string; marks: string; percentage: string; grade: string }[]; materials: { title: string; subject: string; type: string; file: string; date: string }[]; notices: { type: string; title: string; body: string; date: string; tone: string }[]; updates: { title: string; body: string; date: string; type: string }[]; assignments: PortalTaskRow[]; homework: PortalTaskRow[] } = { results: [], materials: [], notices: [], updates: [], assignments: [], homework: [] };
+  private liveFees: PortalFee[] = [];
+  private liveSubmissions: FeeSubmission[] = [];
+
+  /** Loads the student (or the parent's chosen child) and every portal section. One failing section does not hide the rest. */
+  load(): void {
+    const token = this.auth.token!;
+    const month = StudentPortalComponent.monthKey(new Date());
+    this.attendanceMonth = month;
+    this.pageAttendance = undefined;
+    const safe = <T>(source: import('rxjs').Observable<T>, fallback: T) => source.pipe(catchError(() => of(fallback)));
+    this.loading = true;
+    this.portalApi.me(token, this.childCode).pipe(switchMap(me => {
+      this.me = me;
+      this.childCode = me.student.studentCode;
+      const child = this.childCode;
+      const school = me.student.workType === 'school';
+      return forkJoin({
+        classInfo: safe(this.portalApi.classInfo(token, child), undefined as PortalClass | undefined),
+        subjects: school ? safe(this.portalApi.subjects(token, child), [] as PortalSubject[]) : of([] as PortalSubject[]),
+        timetable: school ? safe(this.portalApi.timetable(token, child), [] as ApiPeriod[]) : of([] as ApiPeriod[]),
+        attendance: safe(this.portalApi.attendance(token, month, child), undefined as PortalAttendance | undefined),
+        fees: safe(this.portalApi.fees(token, child), undefined as PortalFees | undefined),
+        tests: safe(this.portalApi.tests(token, child), [] as PortalTest[]),
+        results: safe(this.portalApi.results(token, child), [] as PortalResult[]),
+        materials: safe(this.portalApi.materials(token, child), [] as PortalMaterial[]),
+        notices: safe(this.portalApi.notices(token, child), [] as PortalNotice[]),
+        updates: safe(this.portalApi.updates(token, child), [] as PortalUpdate[]),
+        tasks: safe(this.portalApi.tasks(token, child), [] as PortalTask[]),
+        syllabus: safe(this.portalApi.syllabus(token, child), [] as PortalSyllabus[])
+      });
+    })).subscribe({
+      next: data => { this.selectedBatch = 0; Object.assign(this.portal, data); this.buildView(); this.loading = false; if (this.section === 'notices') this.markNoticesSeen(); this.refreshNoticeDot(); },
+      error: (error: Error) => { this.loading = false; this.toast.error(error.message); }
+    });
+  }
+
+  /** Parents with more than one child switch between them. */
+  get children() { return this.me?.children || []; }
+  switchChild(studentCode: string): void { if (studentCode === this.childCode) return; this.childCode = studentCode; this.load(); }
+
+  private buildView(): void {
+    const day = (value: string | null | undefined) => dayLabel(value);
+    this.view.results = this.portal.results.map(row => ({ exam: row.exam, date: day(row.date), subject: row.subject, marks: row.absent ? 'Absent' : `${row.marks} / ${row.maxMarks}`, percentage: `${row.percentage}%`, grade: row.grade }));
+    this.view.materials = this.portal.materials.map(item => ({ title: item.title, subject: item.subject || item.description || MATERIAL_LABELS[item.type] || 'Material', type: MATERIAL_LABELS[item.type] || 'PDF', file: item.file?.url || item.link || '', date: day(item.date) }));
+    this.view.notices = this.portal.notices.map(item => ({ type: NOTICE_LABELS[item.type] || 'General', title: item.title, body: item.description, date: day(item.date), tone: NOTICE_TONES[item.type] || '' }));
+    this.view.updates = this.portal.updates.map(item => ({ title: item.title, body: item.body, date: item.kind === 'event' && item.startTime ? `${day(item.date)} · ${BatchApiService.clock(item.startTime)}` : day(item.date), type: item.kind === 'event' ? 'Upcoming event' : 'Announcement' }));
+    const row = (task: PortalTask): PortalTaskRow => {
+      const status = task.kind === 'homework'
+        ? (task.status === 'closed' ? 'Closed' : task.overdue ? 'Overdue' : 'Due')
+        : task.submission?.status === 'checked' ? 'Checked' : task.submission ? 'Submitted' : task.status === 'closed' ? 'Closed' : task.overdue ? 'Overdue' : 'Pending';
+      return {
+        taskCode: task.taskCode, subject: task.subject, title: task.title, given: day(task.givenOn), due: day(task.dueDate), status,
+        file: task.submission?.file.name || '', fileUrl: task.submission?.file.url, attachment: task.attachment, remark: task.submission?.remark,
+        canSubmit: task.kind === 'assignment' && task.status === 'assigned' && task.submission?.status !== 'checked'
+      };
+    };
+    this.view.homework = this.portal.tasks.filter(task => task.kind === 'homework').map(row);
+    this.view.assignments = this.portal.tasks.filter(task => task.kind === 'assignment').map(row);
+    this.liveFees = (this.portal.fees?.fees || []).map(fee => ({
+      month: fee.period, amount: fee.totalFee - fee.discount, paid: fee.paid, due: fee.due, status: fee.status,
+      date: fee.lastPayment ? day(fee.lastPayment.date) : '—', mode: fee.lastPayment?.mode || '—'
+    }));
+    this.liveSubmissions = (this.portal.fees?.submissions || []).map((item: PortalFeeSubmission, index) => ({
+      id: index, workspace: this.workspace, studentId: item.studentId || '', student: item.student, period: item.period, amount: item.amount, mode: item.mode,
+      reference: item.reference || '', proof: item.proof?.name || '', note: item.note || '', submittedBy: item.submittedBy || '—',
+      submittedOn: day(item.submittedOn), status: SUBMISSION_LABELS[item.status], reviewNote: item.reviewNote || (item.receiptNo ? `Receipt ${item.receiptNo}` : '')
+    }));
+  }
+
+  /** Coaching students can be in several batches; My Batch shows the chosen one. */
+  selectedBatch = 0;
+  get batchGroups() { return this.portal.classInfo?.groups || []; }
+  get batchNames(): string { return this.live ? this.batchGroups.map(group => group.name).join(', ') || '—' : this.demoBatch.name; }
+  /** Coaching: My Batch. */
+  get batch() {
+    if (!this.live) return this.demoBatch;
+    const group = this.batchGroups[this.selectedBatch] || this.batchGroups[0];
+    return {
+      name: group?.name || '—', course: group?.course || '—',
+      timing: group?.startTime && group.endTime ? `${BatchApiService.clock(group.startTime)} – ${BatchApiService.clock(group.endTime)}` : '—',
+      days: group?.days.length ? BatchApiService.daysLabel(group.days) : '—', room: group?.room || '—', classmates: group?.students ?? 0,
+      startDate: group?.startDate ? dayLabel(group.startDate) : '—', coordinator: '',
+      teachers: (group?.teachers || []).map(teacher => ({ name: teacher.name || 'Teacher', subject: teacher.subjects.join(', ') || 'Teacher', initials: StudentPortalComponent.initials(teacher.name) }))
+    };
+  }
+  get batchSchedule() {
+    if (!this.live) return this.demoBatchSchedule;
+    const group = this.batchGroups[this.selectedBatch] || this.batchGroups[0];
+    return [...(group?.days || [])].sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b)).map(day => ({ day: DAY_NAMES[day], first: this.batch.timing, second: group?.room || '—' }));
+  }
+  get scheduleHeads(): [string, string] { return this.live ? ['TIME', 'ROOM'] : ['7:00 – 8:15 AM', '8:15 – 9:30 AM']; }
+  get scheduleNote(): string { return this.live ? `${this.batch.days} · ${this.batch.timing}` : `${this.batch.timing} · two sessions with a short break`; }
+
+  /** School: My Class. */
+  get schoolClass() {
+    if (!this.live) return this.demoSchoolClass;
+    const group = this.portal.classInfo?.groups[0];
+    const teacher = group?.teachers[0];
+    return {
+      name: this.me?.student.course || '—', section: group?.name || this.me?.student.batch || '—', rollNo: this.portal.classInfo?.rollNumber || '—',
+      classTeacher: teacher?.name || '—', classTeacherSubject: teacher?.subjects.join(', ') || '', room: group?.room || '—',
+      classmates: group?.students ?? 0, monitor: '', session: this.portal.classInfo?.session || '—', timing: ''
+    };
+  }
+  get subjects() {
+    if (!this.live) return this.demoSubjects;
+    return this.portal.subjects.map(subject => {
+      // Syllabus covered comes from the Syllabus page (chapters ticked for the student's section).
+      const syllabus = this.portal.syllabus.find(item => item.subject.toLowerCase() === subject.name.toLowerCase());
+      return {
+        name: subject.name, teacher: subject.teacher || 'Not assigned yet', book: '',
+        chapters: syllabus ? `${syllabus.done} of ${syllabus.total} chapters` : '', progress: syllabus?.percent ?? 0, hasSyllabus: !!syllabus, status: syllabus?.status ?? null,
+        icon: SUBJECT_ICONS[subject.name.toLowerCase()] || 'menu_book', periods: subject.periodsPerWeek
+      };
+    });
+  }
+  /** School timetable: one column per time slot used in the week. */
+  private get slots(): { start: string; end: string }[] {
+    return [...new Map(this.portal.timetable.map(period => [`${period.startTime}-${period.endTime}`, { start: period.startTime, end: period.endTime }])).values()].sort((a, b) => a.start.localeCompare(b.start));
+  }
+  get periods() { return this.live ? this.slots.map((slot, index) => ({ label: `Period ${index + 1}`, time: `${BatchApiService.clock(slot.start)} – ${BatchApiService.clock(slot.end)}` })) : this.demoPeriods; }
+  get timetableDays(): string[] {
+    if (!this.live) return this.demoTimetableDays;
+    return DAY_ORDER.filter(day => this.portal.timetable.some(period => period.day === day)).map(day => DAY_NAMES[day]);
+  }
+  get timetable(): Record<string, string[]> {
+    if (!this.live) return this.demoTimetable;
+    const grid: Record<string, string[]> = {};
+    DAY_ORDER.forEach(day => grid[DAY_NAMES[day]] = this.slots.map(slot => this.portal.timetable.find(period => period.day === day && period.startTime === slot.start && period.endTime === slot.end)?.subject?.name || '—'));
+    return grid;
+  }
+  get weeklyPeriods(): number { return this.portal.timetable.length; }
+  get todayPeriods(): number { const today = DAY_ORDER[(new Date().getDay() + 6) % 7]; return this.portal.timetable.filter(period => period.day === today).length; }
+
+  /** Coaching tests: upcoming papers and published results. */
+  get upcomingTests() {
+    if (!this.live) return this.demoUpcomingTests;
+    return this.portal.tests.flatMap(test => test.papers.filter(paper => paper.upcoming).map(paper => ({ name: test.name, subject: paper.subject, date: dayLabel(paper.date), time: '', marks: paper.maxMarks, mode: '' })));
+  }
+  get pastTests() {
+    if (!this.live) return this.demoPastTests;
+    return this.portal.results.map(row => ({ name: row.exam, subject: row.subject, date: dayLabel(row.date), marks: row.absent ? 'Absent' : `${row.marks} / ${row.maxMarks}`, rank: row.rank ? `${row.rank} / ${row.outOf}` : '—', percentage: Math.round(row.percentage) }));
+  }
+  /** School exams: the session's exams and the date sheet of the next one. */
+  get examSchedule() {
+    if (!this.live) return this.demoExamSchedule;
+    return this.portal.tests.map(test => {
+      const dates = test.papers.map(paper => dayLabel(paper.date));
+      const maxMarks = [...new Set(test.papers.map(paper => paper.maxMarks))];
+      return {
+        name: test.term ? `${test.name} · ${test.term}` : test.name, period: dates.length > 1 ? `${dates[0]} – ${dates[dates.length - 1]}` : dates[0] || '—',
+        marks: maxMarks.length === 1 ? `${maxMarks[0]} marks per subject` : `${maxMarks.join(' / ')} marks`,
+        status: test.resultsPublished ? 'Results out' : test.papers.some(paper => paper.upcoming) ? 'Upcoming' : 'Completed'
+      };
+    });
+  }
+  private get nextExam(): PortalTest | undefined { return this.portal.tests.find(test => test.papers.some(paper => paper.upcoming)); }
+  get dateSheetTitle(): string { return this.live ? this.nextExam?.name || 'No upcoming exam' : 'Term 1 (Half-yearly)'; }
+  get dateSheet() {
+    if (!this.live) return this.demoDateSheet;
+    return (this.nextExam?.papers || []).map(paper => ({ date: new Date(paper.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }), subject: paper.subject, time: `${paper.maxMarks} marks`, syllabus: '' }));
+  }
+
+  /** Calendar of the month shown (demo: September 2026). */
+  get calendar(): { day: number; status: string }[] {
+    if (!this.live) return this.demoCalendar;
+    const shown = this.shownMonth;
+    const now = new Date();
+    const days = new Date(shown.getFullYear(), shown.getMonth() + 1, 0).getDate();
+    const current = shown.getFullYear() === now.getFullYear() && shown.getMonth() === now.getMonth();
+    const marks = new Map((this.shownAttendance?.records || []).map(record => [Number(record.date.slice(8, 10)), record.status]));
+    return Array.from({ length: days }, (_, index) => ({ day: index + 1, status: marks.get(index + 1) || (current && index + 1 > now.getDate() ? 'future' : 'none') }));
+  }
+  /** Blank cells before day 1 (weeks start on Monday). */
+  get calendarOffset(): number[] {
+    if (!this.live) return [1];
+    return Array.from({ length: (this.shownMonth.getDay() + 6) % 7 });
+  }
+  /** Notices not opened yet on this device (all sample notices count in demo mode). */
+  /** Sidebar and top-bar photo: the student's uploaded photo; parents and demo keep the stock avatars. */
+  get avatar(): string { return this.isParent ? 'assets/images/people/parent.jpg' : this.me?.student.profileImage || 'assets/images/people/student.jpg'; }
+  /** Syllabus covered per subject (coaching My Batch, parent Academic progress). */
+  get syllabusRows(): PortalSyllabus[] { return this.live ? this.portal.syllabus : []; }
+  syllabusTone(status: string): 'success' | 'danger' | 'neutral' | 'info' { return status === 'On track' ? 'success' : status === 'Behind' ? 'danger' : status === 'No targets' ? 'info' : 'neutral'; }
+  get noticeCount(): number { return this.live ? this.portal.notices.filter(notice => !this.seenNotices.has(notice.noticeCode)).length : this.notices.length; }
+  private seenNotices = new Set<string>();
+  private get seenKey(): string { return `portal-seen-notices:${this.auth.user?._id || 'demo'}`; }
+  private loadSeenNotices(): void { try { this.seenNotices = new Set(JSON.parse(localStorage.getItem(this.seenKey) || '[]')); } catch { this.seenNotices = new Set(); } }
+  /** Opening Notices marks every notice there as read. */
+  private markNoticesSeen(): void {
+    if (!this.live || !this.portal.notices.length) return;
+    this.portal.notices.forEach(notice => this.seenNotices.add(notice.noticeCode));
+    try { localStorage.setItem(this.seenKey, JSON.stringify([...this.seenNotices].slice(-300))); } catch { /* storage unavailable: keep in memory */ }
+    this.refreshNoticeDot();
+  }
+  /** Phone tab bar: the Notification dot shows only when something is unread. */
+  private refreshNoticeDot(): void { const item = this.bottomNav.find(entry => entry.route === '/student/notices'); if (item) item.dot = this.noticeCount > 0; }
+  /** Where to pay: the institute's UPI / bank details (demo shows sample details). */
+  get paymentDetails(): PaymentDetails | null {
+    if (!this.live) return { upiId: `fees@${this.isSchool ? 'greenfieldschool' : 'nsacademy'}`, accountName: null, accountNumber: '50200012345678', ifsc: 'HDFC0001234', bankName: null, note: null };
+    const details = this.portal.fees?.paymentDetails;
+    return details && (details.upiId || details.accountNumber) ? details : null;
+  }
+  get feePeriodsLabel(): string { return this.live ? `${this.fees.length} ${this.isSchool ? 'term' : 'fee'} period${this.fees.length === 1 ? '' : 's'}` : this.isSchool ? 'Academic year 2026–27' : 'July – September 2026'; }
+  private static initials(name: string | null | undefined): string { return String(name || '?').split(/\s+/).filter(Boolean).map(part => part[0]).join('').slice(0, 2).toUpperCase(); }
+  /** Parent / guardian contacts on file (Family contacts tab). Only one parent mobile is stored, shared by both parents. */
+  get familyContacts(): { initials: string; name: string; relation: string; phone: string; tel: string }[] {
+    if (!this.live) return [
+      { initials: `${this.firstName.charAt(0)}R`, name: `${this.firstName} ${this.isSchool ? 'Rao' : 'Sharma'}`, relation: this.isSchool ? 'Guardian' : 'Parent / guardian', phone: '98765 43210', tel: 'tel:9876543210' },
+      { initials: this.isSchool ? 'AR' : 'VS', name: this.isSchool ? 'Arun Rao' : 'Vikram Sharma', relation: this.isSchool ? 'Guardian' : 'Parent / guardian', phone: '98765 43211', tel: 'tel:9876543211' }
+    ];
+    const parents = this.me?.student.parentsInfo;
+    const phone = parents?.phoneNumber ? formatPhone(parents.countryCode, parents.phoneNumber) : '';
+    const tel = parents?.phoneNumber ? `tel:${parents.countryCode || ''}${parents.phoneNumber}` : '';
+    const people = [{ name: parents?.fatherName, relation: 'Father' }, { name: parents?.motherName, relation: 'Mother' }].filter(person => person.name);
+    if (!people.length) return [{ initials: '?', name: 'Not on file', relation: 'Parent / guardian', phone, tel }];
+    return people.map(person => ({ initials: StudentPortalComponent.initials(person.name), name: person.name!, relation: person.relation, phone, tel }));
+  }
+  get classTeacherInitials(): string { return this.live ? StudentPortalComponent.initials(this.schoolClass.classTeacher) : 'PN'; }
+
   get paidTotal(): number { return this.fees.reduce((sum, fee) => sum + fee.paid, 0); }
   get feeDue(): number { return this.fees.reduce((sum, fee) => sum + fee.due, 0); }
   get sectionLabel(): string { return this.menu.find(item => item.key === this.section)?.label || 'Overview'; }
-  private update(url: string): void { const part = url.split('?')[0].split('/').filter(Boolean)[1]; this.section = part || 'dashboard'; }
+  private update(url: string): void { const part = url.split('?')[0].split('/').filter(Boolean)[1]; this.section = part || 'dashboard'; if (this.section === 'notices') this.markNoticesSeen(); }
   go(key: string): void { this.router.navigate(['/student', key === 'dashboard' ? 'dashboard' : key]); }
-  download(file: string): void { const blob = new Blob([`EduNexa student portal demo file: ${file}`], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.endsWith('.mp4') ? 'lesson-recording.txt' : file; a.click(); URL.revokeObjectURL(a.href); this.toast.success(`Download started: ${a.download}`); }
-  printReceipt(month: string, amount: number): void { this.toast.info(`Opening receipt for ${month} · ₹${amount.toLocaleString('en-IN')}.`); setTimeout(() => window.print(), 300); }
+  download(file: string): void { if (/^https?:\/\//.test(file)) { window.open(file, '_blank', 'noopener'); return; } const blob = new Blob([`EduNexa student portal demo file: ${file}`], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.endsWith('.mp4') ? 'lesson-recording.txt' : file; a.click(); URL.revokeObjectURL(a.href); this.toast.success(`Download started: ${a.download}`); }
+  /** Demo receipt (sample data). */
+  private printDemoReceipt(month: string, amount: number): void { this.toast.info(`Opening receipt for ${month} · ₹${amount.toLocaleString('en-IN')}.`); setTimeout(() => window.print(), 300); }
   markHomeworkDone(item: { title: string; status: string }): void { if (item.status === 'Submitted') { this.toast.info('This homework is already marked as done.'); return; } item.status = 'Submitted'; this.toast.success(`Marked as done: ${item.title}`); }
-  startSubmission(item: { title: string; status: string; file: string }, picker: HTMLInputElement): void { this.pendingSubmission = item; picker.value = ''; picker.click(); }
+  startSubmission(item: PortalTaskRow, picker: HTMLInputElement): void { this.pendingSubmission = item; picker.value = ''; picker.click(); }
   onSubmissionFile(event: Event): void {
     const input = event.target as HTMLInputElement; const file = input.files?.[0]; const item = this.pendingSubmission; input.value = '';
     if (!file || !item) { this.toast.info('No file selected. Your assignment was not submitted.'); return; }
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
     if (!StudentPortalComponent.ALLOWED_FILE_TYPES.includes(ext)) { this.toast.error('Unsupported file type. Upload a PDF, DOC, DOCX, JPG or PNG file.'); return; }
     if (file.size > StudentPortalComponent.MAX_FILE_BYTES) { this.toast.error(`File is too large (${(file.size / 1048576).toFixed(1)} MB). Maximum size is 10 MB.`); return; }
-    item.status = 'Submitted'; item.file = file.name; this.pendingSubmission = null; this.toast.success(`Submitted “${item.title}” · ${file.name}`);
+    this.pendingSubmission = null;
+    if (this.live && item.taskCode) {
+      const token = this.auth.token!;
+      this.portalApi.upload(token, file).pipe(switchMap(saved => this.portalApi.submitTask(token, item.taskCode!, saved))).subscribe({
+        next: task => { this.portal.tasks = this.portal.tasks.map(entry => entry.taskCode === task.taskCode ? task : entry); this.buildView(); this.toast.success(`Submitted “${item.title}” · ${file.name}`); },
+        error: (error: Error) => this.toast.error(error.message)
+      });
+      return;
+    }
+    item.status = 'Submitted'; item.file = file.name; this.toast.success(`Submitted “${item.title}” · ${file.name}`);
   }
-  setTestReminder(name: string, date: string): void { this.toast.success(`Reminder set for ${name} on ${date}.`); }
-  contactTeacher(name: string): void { this.toast.info(`Message request sent to ${name}. They will reply via the ${this.isSchool ? 'school' : 'institute'} office.`); }
+  /** Teachers are reached through the office: WhatsApp when the institute has a number, otherwise a call. */
+  contactOffice(): void {
+    const link = this.content.whatsapp ? this.officeWhatsapp : this.officeTel;
+    if (!link) { this.toast.info(`Please contact the ${this.isSchool ? 'school' : 'institute'} office.`); return; }
+    window.open(link, this.content.whatsapp ? '_blank' : '_self', 'noopener');
+  }
   logout(): void { this.signOutFlow.signOut(); }
   openPayment(fee?: PortalFee): void {
     const target = fee && this.payableFor(fee) > 0 ? fee : this.payablePeriods[0];
@@ -190,11 +508,13 @@ export class StudentPortalComponent {
   onPeriodChange(): void { this.pay.amount = this.selectedPayable || null; }
   onProofFile(event: Event): void {
     const input = event.target as HTMLInputElement; const file = input.files?.[0];
+    this.proofFile = undefined;
     if (!file) { this.pay.proof = ''; return; }
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
     if (!StudentPortalComponent.PROOF_TYPES.includes(ext)) { input.value = ''; this.pay.proof = ''; this.toast.error('Upload the payment receipt as a PDF, JPG or PNG file.'); return; }
     if (file.size > StudentPortalComponent.MAX_PROOF_BYTES) { input.value = ''; this.pay.proof = ''; this.toast.error(`File is too large (${(file.size / 1048576).toFixed(1)} MB). Maximum size is 5 MB.`); return; }
     this.pay.proof = file.name;
+    this.proofFile = file;
   }
   submitPayment(): void {
     const amount = Number(this.pay.amount); const max = this.selectedPayable; const cash = this.pay.mode === 'Cash at office'; const reference = this.pay.reference.trim();
@@ -204,9 +524,25 @@ export class StudentPortalComponent {
       : !cash && !/^[A-Za-z0-9-]{6,30}$/.test(reference) ? 'Enter the transaction / UTR number (6–30 letters or digits).'
       : cash && !reference && !this.pay.note.trim() ? 'For cash payments, add the office receipt number or a note.' : '';
     if (this.payError) return;
+    if (this.live) { this.submitLivePayment(amount, reference); return; }
     this.feeSubmissions.submit({ workspace: this.workspace, studentId: this.studentId, student: this.childName, period: this.pay.period, amount, mode: this.pay.mode, reference, proof: this.pay.proof, note: this.pay.note.trim(), submittedBy: this.isParent ? `${this.displayName} (Parent)` : this.displayName });
     this.payOpen = false;
     this.toast.success(`Payment of ₹${amount.toLocaleString('en-IN')} submitted. The ${this.isSchool ? 'school' : 'institute'} office will verify it and send your receipt.`);
+  }
+  /** Uploads the proof (if any), sends the payment to the office and reloads the fee rows. */
+  private submitLivePayment(amount: number, reference: string): void {
+    const token = this.auth.token!;
+    const proof$ = this.proofFile ? this.portalApi.upload(token, this.proofFile) : of(null);
+    proof$.pipe(
+      switchMap(proof => this.portalApi.submitFee(token, { period: this.pay.period, amount, mode: this.pay.mode, reference: reference || null, proof, note: this.pay.note.trim() || null }, this.childCode)),
+      switchMap(() => this.portalApi.fees(token, this.childCode))
+    ).subscribe({
+      next: fees => {
+        this.portal.fees = fees; this.buildView(); this.payOpen = false; this.proofFile = undefined;
+        this.toast.success(`Payment of ₹${amount.toLocaleString('en-IN')} submitted. The ${this.isSchool ? 'school' : 'institute'} office will verify it and send your receipt.`);
+      },
+      error: (error: Error) => this.payError = error.message
+    });
   }
   submissionTone(status: string): 'success' | 'warning' | 'danger' { return status === 'Approved' ? 'success' : status === 'Rejected' ? 'danger' : 'warning'; }
   requestBook(book: LibraryBook): void {
@@ -221,6 +557,18 @@ export class StudentPortalComponent {
     if (problem) { this.toast.info(problem); return; }
     this.toast.success(`Requested “${book.title}”. Collect it from the library once it is issued.`);
   }
+  /** Opens the receipt for a fee period: the latest payment's receipt number, with the period's total paid. */
+  printReceipt(month: string, amount: number): void {
+    if (!this.live) { this.printDemoReceipt(month, amount); return; }
+    const fee = this.portal.fees?.fees.find(item => item.period === month);
+    if (!fee?.lastPayment) { this.toast.info('No payment recorded for this period yet.'); return; }
+    const data: ReceiptData = {
+      receiptNo: fee.lastPayment.receiptNo, institution: this.instituteName, logo: this.content.customLogo,
+      studentId: this.studentId, student: this.childName, month: fee.period, date: dayLabel(fee.lastPayment.date),
+      mode: fee.lastPayment.mode, discount: fee.discount, paid: fee.paid, total: fee.totalFee, due: fee.due, status: fee.status
+    };
+    this.dialog.open(ReceiptPreviewComponent, { width: '450px', maxWidth: 'calc(100vw - 24px)', data });
+  }
   /** Payments the office has approved count towards the fee rows (the rows are fresh on each visit). */
   private applyApprovedPayments(): void {
     this.feeSubmissions.forWorkspace(this.tenant.current.businessType).filter(item => item.studentId === this.studentId && item.status === 'Approved').forEach(item => {
@@ -229,5 +577,5 @@ export class StudentPortalComponent {
       fee.paid += item.amount; fee.due = Math.max(0, fee.amount - fee.paid); fee.status = fee.due ? 'Partial' : 'Paid'; fee.date = item.submittedOn; fee.mode = item.mode;
     });
   }
-  showNotifications(): void { this.toast.info(this.notices.length ? `You have ${this.notices.length} notices. Opening Notices.` : 'You are all caught up.'); if (this.notices.length) this.go('notices'); }
+  showNotifications(): void { const unread = this.noticeCount; this.toast.info(unread ? `You have ${unread} new notice${unread === 1 ? '' : 's'}. Opening Notices.` : 'You are all caught up.'); this.go('notices'); }
 }

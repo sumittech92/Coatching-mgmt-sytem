@@ -3,7 +3,7 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthApiService } from './auth-api.service';
 
-interface ApiResponse<T> { success: boolean; message: string; data: T; }
+export interface ApiResponse<T> { success: boolean; message: string; data: T; }
 
 /** Shared CRUD calls for crm-backend resources shaped as `POST /create`, `GET /`, `PATCH /:id`, `DELETE /:id`. */
 export abstract class ApiClient<T, P> {
@@ -21,9 +21,9 @@ export abstract class ApiClient<T, P> {
     return this.request(this.http.get<ApiResponse<R>>(`${this.base}${suffix}`, { headers: this.headers(accessToken), params }));
   }
 
-  private headers(accessToken: string): HttpHeaders { return new HttpHeaders({ accesstoken: accessToken }); }
+  protected headers(accessToken: string): HttpHeaders { return new HttpHeaders({ accesstoken: accessToken }); }
 
-  private request<R>(call: Observable<ApiResponse<R>>): Observable<R> {
+  protected request<R>(call: Observable<ApiResponse<R>>): Observable<R> {
     return call.pipe(map(response => response.data), catchError((error: HttpErrorResponse) => throwError(() => new Error(AuthApiService.messageFor(error)))));
   }
 }

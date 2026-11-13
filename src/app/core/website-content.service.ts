@@ -58,9 +58,9 @@ export class WebsiteContentService {
       { name: 'Class 10 Foundation', description: 'Learn each topic and practise every week.', duration: '10 months', fee: '₹3,200 / month', subjects: 'Mathematics, Biology, English', status: 'Published' }
     ],
     faculty: [
-      { name: 'Priya Nair', qualification: 'Physics teacher', experience: '8 years', subjects: 'Physics, Mathematics', photo: 'assets/images/avatars/avatar-3.png', status: 'Published' },
-      { name: 'Ankit Rao', qualification: 'Chemistry teacher', experience: '6 years', subjects: 'Chemistry', photo: 'assets/images/avatars/avatar-5.png', status: 'Published' },
-      { name: 'Nisha Thomas', qualification: 'English teacher', experience: '11 years', subjects: 'English', photo: 'assets/images/avatars/avatar-8.png', status: 'Published' }
+      { name: 'Priya Nair', qualification: 'Physics teacher', experience: '8 years', subjects: 'Physics, Mathematics', photo: 'assets/images/people/teacher-woman.jpg', status: 'Published' },
+      { name: 'Ankit Rao', qualification: 'Chemistry teacher', experience: '6 years', subjects: 'Chemistry', photo: 'assets/images/people/teacher-man.jpg', status: 'Published' },
+      { name: 'Nisha Thomas', qualification: 'English teacher', experience: '11 years', subjects: 'English', photo: 'assets/images/people/teacher-senior.jpg', status: 'Published' }
     ],
     results: [
       { name: 'Diya Iyer', course: 'Class 10 Foundation', exam: 'Board examinations 2026', score: '97.2%', achievement: 'State merit list', status: 'Published' },
@@ -69,8 +69,8 @@ export class WebsiteContentService {
     gallery: [
       { title: 'Students learn together', media: 'assets/images/coaching/classroom-india.jpg', date: 'September 2026', status: 'Published' },
       { title: 'Class time', media: 'assets/images/coaching/students-india.jpg', date: 'September 2026', status: 'Published' },
-      { title: 'Learning in class', media: 'assets/images/coaching/classroom-india.jpg', date: 'August 2026', status: 'Published' },
-      { title: 'Students in class', media: 'assets/images/coaching/classroom-india.jpg', date: 'August 2026', status: 'Published' }
+      { title: 'Learning in class', media: 'assets/images/edu/coaching-class.jpg', date: 'August 2026', status: 'Published' },
+      { title: 'Students in class', media: 'assets/images/edu/coaching-batch.jpg', date: 'August 2026', status: 'Published' }
     ],
     updates: [
       { title: 'New classes are open', description: 'Call us to ask about the new classes.', type: 'Announcement', date: '26 Sep 2026', status: 'Published' },
@@ -93,9 +93,9 @@ export class WebsiteContentService {
       { name: 'Senior Secondary (Class 11 – 12)', description: 'Science, Commerce and Humanities streams with career guidance for life after school.', duration: 'Class 11 to Class 12', fee: '₹22,000 / term', subjects: 'Physics, Chemistry, Biology, Mathematics, Accountancy, Economics', status: 'Published' }
     ],
     faculty: [
-      { name: 'Mrs. Neha Iyer', qualification: 'PGT Mathematics · M.Sc, B.Ed', experience: '12 years', subjects: 'Mathematics', photo: 'assets/images/avatars/avatar-3.png', status: 'Published' },
-      { name: 'Mr. Rahul Mehta', qualification: 'PGT Commerce · M.Com, B.Ed', experience: '10 years', subjects: 'Accountancy, Economics', photo: 'assets/images/avatars/avatar-5.png', status: 'Published' },
-      { name: 'Ms. Ananya Rao', qualification: 'TGT Science · M.Sc, B.Ed', experience: '9 years', subjects: 'Science, Biology', photo: 'assets/images/avatars/avatar-8.png', status: 'Published' }
+      { name: 'Mrs. Neha Iyer', qualification: 'PGT Mathematics · M.Sc, B.Ed', experience: '12 years', subjects: 'Mathematics', photo: 'assets/images/people/teacher-woman.jpg', status: 'Published' },
+      { name: 'Mr. Rahul Mehta', qualification: 'PGT Commerce · M.Com, B.Ed', experience: '10 years', subjects: 'Accountancy, Economics', photo: 'assets/images/people/teacher-man.jpg', status: 'Published' },
+      { name: 'Ms. Ananya Rao', qualification: 'TGT Science · M.Sc, B.Ed', experience: '9 years', subjects: 'Science, Biology', photo: 'assets/images/people/teacher-senior.jpg', status: 'Published' }
     ],
     results: [
       { name: 'Rohan Das', course: 'Class 12 · Science', exam: 'CBSE Class 12 board 2026', score: '97.4%', achievement: 'School topper', status: 'Published' },
@@ -104,8 +104,8 @@ export class WebsiteContentService {
     gallery: [
       { title: 'Learning in the classroom', media: 'assets/images/coaching/classroom-india.jpg', date: 'September 2026', status: 'Published' },
       { title: 'Students learn together', media: 'assets/images/coaching/students-india.jpg', date: 'September 2026', status: 'Published' },
-      { title: 'Annual sports day', media: 'assets/images/gallery/02.png', date: 'August 2026', status: 'Published' },
-      { title: 'Science exhibition', media: 'assets/images/gallery/03.png', date: 'August 2026', status: 'Published' }
+      { title: 'Annual sports day', media: 'assets/images/edu/sports-day.jpg', date: 'August 2026', status: 'Published' },
+      { title: 'Science exhibition', media: 'assets/images/edu/science-exhibition.jpg', date: 'August 2026', status: 'Published' }
     ],
     updates: [
       { title: 'Admissions open for 2027–28', description: 'Admission forms for Nursery to Class 9 and Class 11 are available at the school office and online.', type: 'Announcement', date: '26 Sep 2026', status: 'Published' },
@@ -128,7 +128,7 @@ export class WebsiteContentService {
     if (!token || !user) return of(null);
     if (this.ownerSite?.ownerId === user._id) return of(this.ownerSite);
     if (this.ownerLoad$) return this.ownerLoad$;
-    if (this.auth.role === 'Teacher' || this.auth.role === 'Student') return this.ownerLoad$ = this.loadMemberWebsite(token, user._id);
+    if (this.auth.role === 'Teacher' || this.auth.role === 'Student' || this.auth.role === 'Parent') return this.ownerLoad$ = this.loadMemberWebsite(token, user._id);
     if (this.auth.role !== 'Owner') return of(null);
     this.ownerLoad$ = this.api.mine(token).pipe(
       map(({ website, siteSlug, customDomain }) => {
@@ -146,7 +146,7 @@ export class WebsiteContentService {
     return this.ownerLoad$;
   }
 
-  /** Teachers and students see their institute's logo, name and office contact (read-only). */
+  /** Teachers, students and parents see their institute's logo, name and office contact (read-only). */
   private loadMemberWebsite(token: string, userId: string): Observable<OwnerWebsite | null> {
     return this.api.institute(token).pipe(
       map(({ website, instituteName, workType }) => {

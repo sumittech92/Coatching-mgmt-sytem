@@ -9,7 +9,7 @@ import { ClientSectionComponent } from '../client/client-section.component';
 import { ClientManagementComponent } from '../client/management/client-management.component';
 import { RecordDialogComponent } from '../client/management/record-dialog.component';
 import { AttendancePageComponent } from '../client/attendance-page.component';
-import { FeesPageComponent, ReceiptPreviewComponent } from '../client/fees-page.component';
+import { FeesPageComponent } from '../client/fees-page.component';
 import { WebsiteCmsComponent } from '../client/website-cms.component';
 import { ShopDashboardComponent } from '../shop/shop-dashboard.component';
 import { ShopManagementComponent } from '../shop/shop-management.component';
@@ -20,6 +20,7 @@ import { AccountSettingsComponent } from './account-settings/account-settings.co
 import { ModulePageComponent } from '../client/modules/module-page.component';
 import { LibraryPageComponent } from '../client/library/library-page.component';
 import { ReportsPageComponent } from '../client/reports/reports-page.component';
+import { SyllabusPageComponent } from '../client/syllabus/syllabus-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -56,6 +57,7 @@ const routes: Routes = [
   { path: 'client/batches/:id', component: ClientManagementComponent },
   { path: 'client/batches', component: ClientManagementComponent },
   { path: 'client/attendance', component: AttendancePageComponent },
+  { path: 'client/syllabus', component: SyllabusPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
   { path: 'client/library', component: LibraryPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
   { path: 'client/fees/collect', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/fees/:studentId', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },

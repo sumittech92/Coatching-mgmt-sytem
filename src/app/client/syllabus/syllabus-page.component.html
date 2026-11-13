@@ -1,0 +1,99 @@
+<div class="page-head syllabus-head">
+  <div>
+    <app-breadcrumbs [items]="[workspaceLabel, 'Syllabus']"></app-breadcrumbs>
+    <h1>Syllabus</h1>
+    <p>{{ isOwner ? 'How much of each subject every ' + groupWord + ' has finished, against the target months.' : 'Tick chapters as you finish them in your ' + groupWord + 's.' }}</p>
+  </div>
+  <div class="head-actions" *ngIf="live">
+    <button mat-stroked-button (click)="exportExcel()"><mat-icon>download</mat-icon>Export Excel</button>
+    <button mat-flat-button color="primary" *ngIf="isOwner || courses.length" (click)="openEditor()"><mat-icon>add</mat-icon>Add syllabus</button>
+  </div>
+</div>
+
+<app-empty-state *ngIf="!live" icon="menu_book" title="Syllabus uses your institute's data" description="Sign in with your owner or teacher account to plan chapters and track how much of each subject is done."></app-empty-state>
+
+<ng-container *ngIf="live">
+  <div class="syllabus-controls">
+    <div class="report-tabs" role="tablist">
+      <button role="tab" [attr.aria-selected]="tab === 'progress'" [class.active]="tab === 'progress'" (click)="tab = 'progress'"><mat-icon>insights</mat-icon>Progress</button>
+      <button role="tab" [attr.aria-selected]="tab === 'lists'" [class.active]="tab === 'lists'" (click)="tab = 'lists'"><mat-icon>format_list_numbered</mat-icon>Chapter lists</button>
+    </div>
+    <mat-form-field appearance="outline" class="course-filter" *ngIf="groups.length > 1 || syllabi.length > 1">
+      <mat-select [(ngModel)]="courseFilter" [attr.aria-label]="'Filter by ' + classWord">
+        <mat-option value="">All {{ isSchool ? 'classes' : 'courses' }}</mat-option>
+        <mat-option *ngFor="let group of groups" [value]="group.course.courseCode">{{ group.course.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <app-loading-state *ngIf="loading" label="Loading syllabus…"></app-loading-state>
+
+  <!-- Progress grid -->
+  <ng-container *ngIf="tab === 'progress' && !loading">
+    <div class="summary-row" *ngIf="shownGroups.length">
+      <div class="summary-chip"><strong>{{ average }}%</strong><span>Average done</span></div>
+      <div class="summary-chip" [class.alert]="behind"><strong>{{ behind }}</strong><span>Behind target</span></div>
+      <div class="summary-chip"><strong>{{ notSet }}</strong><span>Subjects without a syllabus</span></div>
+    </div>
+
+    <mat-card class="grid-card" *ngFor="let group of shownGroups">
+      <mat-card-content>
+        <div class="grid-title"><h2>{{ group.course.name }}</h2><small>{{ group.rows.length }} {{ groupWord }}{{ group.rows.length === 1 ? '' : 's' }} · {{ group.subjects.length }} subject{{ group.subjects.length === 1 ? '' : 's' }}</small></div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0 progress-table">
+            <thead><tr><th>{{ isSchool ? 'SECTION' : 'BATCH' }}</th><th *ngFor="let subject of group.subjects">{{ subject | uppercase }}</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let row of group.rows">
+                <td class="row-label">{{ row.label }}</td>
+                <td *ngFor="let cell of row.cells">
+                  <button class="cell" type="button" (click)="openCell(group, cell, row.batchCode)" [disabled]="!cell.syllabusCode && !cell.canMark && !isOwner"
+                    [attr.aria-label]="cell.subject + ' in ' + row.label + ': ' + (cell.syllabusCode ? cell.percent + '% done, ' + cell.status : 'no syllabus yet')">
+                    <ng-container *ngIf="cell.syllabusCode; else notSetCell">
+                      <span class="cell-top"><strong>{{ cell.percent }}%</strong><app-status-badge [label]="cell.status" [tone]="tone(cell.status)"></app-status-badge></span>
+                      <span class="track"><i [class]="barClass(cell)" [style.width.%]="cell.percent"></i><b *ngIf="cell.expected !== null" class="expected" [style.left.%]="cell.expected" title="Expected by now"></b></span>
+                      <small>{{ cell.done }} of {{ cell.total }} chapters<ng-container *ngIf="cell.expected !== null"> · {{ cell.expected }}% expected</ng-container></small>
+                    </ng-container>
+                    <ng-template #notSetCell><span class="not-set"><mat-icon>add_circle_outline</mat-icon>{{ isOwner || cell.canMark ? 'Add chapters' : 'Not set' }}</span></ng-template>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <app-empty-state *ngIf="!shownGroups.length" icon="menu_book"
+      [title]="isOwner ? 'No ' + groupWord + 's yet' : 'No subjects assigned'"
+      [description]="isOwner ? 'Add ' + (isSchool ? 'classes, sections and subjects' : 'courses and batches') + ' first; their syllabus progress appears here.' : 'Subjects you teach in your ' + groupWord + 's appear here.'"></app-empty-state>
+    <p class="legend" *ngIf="shownGroups.length"><b class="legend-mark"></b> Expected by now (chapters whose target month has passed). Click a cell to tick chapters.</p>
+  </ng-container>
+
+  <!-- Chapter lists -->
+  <mat-card class="grid-card" *ngIf="tab === 'lists' && !loading">
+    <mat-card-content>
+      <div class="table-responsive" *ngIf="shownSyllabi.length">
+        <table class="table align-middle mb-0">
+          <thead><tr><th>{{ isSchool ? 'CLASS' : 'COURSE' }}</th><th>SUBJECT</th><th>CHAPTERS</th><th>FINISH BY</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let syllabus of shownSyllabi; trackBy: trackByCode">
+              <td><strong>{{ syllabus.course?.name }}</strong></td>
+              <td>{{ syllabus.subject }}</td>
+              <td>{{ syllabus.chapters.length }}</td>
+              <td>{{ finishBy(syllabus) }}</td>
+              <td class="row-actions">
+                <button mat-stroked-button (click)="openChecklist(syllabus.syllabusCode)"><mat-icon>checklist</mat-icon>Progress</button>
+                <button mat-stroked-button (click)="openEditor(syllabus)"><mat-icon>edit</mat-icon>{{ syllabus.canEdit ? 'Edit' : 'Add chapters' }}</button>
+                <button mat-icon-button *ngIf="syllabus.canEdit" (click)="remove(syllabus)" aria-label="Delete syllabus"><mat-icon>delete_outline</mat-icon></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <app-empty-state *ngIf="!shownSyllabi.length" icon="format_list_numbered" title="No chapter lists yet"
+        [description]="'Add a syllabus for a ' + classWord + ' subject: pick a starter list (NCERT, Navodaya, Sainik School…) or paste your own chapters.'">
+        <button mat-flat-button color="primary" *ngIf="isOwner || courses.length" (click)="openEditor()">Add syllabus</button>
+      </app-empty-state>
+    </mat-card-content>
+  </mat-card>
+</ng-container>

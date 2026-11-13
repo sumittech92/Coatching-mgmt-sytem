@@ -1,0 +1,71 @@
+<h2 mat-dialog-title class="dialog-title">{{ editing ? 'Edit syllabus' : 'Add syllabus' }}</h2>
+<p class="dialog-subtitle">{{ data.owner ? 'Chapters with target months show whether each ' + (data.school ? 'section' : 'batch') + ' is on track.' : 'You can add chapters and change the ones you added. The owner manages the rest.' }}</p>
+<mat-dialog-content class="dialog-content">
+  <div class="row g-2">
+    <div class="col-md-6">
+      <label class="field-label">{{ classWord }} *</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-select [(ngModel)]="courseCode" (selectionChange)="courseChanged()" [disabled]="editing" [placeholder]="'Select ' + classWord.toLowerCase()">
+          <mat-option *ngFor="let course of data.courses" [value]="course.courseCode">{{ course.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="col-md-6">
+      <label class="field-label">Subject *</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-select [(ngModel)]="subject" [disabled]="editing || !courseCode" [placeholder]="courseCode ? 'Select subject' : 'Choose the ' + classWord.toLowerCase() + ' first'">
+          <mat-option *ngFor="let item of subjects" [value]="item">{{ item }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <small class="field-help" *ngIf="courseCode && !subjects.length">This {{ classWord.toLowerCase() }} has no subjects yet. Add them on the {{ data.school ? 'Subjects' : 'Courses' }} page.</small>
+    </div>
+  </div>
+
+  <div class="fill-tools">
+    <div class="tool">
+      <label class="field-label">Starter chapter list</label>
+      <div class="tool-row">
+        <mat-form-field appearance="outline" class="grow">
+          <mat-select [(ngModel)]="presetKey" placeholder="NCERT, Navodaya, Sainik School…">
+            <mat-option *ngFor="let preset of presets" [value]="preset.key">{{ preset.label }} ({{ preset.chapters.length }})</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-stroked-button type="button" [disabled]="!presetKey" (click)="usePreset()">Add chapters</button>
+      </div>
+      <small class="field-help">Starter lists follow the current NCERT books; check them against your board's syllabus.</small>
+    </div>
+    <div class="tool">
+      <label class="field-label">Paste chapters (one per line)</label>
+      <div class="tool-row">
+        <textarea class="paste" rows="2" [(ngModel)]="paste" placeholder="1. Real Numbers&#10;2. Polynomials"></textarea>
+        <button mat-stroked-button type="button" [disabled]="!paste.trim()" (click)="addPasted()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chapters-head">
+    <h3 class="sheet-title">Chapters ({{ rows.length }})</h3>
+    <div class="spread" *ngIf="rows.length">
+      <span>Spread target months</span>
+      <input type="month" [(ngModel)]="spreadFrom" aria-label="First month"><span>to</span><input type="month" [(ngModel)]="spreadTo" aria-label="Last month">
+      <button mat-button type="button" (click)="spread()">Apply</button>
+    </div>
+  </div>
+  <div class="chapter-rows">
+    <div class="chapter-row" *ngFor="let row of rows; let i = index" [class.locked]="row.locked">
+      <span class="num">{{ i + 1 }}</span>
+      <input class="title" [(ngModel)]="row.title" [disabled]="row.locked" maxlength="150" placeholder="Chapter name" [attr.aria-label]="'Chapter ' + (i + 1)">
+      <input class="month" type="month" [(ngModel)]="row.targetMonth" [disabled]="row.locked" [attr.aria-label]="'Target month, chapter ' + (i + 1)" title="Target month">
+      <input class="weight" type="number" min="1" max="100" [(ngModel)]="row.weight" [disabled]="row.locked" [attr.aria-label]="'Weight, chapter ' + (i + 1)" title="Weight (planned periods)">
+      <button mat-icon-button type="button" (click)="move(i, -1)" [disabled]="i === 0" aria-label="Move up"><mat-icon>arrow_upward</mat-icon></button>
+      <button mat-icon-button type="button" (click)="removeRow(i)" [disabled]="row.locked" aria-label="Remove chapter"><mat-icon>delete_outline</mat-icon></button>
+    </div>
+    <button mat-stroked-button type="button" class="add-row" (click)="addRow()"><mat-icon>add</mat-icon>Add chapter</button>
+  </div>
+  <small class="field-help">Target month: when the chapter should be finished (for On track / Behind). Weight: planned periods; a 10-period chapter counts more than a 2-period one. Leave 1 to count chapters equally.</small>
+  <div class="form-error" *ngIf="error" role="alert"><mat-icon>error_outline</mat-icon>{{ error }}</div>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()">{{ editing ? 'Save chapters' : 'Add syllabus' }}</button>
+</mat-dialog-actions>

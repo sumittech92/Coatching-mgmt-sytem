@@ -1,0 +1,21 @@
+.batch-picker{flex-wrap:wrap;margin-bottom:12px}
+.batch-picker .mat-button-toggle{font-size:12px}
+.checklist-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 8px}
+.checklist-summary strong{font-size:22px;color:#253447;margin-right:8px}
+.checklist-summary span{font-size:12px;color:#7d8a99}
+.track{position:relative;height:8px;border-radius:8px;background:#e9eef5;margin-bottom:14px}
+.track i{display:block;height:100%;border-radius:8px;background:#4c78f1}
+.track i.behind{background:#e0796f}
+.track b{position:absolute;top:-3px;width:2px;height:14px;background:#384658}
+.chapter-list{list-style:decimal;margin:0;padding-left:22px}
+.chapter-list li{padding:5px 0;border-bottom:1px dashed #edf0f4;font-size:13px;color:#3a4759}
+.chapter-list li::marker{color:#9aa5af;font-size:12px}
+.chapter-list li > *{vertical-align:middle}
+.chapter-list li{display:list-item}
+.chapter-list li mat-checkbox{margin-right:8px}
+.chapter-list li.done mat-checkbox ::ng-deep label{color:#2f7a55}
+.meta{display:inline-flex;align-items:center;gap:8px;float:right;margin-top:8px}
+.target{font-size:12px;color:#8c98a6}
+.target.late{color:#c0453b;font-weight:600}
+.done-date{font-size:12px;border:1px solid #dfe5ec;border-radius:7px;padding:3px 6px;color:#3a4759}
+@media(max-width:600px){.meta{float:none;display:flex;margin:0 0 4px 32px}}

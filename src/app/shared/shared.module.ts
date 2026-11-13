@@ -18,7 +18,8 @@ import { ChangePasswordComponent } from './ui/change-password/change-password.co
 import { MultiSelectComponent } from './ui/multi-select/multi-select.component';
 import { StackTableDirective } from './ui/stack-table.directive';
 import { BottomNavComponent } from './ui/bottom-nav/bottom-nav.component';
+import { ReceiptPreviewComponent } from './ui/receipt-preview/receipt-preview.component';
 
-const components = [HeaderComponent, SidebarComponent, BreadcrumbsComponent, StatCardComponent, StatusBadgeComponent, EmptyStateComponent, LoadingStateComponent, SearchToolbarComponent, DataTableComponent, FormFieldComponent, ConfirmationDialogComponent, ChangePasswordComponent, MultiSelectComponent, StackTableDirective, BottomNavComponent];
+const components = [ReceiptPreviewComponent, HeaderComponent, SidebarComponent, BreadcrumbsComponent, StatCardComponent, StatusBadgeComponent, EmptyStateComponent, LoadingStateComponent, SearchToolbarComponent, DataTableComponent, FormFieldComponent, ConfirmationDialogComponent, ChangePasswordComponent, MultiSelectComponent, StackTableDirective, BottomNavComponent];
 @NgModule({ declarations: components, imports: [CommonModule, RouterModule, MatModule, FormsModule, ReactiveFormsModule], exports: [CommonModule, RouterModule, MatModule, FormsModule, ReactiveFormsModule, ...components] })
 export class SharedModule {}

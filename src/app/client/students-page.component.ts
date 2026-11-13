@@ -74,6 +74,9 @@ export class StudentsPageComponent implements OnInit {
     semester: [""],
     quota: [""],
     status: ["Active", AppValidators.required],
+    // Family portal login on the parent phone; the password is needed for a new parent account.
+    parentLogin: [false],
+    parentPassword: ["", [Validators.minLength(8), Validators.maxLength(64)]],
   });
   readonly boards = COACHING_BOARDS;
   readonly schoolTerms = SCHOOL_TERMS;
@@ -159,9 +162,10 @@ export class StudentsPageComponent implements OnInit {
     this.photo = "";
     this.photoFile = undefined;
     const password = this.form.controls.password;
-    password.setValidators(this.mode === "add" ? [AppValidators.required, AppValidators.password] : null);
+    // Adding: required. Editing: optional new password (also how a sample student gets a login).
+    password.setValidators(this.mode === "add" ? [AppValidators.required, AppValidators.password] : this.mode === "edit" ? [AppValidators.password] : null);
     password.updateValueAndValidity();
-    if (this.mode === "add") this.form.reset({ course: [], batch: [], monthlyFee: 0, discount: 0, status: "Active" });
+    if (this.mode === "add") this.form.reset({ course: [], batch: [], monthlyFee: 0, discount: 0, status: "Active", parentLogin: false, parentPassword: "" });
     if (this.selected && this.mode !== "list")
       this.form.patchValue({
         ...this.selected,
@@ -169,6 +173,8 @@ export class StudentsPageComponent implements OnInit {
         parentPhone: normalizeMobile(this.selected.parentPhone ?? this.selected.phone),
         course: StudentsPageComponent.splitList(this.selected.course),
         batch: StudentsPageComponent.splitList(this.selected.batch),
+        parentLogin: !!this.selected.parentLogin,
+        parentPassword: "",
       });
   }
   /** API student -> the row / form shape this page uses. */
@@ -197,6 +203,7 @@ export class StudentsPageComponent implements OnInit {
       monthlyFee: student.feePlan?.amount ?? 0, discount: student.feePlan?.discount ?? 0,
       school: student.coachingInfo?.schoolName || "", board: student.coachingInfo?.board || "",
       rollNo: student.schoolInfo?.rollNumber || "", semester: student.schoolInfo?.currentTerm || "", quota: student.schoolInfo?.admissionCategory || "",
+      parentLogin: !!student.parentId,
     };
   }
   /** Uploaded photos are URLs; demo and fallback photos are initials. */
@@ -287,9 +294,13 @@ export class StudentsPageComponent implements OnInit {
       this.toast.invalidForm();
       return;
     }
+    if (this.live && this.form.controls.parentLogin.value && !normalizeMobile(this.form.controls.parentPhone.value || "")) {
+      this.toast.error("Add the parent phone to give the parent a login.");
+      return;
+    }
     const value = this.form.getRawValue();
     const name = (value.name || "").trim();
-    const { password, ...fields } = value;
+    const { password, parentLogin, parentPassword, ...fields } = value;
     const record = {
       ...fields,
       name,
@@ -336,10 +347,10 @@ export class StudentsPageComponent implements OnInit {
     photo$
       .pipe(
         switchMap((profileImage) => {
-          const payload = this.createPayload(record, password, profileImage);
+          const payload = { ...this.createPayload(record, password, profileImage), parentLogin: { enabled: !!this.form.controls.parentLogin.value, password: this.form.controls.parentPassword.value || null } };
           if (!editing) return this.studentApi.create(token, payload);
-          const { password: _unused, ...update } = payload;
-          return this.studentApi.update(token, this.selected!.code!, update);
+          const { password: newPassword, ...update } = payload;
+          return this.studentApi.update(token, this.selected!.code!, { ...update, ...(newPassword ? { password: newPassword } : {}) });
         }),
       )
       .subscribe({

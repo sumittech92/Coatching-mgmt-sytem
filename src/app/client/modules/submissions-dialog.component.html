@@ -1,0 +1,30 @@
+<h2 mat-dialog-title class="dialog-title">Submissions · {{ data.title }}</h2>
+<p class="dialog-subtitle">{{ data.group }} · {{ submittedCount }} of {{ rows.length }} submitted · {{ checkedCount }} checked</p>
+<mat-dialog-content class="dialog-content">
+  <app-loading-state *ngIf="loading" label="Loading submissions…"></app-loading-state>
+  <app-empty-state *ngIf="!loading && !rows.length" icon="groups" title="No students in this section" description="Students added to the section appear here."></app-empty-state>
+  <div class="table-responsive" *ngIf="!loading && rows.length">
+    <table class="table align-middle mb-0 marks-table">
+      <thead><tr><th>STUDENT</th><th>FILE</th><th>SUBMITTED</th><th>REMARK</th><th>CHECKED</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let row of rows">
+          <td><strong>{{ row.fullName }}</strong><small class="field-help d-block" *ngIf="row.rollNo">Roll no. {{ row.rollNo }}</small></td>
+          <td>
+            <a *ngIf="row.submission; else none" [href]="row.submission.file.url" target="_blank" rel="noopener">{{ row.submission.file.name }}</a>
+            <ng-template #none><span class="field-help">Not submitted</span></ng-template>
+          </td>
+          <td>{{ row.submission ? when(row.submission.submittedAt) : '—' }}<small class="field-help d-block" *ngIf="row.submission?.late">Late</small></td>
+          <td>
+            <mat-form-field appearance="outline" class="w-100" *ngIf="row.submission">
+              <input matInput maxlength="300" [(ngModel)]="remarks[row.studentCode]" (blur)="saveRemark(row)" placeholder="Optional, the student sees it" [attr.aria-label]="'Remark for ' + row.fullName">
+            </mat-form-field>
+          </td>
+          <td><mat-checkbox *ngIf="row.submission" [checked]="row.submission.status === 'checked'" (change)="setChecked(row, $event.checked)" [attr.aria-label]="'Checked: ' + row.fullName"></mat-checkbox></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-flat-button color="primary" [mat-dialog-close]="changed">Done</button>
+</mat-dialog-actions>

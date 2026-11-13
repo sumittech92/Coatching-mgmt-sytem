@@ -2,6 +2,8 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { RecordDialogComponent, RecordField } from './management/record-dialog.component';
+import { ReceiptPreviewComponent } from '../shared/ui/receipt-preview/receipt-preview.component';
+import { PaymentDetails } from '../core/portal-api.service';
 import { ConfirmationDialogService } from '../core/confirmation-dialog.service';
 import { MockDataService } from '../core/mock-data.service';
 import { TenantContextService } from '../core/tenant-context.service';
@@ -14,18 +16,6 @@ import { MockAuthService } from '../core/mock-auth.service';
 import { ApiFee, ApiFeeSummary, FeeApiService } from '../core/fee-api.service';
 import { ApiStudentSummary, StudentApiService } from '../core/student-api.service';
 interface FeeRecord { id: number | string; receiptNo?: string; phone?: string; studentId: string; student: string; month: string; total: number; discount: number; paid: number; due: number; date: string; mode: string; status: 'Paid'|'Partial'|'Pending'|'Overdue'; }
-@Component({ selector: 'app-receipt-preview', template: '<div class="receipt-wrap"><div class="receipt-brand"><span class="receipt-logo"><img *ngIf="data.logo; else initial" [src]="data.logo" alt=""><ng-template #initial>{{(data.institution || "E").charAt(0)}}</ng-template></span><div><strong>{{data.institution}}</strong><small *ngIf="data.address">{{data.address}}</small><small *ngIf="data.registration">{{data.registration}}</small></div></div><div class="receipt-kind">PAYMENT RECEIPT</div><div class="receipt-success"><mat-icon>check_circle</mat-icon><strong>Payment received</strong></div><div class="receipt-total">₹{{data.paid | number}}</div><p class="receipt-muted">Receipt no. {{data.receiptNo}}</p><mat-divider></mat-divider><div class="receipt-line"><span>Student</span><strong>{{data.student}}</strong></div><div class="receipt-line"><span>Student ID</span><strong>{{data.studentId}}</strong></div><div class="receipt-line"><span>Fee period</span><strong>{{data.month}}</strong></div><div class="receipt-line"><span>Payment date</span><strong>{{data.date}}</strong></div><div class="receipt-line"><span>Payment method</span><strong>{{data.mode}}</strong></div><div class="receipt-line"><span>Discount</span><strong>₹{{data.discount | number}}</strong></div><div class="receipt-line total-line"><span>Amount paid</span><strong>₹{{data.paid | number}}</strong></div><p class="receipt-footer">Thank you for your payment.</p><div class="receipt-wa" *ngIf="data.phone !== undefined"><span *ngIf="sentOn">Sent on WhatsApp · {{sentOn}}</span><span *ngIf="!sentOn && !validPhone" class="bad">No valid mobile number for this student</span></div><div class="receipt-actions"><button mat-stroked-button mat-dialog-close>Close</button><button mat-stroked-button (click)="print()"><mat-icon>print</mat-icon> Print</button><button mat-flat-button class="wa-button" *ngIf="data.phone !== undefined" [disabled]="!validPhone" (click)="sendWhatsApp()"><mat-icon>chat</mat-icon> {{sentOn ? "Send again" : "Send on WhatsApp"}}</button></div></div>', styles: [':host{display:block}.receipt-wrap{padding:26px;min-width:min(400px,80vw);color:#29374a}.receipt-brand{display:flex;align-items:center;gap:12px;border-bottom:1px solid #edf0f3;padding-bottom:15px}.receipt-logo{flex:none;width:48px;height:48px;border-radius:12px;background:#272f62;color:#fff;display:grid;place-items:center;font:700 22px Georgia,serif;overflow:hidden}.receipt-logo img{width:100%;height:100%;object-fit:contain;background:#fff}.receipt-brand strong{display:block;color:#272f62;font-size:16px}.receipt-brand small{display:block;color:#7f8593;font-size:12px;line-height:1.4;margin-top:2px}.receipt-kind{margin:14px 0 0;text-align:center;font-size:12px;letter-spacing:.14em;color:#858c9c}.receipt-success{text-align:center;display:flex;align-items:center;justify-content:center;gap:7px;color:#4166ce;font-size:clamp(12px, 11.648px + 0.0939vw, 13px);margin-top:25px}.receipt-total{text-align:center;font-size:clamp(24px, 21.183px + 0.7512vw, 32px);font-weight:750;margin-top:10px}.receipt-muted{text-align:center;font-size:12px;color:#929daa;margin:4px 0 18px}.receipt-line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f2f4;font-size:12px}.receipt-line span{color:#8491a0}.receipt-line strong{color:#3a485b}.total-line{border:0;font-weight:700;padding-top:15px}.total-line strong{color:#4770e3}.receipt-footer{text-align:center;color:#8a96a3;font-size:12px;margin:15px 0}.receipt-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap}.wa-button{background:#1fa855!important;color:#fff!important}.wa-button[disabled]{opacity:.5}.receipt-wa{text-align:right;font-size:12px;color:#1f8a4c;margin-top:8px}.receipt-wa .bad{color:#b5443d}.receipt-actions button{font-size:12px}@media print{body *{visibility:hidden!important}.receipt-wrap,.receipt-wrap *{visibility:visible!important}.receipt-wrap{position:absolute;left:0;top:0;width:100%;box-shadow:none!important}}'] })
-export class ReceiptPreviewComponent {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: FeeRecord & { receiptNo: string; institution: string; phone?: string; workspace?: string; logo?: string | null; address?: string; registration?: string }, private ref: MatDialogRef<ReceiptPreviewComponent>, private whatsapp: WhatsAppService, private toast: ToastService) {}
-  get key(): string { return `${this.data.workspace}:${this.data.receiptNo}:${this.data.paid}`; }
-  get validPhone(): boolean { return !!WhatsAppService.mobile(this.data.phone); }
-  get sentOn(): string { const entry = this.whatsapp.lastSent('receipt', this.key); return entry ? WhatsAppService.when(entry) : ''; }
-  print(): void { window.print(); }
-  sendWhatsApp(): void {
-    if (!this.whatsapp.send('receipt', this.key, this.data.phone, this.whatsapp.receiptText(this.data))) { this.toast.error(`${this.data.student} has no valid mobile number. Update it on the Students page.`); return; }
-    this.toast.success(`WhatsApp opened with ${this.data.student}'s receipt. Tap Send in WhatsApp.`);
-  }
-}
 @Component({ selector: 'app-fees-page', templateUrl: './fees-page.component.html', styleUrls: ['./fees-page.component.scss'] })
 export class FeesPageComponent implements OnInit {
   search = ''; statusFilter = ''; monthFilter = ''; studentFilter = '';
@@ -127,7 +117,37 @@ export class FeesPageComponent implements OnInit {
   viewHistory(row: FeeRecord): void { this.router.navigate(['/client/fees', row.studentId]); }
   resetDetail(): void { this.detailStudent = undefined; this.router.navigate(['/client/fees']); }
   /** Payments students / parents submitted from the portal, waiting for the office to check them. */
-  get pendingSubmissions(): FeeSubmission[] { return this.submissions.pending(this.tenant.current.businessType); }
+  /** Live: payments from the portal waiting for the office; demo: the browser's sample submissions. */
+  liveSubmissions: FeeSubmission[] = [];
+  get pendingSubmissions(): FeeSubmission[] { return this.live ? this.liveSubmissions : this.submissions.pending(this.tenant.current.businessType); }
+  private loadSubmissions(): void {
+    this.feeApi.submissions(this.auth.token!, 'pending').subscribe({
+      next: rows => this.liveSubmissions = rows.map((item, index) => ({
+        id: index, apiId: item.id, workspace: this.tenant.current.businessType, studentId: item.studentId || '', student: item.student, period: item.period, amount: item.amount,
+        mode: item.mode, reference: item.reference || '', proof: item.proof?.name || '', proofUrl: item.proof?.url, note: item.note || '', submittedBy: item.submittedBy || '—',
+        submittedOn: new Date(item.submittedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), status: 'Pending verification'
+      })),
+      error: () => { /* the fee list reports connection problems */ }
+    });
+  }
+  /** Where students and parents send fees (shown in their portal's Pay fees form). */
+  editPaymentDetails(): void {
+    const token = this.auth.token; if (!token) return;
+    this.feeApi.paymentDetails(token).subscribe({
+      next: details => this.dialog.open(RecordDialogComponent, { width: '640px', maxWidth: 'calc(100vw - 24px)', data: {
+        title: 'Payment details', submitLabel: 'Save details', successMessage: '', record: { ...details },
+        fields: [
+          { key: 'upiId', label: 'UPI ID', hint: 'e.g. fees@okhdfcbank' }, { key: 'accountName', label: 'Account name' },
+          { key: 'accountNumber', label: 'Account number' }, { key: 'ifsc', label: 'IFSC', hint: 'e.g. HDFC0001234' },
+          { key: 'bankName', label: 'Bank name' }, { key: 'note', label: 'Note for students and parents', type: 'textarea', hint: 'e.g. Mention the admission number in the payment remarks.' }
+        ]
+      } }).afterClosed().subscribe((value: Record<string, unknown> | undefined) => {
+        if (!value) return;
+        this.feeApi.savePaymentDetails(token, value as Partial<PaymentDetails>).subscribe({ next: () => this.toast.success('Payment details saved. Students and parents see them when they pay.'), error: (error: Error) => this.toast.error(error.message) });
+      }),
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
   approveSubmission(item: FeeSubmission): void {
     const existing = this.records.find(row => row.studentId === item.studentId && row.month === item.period);
     if (this.live) { this.approveLive(item); return; }
@@ -140,6 +160,7 @@ export class FeesPageComponent implements OnInit {
     });
   }
   rejectSubmission(item: FeeSubmission): void {
+    if (this.live && item.apiId) { this.rejectLive(item); return; }
     this.confirm.confirm({ title: 'Reject payment?', message: `Reject ₹${item.amount.toLocaleString('en-IN')} from ${item.student}? They will see that the office could not verify this payment.`, confirmLabel: 'Reject', destructive: true }).subscribe(ok => {
       if (!ok) return;
       this.submissions.review(item.id, 'Rejected', 'Could not verify this payment. Please contact the office.');
@@ -170,6 +191,7 @@ export class FeesPageComponent implements OnInit {
     this.loading = true;
     this.feeApi.list(token).subscribe({ next: rows => { this.loading = false; this.liveRecords = rows.map(row => FeesPageComponent.fromApi(row)); }, error: (error: Error) => { this.loading = false; this.toast.error(error.message); } });
     this.feeApi.summary(token).subscribe({ next: summary => this.liveSummary = summary, error: () => { /* the list call already reports errors */ } });
+    this.loadSubmissions();
   }
   private loadStudents(done?: () => void): void {
     const token = this.auth.token; if (!token) return;
@@ -239,13 +261,21 @@ export class FeesPageComponent implements OnInit {
   }
   /** Portal submissions only match live students by their 6-digit ID. */
   private approveLive(item: FeeSubmission): void {
-    const token = this.auth.token; if (!token) return;
-    if (!/^\d{6}$/.test(item.studentId)) { this.toast.error(`${item.student} is not a student in your records. Reject it and collect the fee manually.`); return; }
-    this.confirm.confirm({ title: 'Approve payment?', message: `Confirm that ₹${item.amount.toLocaleString('en-IN')} from ${item.student} (${item.mode}${item.reference ? ' · ' + item.reference : ''}) has been received for ${item.period}.`, confirmLabel: 'Approve & issue receipt' }).subscribe(ok => {
+    const token = this.auth.token; if (!token || !item.apiId) return;
+    this.confirm.confirm({ title: 'Approve payment?', message: `Confirm that ₹${item.amount.toLocaleString('en-IN')} from ${item.student} (${item.mode}${item.reference ? ' · ' + item.reference : ''}) has been received for ${item.period}.`, confirmLabel: 'Approve' }).subscribe(ok => {
       if (!ok) return;
-      const mode = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Cheque', 'Net banking'].includes(item.mode) ? item.mode : 'UPI';
-      this.feeApi.collect(token, { studentIds: [item.studentId], period: item.period, amount: item.amount, mode, date: FeesPageComponent.dayKey(new Date()), reference: item.reference || null, note: item.note || null }).subscribe({
-        next: saved => { this.submissions.review(item.id, 'Approved', 'Verified by the office'); if (saved[0]) this.showReceipt({ ...FeesPageComponent.fromApi(saved[0]), paid: item.amount }); this.toast.success(`Payment of ₹${item.amount.toLocaleString('en-IN')} from ${item.student} approved.`); this.load(); },
+      this.feeApi.approveSubmission(token, item.apiId!).subscribe({
+        next: ({ fee }) => { this.showReceipt({ ...FeesPageComponent.fromApi(fee), paid: item.amount }); this.toast.success(`Payment of ₹${item.amount.toLocaleString('en-IN')} from ${item.student} approved.`); this.load(); },
+        error: (error: Error) => this.toast.error(error.message)
+      });
+    });
+  }
+  private rejectLive(item: FeeSubmission): void {
+    const token = this.auth.token!;
+    this.confirm.confirm({ title: 'Reject payment?', message: `Reject ₹${item.amount.toLocaleString('en-IN')} from ${item.student}? They will see that the office could not verify this payment.`, confirmLabel: 'Reject', destructive: true }).subscribe(ok => {
+      if (!ok) return;
+      this.feeApi.rejectSubmission(token, item.apiId!).subscribe({
+        next: () => { this.liveSubmissions = this.liveSubmissions.filter(entry => entry !== item); this.toast.info(`Payment from ${item.student} rejected.`); },
         error: (error: Error) => this.toast.error(error.message)
       });
     });

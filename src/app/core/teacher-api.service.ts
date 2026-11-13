@@ -61,7 +61,7 @@ export class TeacherApiService {
     return this.request(this.http.post<ApiResponse<{ id: string; user: ApiUser; teacher: ApiTeacher }>>(`${this.base}/create`, payload, { headers: this.headers(accessToken) }));
   }
 
-  update(accessToken: string, teacherCode: string, payload: Partial<TeacherPayload>): Observable<ApiTeacher> {
+  update(accessToken: string, teacherCode: string, payload: Partial<TeacherPayload> & { password?: string }): Observable<ApiTeacher> {
     return this.request(this.http.patch<ApiResponse<ApiTeacher>>(`${this.base}/${teacherCode}`, payload, { headers: this.headers(accessToken) }));
   }
 

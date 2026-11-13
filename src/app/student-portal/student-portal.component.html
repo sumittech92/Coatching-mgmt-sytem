@@ -2,14 +2,16 @@
     <aside class="portal-sidebar" [class.mobile-open]="menuOpen"><a class="portal-brand"
             routerLink="/student/dashboard"><ng-container *ngIf="content.customLogo as logo; else defaultBrand"><img class="portal-logo" [src]="logo" alt="" />{{instituteName}}</ng-container><ng-template #defaultBrand><span>E</span> EduNexa</ng-template></a>
         <div class="student-card"><img
-                [src]="isParent ? 'assets/images/avatars/avatar-4.png' : 'assets/images/avatars/avatar-3.png'"
+                [src]="avatar"
                 [alt]="displayName"><span><strong>{{displayName}}</strong><small>{{isParent ? 'Parent of ' +
                     childFirstName : isSchool ? 'School student' : 'Student'}} ·
-                    {{studentId}}</small></span><mat-icon>expand_more</mat-icon></div>
+                    {{studentId}}</small></span></div>
+        <button mat-stroked-button class="child-switch" *ngIf="children.length > 1" [matMenuTriggerFor]="childMenu"><mat-icon>swap_horiz</mat-icon>Switch child ({{children.length}})</button>
+        <mat-menu #childMenu="matMenu"><button mat-menu-item *ngFor="let child of children" (click)="switchChild(child.studentCode)"><mat-icon>{{child.studentCode === studentId ? 'radio_button_checked' : 'radio_button_unchecked'}}</mat-icon>{{child.fullName}} · {{child.placement}}</button></mat-menu>
         <div class="portal-nav-label">{{isParent ? 'YOUR CHILD' : isSchool ? 'MY SCHOOL' : 'MY LEARNING'}}</div>
         <nav><a *ngFor="let item of menu" [routerLink]="['/student',item.key]" routerLinkActive="active"
                 [routerLinkActiveOptions]="{exact:true}"><mat-icon>{{item.icon}}</mat-icon>{{item.label}}<span
-                    *ngIf="item.key==='notices'" class="nav-count">2</span></a></nav>
+                    *ngIf="item.key==='notices' && noticeCount" class="nav-count">{{noticeCount}}</span></a></nav>
         <div class="portal-help"><mat-icon>support_agent</mat-icon><strong>Need help?</strong><small>Contact your
                 institute</small><a [href]="officeTel">Call the office · {{officePhone}} <mat-icon>arrow_forward</mat-icon></a><a [href]="officeWhatsapp" target="_blank" rel="noopener">WhatsApp us <mat-icon>arrow_forward</mat-icon></a>
         </div><button class="portal-logout" type="button" (click)="logout()"><mat-icon>logout</mat-icon>Log out</button>
@@ -19,10 +21,10 @@
                 (click)="menuOpen=!menuOpen"><mat-icon>menu</mat-icon></button>
             <div><small>{{isParent ? 'FAMILY PORTAL' : isSchool ? 'SCHOOL PORTAL' : 'STUDENT
                     PORTAL'}}</small><strong>{{sectionLabel}}</strong></div>
-            <div class="portal-top-actions"><button mat-icon-button aria-label="Notifications" (click)="showNotifications()"><mat-icon matBadge="2"
+            <div class="portal-top-actions"><button mat-icon-button aria-label="Notifications" (click)="showNotifications()"><mat-icon [matBadge]="noticeCount" [matBadgeHidden]="!noticeCount"
                         matBadgeColor="warn" matBadgeSize="small">notifications_none</mat-icon></button><button
                     class="top-profile" [matMenuTriggerFor]="profileMenu" aria-label="Account menu"><img
-                        [src]="isParent ? 'assets/images/avatars/avatar-4.png' : 'assets/images/avatars/avatar-3.png'"
+                        [src]="avatar"
                         alt=""><span>{{firstName}}</span><mat-icon>expand_more</mat-icon></button>
                 <mat-menu #profileMenu="matMenu" xPosition="before"><button mat-menu-item (click)="go('profile')"><mat-icon>person_outline</mat-icon>My profile</button><button mat-menu-item (click)="logout()"><mat-icon>logout</mat-icon>Log out</button></mat-menu></div>
         </header>
@@ -30,8 +32,8 @@
             <section *ngSwitchCase="'dashboard'">
                 <div class="welcome-row">
                     <div>
-                        <div class="welcome-date">MONDAY, SEPTEMBER 28, 2026</div>
-                        <h1>Good morning, {{firstName}} <span>☀️</span></h1>
+                        <div class="welcome-date">{{todayLabel}}</div>
+                        <h1>{{greeting}}, {{firstName}} <span>☀️</span></h1>
                         <p>{{isParent ? 'Here is ' + childFirstName + '’s learning snapshot.' : 'You’re making good
                             progress. Here’s your learning snapshot.'}}</p>
                     </div><span class="course-chip"><mat-icon>school</mat-icon> {{academicPlacement}}</span>
@@ -40,7 +42,7 @@
                     <article class="summary-card attendance-summary"><span
                             class="summary-icon"><mat-icon>event_available</mat-icon></span><small>ATTENDANCE</small><strong>{{attendanceRate}}<span>%</span></strong>
                         <div class="summary-meter"><i [style.width.%]="attendanceRate"></i></div>
-                        <p>Excellent · {{attendanceDays}} of 25 days</p>
+                        <p>{{attendanceVerdict}} · {{attendanceDays}} of {{markedDays}} days</p>
                     </article>
                     <article class="summary-card fee-summary"><span
                             class="summary-icon"><mat-icon>payments</mat-icon></span><small>PENDING
@@ -50,8 +52,8 @@
                     </article>
                     <article class="summary-card result-summary"><span
                             class="summary-icon"><mat-icon>emoji_events</mat-icon></span><small>LATEST
-                            RESULT</small><strong>88<span>%</span></strong>
-                        <p>{{latestAssessment}} · {{latestSubject}}</p><button (click)="go('results')">View all results
+                            RESULT</small><strong>{{latestResult ? latestResult.percentage : '—'}}<span *ngIf="latestResult">%</span></strong>
+                        <p>{{latestResult ? latestAssessment + ' · ' + latestSubject : 'No results published yet'}}</p><button (click)="go('results')">View all results
                             <mat-icon>arrow_forward</mat-icon></button>
                     </article>
                 </div>
@@ -66,17 +68,18 @@
                         <article class="notice-item" *ngFor="let item of notices | slice:0:2"><span class="notice-mark"
                                 [ngClass]="item.tone"><mat-icon>{{item.type==='Exam'?'assignment':'event'}}</mat-icon></span><span><strong>{{item.title}}</strong><small>{{item.body}}</small><em>{{item.date}}
                                     · {{item.type}}</em></span></article>
+                        <p class="cell-note" *ngIf="!notices.length">No notices right now.</p>
                     </div>
                     <div class="portal-panel attendance-mini">
                         <div class="panel-heading">
                             <div>
                                 <h2>Attendance this month</h2>
-                                <p>September 2026</p>
+                                <p>{{monthLabel}}</p>
                             </div><button (click)="go('attendance')">Details</button>
                         </div>
                         <div class="mini-calendar"><span class="weekday"
-                                *ngFor="let d of ['M','T','W','T','F','S','S']">{{d}}</span><span
-                                *ngFor="let day of calendar | slice:0:28"
+                                *ngFor="let d of ['M','T','W','T','F','S','S']">{{d}}</span><span class="empty-day" *ngFor="let n of live ? calendarOffset : []"></span><span
+                                *ngFor="let day of live ? calendar : (calendar | slice:0:28)"
                                 [class]="'calendar-day '+day.status">{{day.day}}</span></div>
                         <div class="calendar-legend"><span><i class="present"></i>Present</span><span><i
                                     class="absent"></i>Absent</span><span><i class="leave"></i>Leave</span></div>
@@ -93,6 +96,7 @@
                                 [ngClass]="item.type.toLowerCase()"><mat-icon>{{item.type==='Video'?'play_circle':item.type==='Assignment'?'assignment':'picture_as_pdf'}}</mat-icon></span><span><strong>{{item.title}}</strong><small>{{item.subject}}
                                     · {{item.date}}</small></span><button mat-icon-button
                                 (click)="download(item.file)"><mat-icon>download</mat-icon></button></article>
+                        <p class="cell-note" *ngIf="!materials.length">No materials shared yet.</p>
                     </div>
                     <div class="portal-panel materials-panel" *ngIf="!isParent && isSchool">
                         <div class="panel-heading">
@@ -105,17 +109,19 @@
                                 class="material-type assignment"><mat-icon>edit_note</mat-icon></span><span><strong>{{item.title}}</strong><small>{{item.subject}}
                                     · Due {{item.due}}</small></span><app-status-badge [label]="item.status"
                                 [tone]="item.status==='Submitted'?'success':'warning'"></app-status-badge></article>
+                        <p class="cell-note" *ngIf="!homework.length">No homework right now.</p>
                     </div>
                     <div class="portal-panel materials-panel" *ngIf="!isParent && !isSchool">
                         <div class="panel-heading">
                             <div>
                                 <h2>Upcoming tests</h2>
-                                <p>{{batch.name}}</p>
+                                <p>{{batchNames}}</p>
                             </div><button (click)="go('tests')">All tests</button>
                         </div>
                         <article class="material-item" *ngFor="let test of upcomingTests | slice:0:3"><span
                                 class="material-type assignment"><mat-icon>quiz</mat-icon></span><span><strong>{{test.name}}</strong><small>{{test.subject}}
-                                    · {{test.date}} · {{test.time}}</small></span></article>
+                                    · {{test.date}}<ng-container *ngIf="test.time"> · {{test.time}}</ng-container></small></span></article>
+                        <p class="cell-note" *ngIf="!upcomingTests.length">No upcoming tests.</p>
                     </div>
                     <div class="portal-panel updates-panel" *ngIf="isParent">
                         <div class="panel-heading">
@@ -129,6 +135,7 @@
                                 <p>{{item.body}}</p><small>{{item.date}} · {{item.type}}</small>
                             </div>
                         </article>
+                        <p class="cell-note" *ngIf="!updates.length">No updates yet.</p>
                     </div>
                 </div>
             </section>
@@ -139,7 +146,7 @@
                         and family contacts."}}</p>
                 </div>
                 <div class="profile-layout"><mat-card class="profile-card"><mat-card-content><img class="profile-photo"
-                                src="assets/images/avatars/avatar-3.png" alt="{{profile.name}}">
+                                [src]="me?.student?.profileImage || 'assets/images/people/student.jpg'" alt="{{profile.name}}">
                             <h2>{{profile.name}}</h2>
                             <p>Admission no. · {{profile.studentId}}</p><app-status-badge [label]="auth.user?.isBlocked ? 'Blocked' : 'Active student'"
                                 [tone]="auth.user?.isBlocked ? 'danger' : 'success'"></app-status-badge>
@@ -157,32 +164,32 @@
             <section *ngSwitchCase="'attendance'">
                 <div class="page-title"><span>MY LEARNING</span>
                     <h1>Attendance</h1>
-                    <p>Your attendance record for September 2026.</p>
+                    <p>{{isParent ? childFirstName + '’s' : 'Your'}} attendance record for {{monthLabel}}.</p>
                 </div>
                 <div class="portal-summary attendance-page-summary">
                     <article class="summary-card"><small>ATTENDANCE RATE</small><strong>{{attendanceRate}}%</strong>
-                        <p>Excellent consistency this month</p>
+                        <p>{{attendanceVerdict}} this month</p>
                     </article>
                     <article class="summary-card"><small>PRESENT</small><strong>{{attendanceDays}} days</strong>
-                        <p>Of 25 class days</p>
+                        <p>Of {{markedDays}} days marked</p>
                     </article>
-                    <article class="summary-card"><small>ABSENT</small><strong>1 day</strong>
-                        <p>September 12</p>
+                    <article class="summary-card"><small>ABSENT</small><strong>{{absentDays}} day{{absentDays === 1 ? '' : 's'}}</strong>
+                        <p>{{absentDates}}</p>
                     </article>
-                    <article class="summary-card"><small>LEAVE</small><strong>0 days</strong>
-                        <p>No leave recorded</p>
+                    <article class="summary-card"><small>LEAVE</small><strong>{{leaveDays}} day{{leaveDays === 1 ? '' : 's'}}</strong>
+                        <p>{{leaveDays ? 'Leave recorded this month' : 'No leave recorded'}}</p>
                     </article>
                 </div>
                 <div class="portal-panel calendar-panel">
                     <div class="panel-heading">
                         <div>
-                            <h2>September 2026</h2>
+                            <h2>{{monthLabel}}</h2>
                             <p>Monthly attendance calendar · {{academicPlacement}}</p>
-                        </div><span class="calendar-rate">{{attendanceRate}}% this month</span>
+                        </div><div class="month-nav"><button mat-icon-button *ngIf="live" [disabled]="!canPrevMonth" (click)="changeMonth(-1)" aria-label="Previous month"><mat-icon>chevron_left</mat-icon></button><span class="calendar-rate">{{attendanceRate}}% {{canNextMonth ? 'in ' + monthLabel : 'this month'}}</span><button mat-icon-button *ngIf="live" [disabled]="!canNextMonth" (click)="changeMonth(1)" aria-label="Next month"><mat-icon>chevron_right</mat-icon></button></div>
                     </div>
                     <div class="full-calendar"><span class="weekday"
                             *ngFor="let d of ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']"><span class="wd-full">{{d}}</span><span class="wd-short">{{d.slice(0, 3)}}</span></span><span
-                            class="empty-day" *ngFor="let n of [1] "></span><span *ngFor="let day of calendar"
+                            class="empty-day" *ngFor="let n of calendarOffset"></span><span *ngFor="let day of calendar"
                             [class]="'calendar-day '+day.status"><span>{{day.day}}</span><small
                                 *ngIf="day.status==='present'">Present</small><small
                                 *ngIf="day.status==='absent'">Absent</small><small
@@ -200,8 +207,8 @@
                     <button mat-flat-button color="primary" class="pay-cta" *ngIf="payablePeriods.length && !payOpen" (click)="openPayment()"><mat-icon>payments</mat-icon>Pay fees</button>
                 </div>
                 <div class="fee-overview fee-overview-3"><mat-card><mat-card-content><small>TOTAL PAID</small><strong>₹{{paidTotal |
-                                number}}</strong><span>{{isSchool ? 'Academic year 2026–27' : 'July – September 2026'}}</span></mat-card-content></mat-card><mat-card><mat-card-content><small>AMOUNT
-                                DUE</small><strong class="due-value">₹{{feeDue | number}}</strong><span>{{feeDue ? (isSchool ? 'Term 2 balance' : 'September 2026') + ' · Due Oct 5' : 'Nothing due'}}</span></mat-card-content></mat-card><mat-card><mat-card-content><small>AWAITING VERIFICATION</small><strong>₹{{pendingTotal | number}}</strong><span>{{pendingTotal ? 'The office will confirm soon' : 'No payments waiting'}}</span></mat-card-content></mat-card></div>
+                                number}}</strong><span>{{feePeriodsLabel}}</span></mat-card-content></mat-card><mat-card><mat-card-content><small>AMOUNT
+                                DUE</small><strong class="due-value">₹{{feeDue | number}}</strong><span>{{feeDue ? paymentDescription : 'Nothing due'}}</span></mat-card-content></mat-card><mat-card><mat-card-content><small>AWAITING VERIFICATION</small><strong>₹{{pendingTotal | number}}</strong><span>{{pendingTotal ? 'The office will confirm soon' : 'No payments waiting'}}</span></mat-card-content></mat-card></div>
 
                 <div class="portal-panel pay-panel" *ngIf="payOpen">
                     <div class="panel-heading">
@@ -211,9 +218,9 @@
                         </div>
                         <button mat-icon-button (click)="payOpen = false" aria-label="Close payment form"><mat-icon>close</mat-icon></button>
                     </div>
-                    <div class="pay-account">
+                    <div class="pay-account" *ngIf="paymentDetails as pd">
                         <mat-icon>account_balance</mat-icon>
-                        <div><strong>Pay to {{instituteName}}</strong><small>UPI: fees&#64;{{isSchool ? 'greenfieldschool' : 'nsacademy'}} · A/c 50200012345678 · IFSC HDFC0001234</small></div>
+                        <div><strong>Pay to {{pd.accountName || instituteName}}</strong><small><ng-container *ngIf="pd.upiId">UPI: {{pd.upiId}}</ng-container><ng-container *ngIf="pd.upiId && pd.accountNumber"> · </ng-container><ng-container *ngIf="pd.accountNumber">A/c {{pd.accountNumber}}<ng-container *ngIf="pd.ifsc"> · IFSC {{pd.ifsc}}</ng-container><ng-container *ngIf="pd.bankName"> · {{pd.bankName}}</ng-container></ng-container></small><small *ngIf="pd.note">{{pd.note}}</small></div>
                     </div>
                     <form class="pay-form" (ngSubmit)="submitPayment()" novalidate>
                         <div>
@@ -279,12 +286,13 @@
                                     <td>{{fee.date}}</td>
                                     <td>{{fee.mode}}</td>
                                     <td><app-status-badge [label]="fee.status"
-                                            [tone]="fee.status==='Paid'?'success':fee.status==='Partial'?'warning':'neutral'"></app-status-badge>
+                                            [tone]="fee.status==='Paid'?'success':fee.status==='Overdue'?'danger':fee.status==='Partial'?'warning':'neutral'"></app-status-badge>
                                     </td>
                                     <td class="fee-actions"><button mat-stroked-button *ngIf="payableFor(fee) > 0" (click)="openPayment(fee)">Pay now</button><button mat-icon-button *ngIf="fee.paid"
                                             (click)="printReceipt(fee.month,fee.paid)"
                                             aria-label="Print receipt"><mat-icon>receipt_long</mat-icon></button></td>
                                 </tr>
+                                <tr *ngIf="!fees.length"><td colspan="8"><app-empty-state icon="payments" title="No fees yet" [description]="'The ' + (isSchool ? 'school' : 'institute') + ' office has not set up any fees.'"></app-empty-state></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -368,16 +376,16 @@
                     <h1>Results</h1>
                     <p>Celebrating your progress, one step at a time.</p>
                 </div>
-                <div class="result-highlight"><span><mat-icon>emoji_events</mat-icon></span>
-                    <div><small>YOUR LATEST RESULT · {{latestAssessment | uppercase}}</small><strong>88%</strong>
-                        <p>{{latestSubject}} · September 18, 2026 · Grade A</p>
+                <div class="result-highlight" *ngIf="latestResult as latest"><span><mat-icon>emoji_events</mat-icon></span>
+                    <div><small>{{isParent ? 'LATEST RESULT' : 'YOUR LATEST RESULT'}} · {{latest.exam | uppercase}}</small><strong>{{latest.percentage}}%</strong>
+                        <p>{{latest.subject}} · {{latest.date}} · Grade {{latest.grade}}</p>
                     </div><span class="result-message">Keep up the<br>great work!</span>
                 </div>
                 <div class="portal-panel portal-table">
                     <div class="panel-heading">
                         <div>
                             <h2>Exam results</h2>
-                            <p>{{academicPlacement}} · 2026–27</p>
+                            <p>{{academicPlacement}}<ng-container *ngIf="schoolClass.session !== '—'"> · {{schoolClass.session}}</ng-container></p>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -401,9 +409,19 @@
                                     <td>{{row.percentage}}</td>
                                     <td><span class="grade-chip">{{row.grade}}</span></td>
                                 </tr>
+                                <tr *ngIf="!results.length"><td colspan="6"><app-empty-state icon="emoji_events" title="No results yet" description="Results appear here once they are published."></app-empty-state></td></tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
+                <div class="portal-panel section-gap" *ngIf="syllabusRows.length">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>Syllabus covered</h2>
+                            <p>Chapters finished in {{isParent ? childFirstName + '’s' : 'your'}} {{isSchool ? 'section' : 'batch'}}</p>
+                        </div>
+                    </div>
+                    <article class="material-item syllabus-item" *ngFor="let row of syllabusRows"><span class="material-type"><mat-icon>menu_book</mat-icon></span><span><strong>{{row.subject}}<ng-container *ngIf="!isSchool && row.course"> · {{row.course}}</ng-container></strong><small>{{row.done}} of {{row.total}} chapters<ng-container *ngIf="row.expected !== null"> · {{row.expected}}% expected by now</ng-container></small><span class="summary-meter"><i [style.width.%]="row.percent"></i></span></span><app-status-badge [label]="row.percent + '%'" [tone]="syllabusTone(row.status)"></app-status-badge></article>
                 </div>
             </section>
             <section *ngSwitchCase="'materials'">
@@ -418,8 +436,9 @@
                             <h2>{{item.title}}</h2>
                             <p>{{item.subject}}</p><small>Added {{item.date}}</small><button mat-flat-button
                                 color="primary" (click)="download(item.file)"><mat-icon>download</mat-icon>
-                                Download</button>
+                                {{item.file.startsWith('http') && !item.file.includes('/uploads/') ? 'Open' : 'Download'}}</button>
                         </mat-card-content></mat-card></div>
+                <app-empty-state *ngIf="!materials.length" icon="folder_open" title="No study materials yet" description="Notes and worksheets your teachers share appear here."></app-empty-state>
             </section>
             <section *ngSwitchCase="'notices'">
                 <div class="page-title"><span>MY LEARNING</span>
@@ -436,6 +455,7 @@
                         </div>
                     </article>
                 </div>
+                <app-empty-state *ngIf="!notices.length" icon="campaign" title="No notices right now" description="Notices from the office appear here."></app-empty-state>
             </section>
             <section *ngSwitchCase="'updates'">
                 <div class="page-title"><span>{{isParent ? 'YOUR CHILD' : 'MY LEARNING'}}</span>
@@ -455,23 +475,17 @@
                         </div>
                     </article>
                 </div>
+                <app-empty-state *ngIf="!updates.length" icon="auto_awesome" title="No updates yet" description="Posts and upcoming events appear here."></app-empty-state>
             </section>
             <section *ngSwitchCase="'family'">
                 <div class="page-title"><span>FAMILY ACCOUNT</span>
                     <h1>Family contacts</h1>
                     <p>Check the contact details on file for {{childFirstName}}.</p>
                 </div>
-                <div class="family-contact-grid"><mat-card><mat-card-content><span
-                                class="family-avatar">{{firstName.charAt(0)}}R</span><small>PRIMARY GUARDIAN</small>
-                            <h2>{{firstName}} {{isSchool ? 'Rao' : 'Sharma'}}</h2>
-                            <p>{{isSchool ? 'Guardian' : 'Parent / guardian'}}</p><a href="tel:9876543210"><mat-icon>call</mat-icon> 98765
-                                43210</a>
-                        </mat-card-content></mat-card><mat-card><mat-card-content><span
-                                class="family-avatar secondary">{{isSchool ? 'AR' : 'VS'}}</span><small>SECONDARY
-                                CONTACT</small>
-                            <h2>{{isSchool ? 'Arun Rao' : 'Vikram Sharma'}}</h2>
-                            <p>{{isSchool ? 'Guardian' : 'Parent / guardian'}}</p><a href="tel:9876543211"><mat-icon>call</mat-icon> 98765
-                                43211</a><span class="contact-note">Contact the {{isSchool ? 'school office' : 'institute'}} to update family
+                <div class="family-contact-grid"><mat-card *ngFor="let contact of familyContacts; let first = first"><mat-card-content><span
+                                class="family-avatar" [class.secondary]="!first">{{contact.initials}}</span><small>{{first ? 'PRIMARY GUARDIAN' : 'SECONDARY CONTACT'}}</small>
+                            <h2>{{contact.name}}</h2>
+                            <p>{{contact.relation}}</p><a *ngIf="contact.phone" [href]="contact.tel"><mat-icon>call</mat-icon> {{contact.phone}}</a><span class="contact-note" *ngIf="!first || familyContacts.length === 1">Contact the {{isSchool ? 'school office' : 'institute'}} to update family
                                 details.</span>
                         </mat-card-content></mat-card></div>
             </section>
@@ -480,6 +494,9 @@
                     <h1>My Batch</h1>
                     <p>Your batch timing, teachers and weekly class plan.</p>
                 </div>
+                <mat-button-toggle-group class="batch-picker" *ngIf="live && batchGroups.length > 1" [value]="selectedBatch" (change)="selectedBatch = $event.value" aria-label="Choose batch">
+                    <mat-button-toggle *ngFor="let group of batchGroups; let i = index" [value]="i">{{group.name}}</mat-button-toggle>
+                </mat-button-toggle-group>
                 <div class="portal-summary attendance-page-summary">
                     <article class="summary-card"><span class="summary-icon"><mat-icon>groups</mat-icon></span><small>BATCH</small><strong class="small-value">{{batch.name}}</strong>
                         <p>{{batch.course}}</p>
@@ -499,18 +516,19 @@
                         <div class="panel-heading">
                             <div>
                                 <h2>Your teachers</h2>
-                                <p>Batch coordinator · {{batch.coordinator}}</p>
+                                <p>{{batch.coordinator ? 'Batch coordinator · ' + batch.coordinator : 'Reach your teachers through the institute office'}}</p>
                             </div>
                         </div>
                         <article class="material-item" *ngFor="let t of batch.teachers"><span
                                 class="teacher-avatar">{{t.initials}}</span><span><strong>{{t.name}}</strong><small>{{t.subject}}</small></span><button
-                                mat-stroked-button (click)="contactTeacher(t.name)"><mat-icon>chat_bubble_outline</mat-icon> Message</button></article>
+                                mat-stroked-button (click)="contactOffice()"><mat-icon>support_agent</mat-icon> Contact office</button></article>
+                        <p class="cell-note" *ngIf="!batch.teachers.length">No teachers assigned yet.</p>
                     </div>
                     <div class="portal-panel portal-table">
                         <div class="panel-heading">
                             <div>
                                 <h2>Weekly schedule</h2>
-                                <p>{{batch.timing}} · two sessions with a short break</p>
+                                <p>{{scheduleNote}}</p>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -518,8 +536,8 @@
                                 <thead>
                                     <tr>
                                         <th>DAY</th>
-                                        <th>7:00 – 8:15 AM</th>
-                                        <th>8:15 – 9:30 AM</th>
+                                        <th>{{scheduleHeads[0]}}</th>
+                                        <th>{{scheduleHeads[1]}}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -533,24 +551,33 @@
                         </div>
                     </div>
                 </div>
+                <div class="portal-panel section-gap" *ngIf="syllabusRows.length">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>Syllabus covered</h2>
+                            <p>Chapters finished in {{isParent ? childFirstName + '’s' : 'your'}} {{isSchool ? 'section' : 'batch'}}</p>
+                        </div>
+                    </div>
+                    <article class="material-item syllabus-item" *ngFor="let row of syllabusRows"><span class="material-type"><mat-icon>menu_book</mat-icon></span><span><strong>{{row.subject}}<ng-container *ngIf="!isSchool && row.course"> · {{row.course}}</ng-container></strong><small>{{row.done}} of {{row.total}} chapters<ng-container *ngIf="row.expected !== null"> · {{row.expected}}% expected by now</ng-container></small><span class="summary-meter"><i [style.width.%]="row.percent"></i></span></span><app-status-badge [label]="row.percent + '%'" [tone]="syllabusTone(row.status)"></app-status-badge></article>
+                </div>
             </section>
             <section *ngSwitchCase="'class'">
                 <div class="page-title"><span>MY SCHOOL</span>
                     <h1>My Class</h1>
-                    <p>{{schoolClass.name}} · {{schoolClass.section}} · Session {{schoolClass.session}}</p>
+                    <p>{{schoolClass.name}} · {{schoolClass.section}}<ng-container *ngIf="schoolClass.session !== '—'"> · Session {{schoolClass.session}}</ng-container></p>
                 </div>
                 <div class="portal-summary attendance-page-summary">
                     <article class="summary-card"><span class="summary-icon"><mat-icon>meeting_room</mat-icon></span><small>CLASS &amp; SECTION</small><strong class="small-value">{{schoolClass.name}} · {{schoolClass.section}}</strong>
                         <p>Roll no. {{schoolClass.rollNo}}</p>
                     </article>
                     <article class="summary-card"><span class="summary-icon"><mat-icon>person</mat-icon></span><small>CLASS TEACHER</small><strong class="small-value">{{schoolClass.classTeacher}}</strong>
-                        <p>{{schoolClass.classTeacherSubject}}</p>
+                        <p>{{schoolClass.classTeacherSubject || 'Class teacher'}}</p>
                     </article>
                     <article class="summary-card"><span class="summary-icon"><mat-icon>place</mat-icon></span><small>CLASSROOM</small><strong class="small-value">{{schoolClass.room}}</strong>
-                        <p>School hours {{schoolClass.timing}}</p>
+                        <p>{{schoolClass.timing ? 'School hours ' + schoolClass.timing : 'Your section’s classroom'}}</p>
                     </article>
                     <article class="summary-card"><span class="summary-icon"><mat-icon>groups</mat-icon></span><small>CLASSMATES</small><strong>{{schoolClass.classmates}}</strong>
-                        <p>Class monitor · {{schoolClass.monitor}}</p>
+                        <p>{{schoolClass.monitor ? 'Class monitor · ' + schoolClass.monitor : 'Students in your section'}}</p>
                     </article>
                 </div>
                 <div class="portal-dashboard-grid">
@@ -558,11 +585,12 @@
                         <div class="panel-heading">
                             <div>
                                 <h2>Subjects &amp; teachers</h2>
-                                <p>{{subjects.length}} subjects this session</p>
-                            </div><button (click)="go('subjects')">View progress</button>
+                                <p>{{subjects.length}} subject{{subjects.length === 1 ? '' : 's'}} this session</p>
+                            </div><button (click)="go('subjects')">{{live ? 'View all' : 'View progress'}}</button>
                         </div>
                         <article class="material-item" *ngFor="let sub of subjects"><span
                                 class="material-type"><mat-icon>{{sub.icon}}</mat-icon></span><span><strong>{{sub.name}}</strong><small>{{sub.teacher}}</small></span></article>
+                        <p class="cell-note" *ngIf="!subjects.length">Subjects will appear once the school adds them.</p>
                     </div>
                     <div class="portal-panel">
                         <div class="panel-heading">
@@ -571,9 +599,9 @@
                                 <p>For leave, permissions and general queries</p>
                             </div>
                         </div>
-                        <article class="material-item"><span class="teacher-avatar">PN</span><span><strong>{{schoolClass.classTeacher}}</strong><small>Class teacher · {{schoolClass.name}} {{schoolClass.section}} · Available 1:50 – 2:10 pm</small></span><button
-                                mat-stroked-button (click)="contactTeacher(schoolClass.classTeacher)"><mat-icon>chat_bubble_outline</mat-icon> Message</button></article>
-                        <article class="material-item"><span class="material-type video"><mat-icon>schedule</mat-icon></span><span><strong>Today’s timetable</strong><small>8 periods · Lunch 10:40 – 11:10 am</small></span><button
+                        <article class="material-item"><span class="teacher-avatar">{{classTeacherInitials}}</span><span><strong>{{schoolClass.classTeacher}}</strong><small>Class teacher · {{schoolClass.name}} {{schoolClass.section}}<ng-container *ngIf="!live"> · Available 1:50 – 2:10 pm</ng-container></small></span><button
+                                mat-stroked-button (click)="contactOffice()"><mat-icon>support_agent</mat-icon> Contact office</button></article>
+                        <article class="material-item"><span class="material-type video"><mat-icon>schedule</mat-icon></span><span><strong>Today’s timetable</strong><small>{{live ? todayPeriods + ' period' + (todayPeriods === 1 ? '' : 's') + ' today' : '8 periods · Lunch 10:40 – 11:10 am'}}</small></span><button
                                 mat-stroked-button (click)="go('timetable')">Open</button></article>
                     </div>
                 </div>
@@ -581,28 +609,30 @@
             <section *ngSwitchCase="'subjects'">
                 <div class="page-title"><span>MY SCHOOL</span>
                     <h1>My Subjects</h1>
-                    <p>Subject teachers and syllabus covered so far in {{schoolClass.name}}.</p>
+                    <p>{{live ? 'Your subjects and subject teachers in ' + schoolClass.name + ' · ' + schoolClass.section + '.' : 'Subject teachers and syllabus covered so far in ' + schoolClass.name + '.'}}</p>
                 </div>
                 <div class="portal-material-grid"><mat-card *ngFor="let sub of subjects"><mat-card-content><span
-                                class="material-type large"><mat-icon>{{sub.icon}}</mat-icon></span><app-status-badge
-                                [label]="sub.progress + '% done'" [tone]="sub.progress >= 50 ? 'success' : 'info'"></app-status-badge>
+                                class="material-type large"><mat-icon>{{sub.icon}}</mat-icon></span><app-status-badge *ngIf="!live || $any(sub).hasSyllabus"
+                                [label]="sub.progress + '% done'" [tone]="live ? syllabusTone($any(sub).status) : sub.progress >= 50 ? 'success' : 'info'"></app-status-badge><app-status-badge *ngIf="live && !$any(sub).hasSyllabus && $any(sub).periods"
+                                [label]="$any(sub).periods + ' periods / week'" tone="info"></app-status-badge>
                             <h2>{{sub.name}}</h2>
-                            <p>{{sub.teacher}} · {{sub.book}}</p>
-                            <div class="summary-meter"><i [style.width.%]="sub.progress"></i></div><small>Syllabus covered · {{sub.chapters}}</small><button
-                                mat-stroked-button color="primary" (click)="contactTeacher(sub.teacher)"><mat-icon>chat_bubble_outline</mat-icon>
-                                Message teacher</button>
+                            <p>{{sub.teacher}}<ng-container *ngIf="sub.book"> · {{sub.book}}</ng-container></p>
+                            <ng-container *ngIf="!live || $any(sub).hasSyllabus"><div class="summary-meter"><i [style.width.%]="sub.progress"></i></div><small>Syllabus covered · {{sub.chapters}}<ng-container *ngIf="$any(sub).status === 'Behind'"> · behind target</ng-container></small></ng-container><button
+                                mat-stroked-button color="primary" (click)="contactOffice()"><mat-icon>support_agent</mat-icon>
+                                Contact office</button>
                         </mat-card-content></mat-card></div>
+                <app-empty-state *ngIf="!subjects.length" icon="menu_book" title="No subjects yet" description="Subjects appear here once the school adds them."></app-empty-state>
             </section>
             <section *ngSwitchCase="'timetable'">
                 <div class="page-title"><span>MY SCHOOL</span>
                     <h1>Timetable</h1>
-                    <p>Weekly timetable · {{schoolClass.name}} {{schoolClass.section}} · {{schoolClass.room}}</p>
+                    <p>Weekly timetable · {{schoolClass.name}} {{schoolClass.section}}<ng-container *ngIf="schoolClass.room !== '—'"> · {{schoolClass.room}}</ng-container></p>
                 </div>
-                <div class="portal-panel portal-table">
+                <div class="portal-panel portal-table" *ngIf="timetableDays.length; else noTimetable">
                     <div class="panel-heading">
                         <div>
-                            <h2>Monday – Saturday</h2>
-                            <p>Saturday is a half day · club activities after Period 5</p>
+                            <h2>{{live ? timetableDays[0] + (timetableDays.length > 1 ? ' – ' + timetableDays[timetableDays.length - 1] : '') : 'Monday – Saturday'}}</h2>
+                            <p>{{live ? weeklyPeriods + ' period' + (weeklyPeriods === 1 ? '' : 's') + ' a week' : 'Saturday is a half day · club activities after Period 5'}}</p>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -622,6 +652,7 @@
                         </table>
                     </div>
                 </div>
+                <ng-template #noTimetable><app-empty-state icon="schedule" title="No timetable yet" description="Your timetable appears here once the school sets it up."></app-empty-state></ng-template>
             </section>
             <section *ngSwitchCase="'homework'">
                 <div class="page-title"><span>MY SCHOOL</span>
@@ -644,12 +675,13 @@
                             <tbody>
                                 <tr *ngFor="let item of homework">
                                     <td><strong>{{item.subject}}</strong></td>
-                                    <td>{{item.title}}</td>
+                                    <td>{{item.title}}<small class="cell-note" *ngIf="item.attachment"><a href="" (click)="$event.preventDefault(); download(item.attachment.url)">{{item.attachment.name}}</a></small></td>
                                     <td>{{item.given}}</td>
                                     <td>{{item.due}}</td>
-                                    <td><app-status-badge [label]="item.status" [tone]="item.status==='Submitted'?'success':'warning'"></app-status-badge></td>
+                                    <td><app-status-badge [label]="item.status" [tone]="item.status==='Submitted'?'success':item.status==='Overdue'?'danger':item.status==='Closed'?'neutral':'warning'"></app-status-badge></td>
                                     <td><button mat-stroked-button color="primary" *ngIf="item.status==='Pending'" (click)="markHomeworkDone(item)"><mat-icon>check</mat-icon> Mark as done</button></td>
                                 </tr>
+                                <tr *ngIf="!homework.length"><td colspan="6"><app-empty-state icon="edit_note" title="No homework" description="Homework from your teachers appears here."></app-empty-state></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -676,14 +708,15 @@
                             </thead>
                             <tbody>
                                 <tr *ngFor="let item of assignments">
-                                    <td><strong>{{item.title}}</strong><small class="cell-note" *ngIf="item.file">{{item.file}}</small></td>
+                                    <td><strong>{{item.title}}</strong><small class="cell-note" *ngIf="item.attachment">Teacher’s file: <a href="" (click)="$event.preventDefault(); download(item.attachment.url)">{{item.attachment.name}}</a></small><small class="cell-note" *ngIf="item.file">My file: {{item.file}}</small><small class="cell-note" *ngIf="item.remark">Teacher: {{item.remark}}</small></td>
                                     <td>{{item.subject}}</td>
                                     <td>{{item.given}}</td>
                                     <td>{{item.due}}</td>
-                                    <td><app-status-badge [label]="item.status" [tone]="item.status==='Submitted'?'success':'warning'"></app-status-badge></td>
-                                    <td><button mat-flat-button color="primary" *ngIf="item.status==='Pending'" (click)="startSubmission(item, submissionPicker)"><mat-icon>upload_file</mat-icon> Submit</button><button
-                                            mat-stroked-button *ngIf="item.status==='Submitted'" (click)="download(item.file)"><mat-icon>download</mat-icon> My file</button></td>
+                                    <td><app-status-badge [label]="item.status" [tone]="item.status==='Submitted'||item.status==='Checked'?'success':item.status==='Overdue'?'danger':item.status==='Closed'?'neutral':'warning'"></app-status-badge></td>
+                                    <td class="fee-actions"><button mat-flat-button color="primary" *ngIf="item.canSubmit ?? item.status==='Pending'" (click)="startSubmission(item, submissionPicker)"><mat-icon>upload_file</mat-icon> {{item.file ? 'Replace' : 'Submit'}}</button><button
+                                            mat-stroked-button *ngIf="item.file" (click)="download(item.fileUrl || item.file!)"><mat-icon>download</mat-icon> My file</button></td>
                                 </tr>
+                                <tr *ngIf="!assignments.length"><td colspan="6"><app-empty-state icon="assignment" title="No assignments" description="Assignments from your teachers appear here."></app-empty-state></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -692,16 +725,15 @@
             <section *ngSwitchCase="'tests'">
                 <div class="page-title"><span>MY LEARNING</span>
                     <h1>Tests</h1>
-                    <p>Weekly tests, chapter tests and JEE mock tests for {{batch.name}}.</p>
+                    <p>{{live ? 'Upcoming tests and your marks for ' + batchNames + '.' : 'Weekly tests, chapter tests and JEE mock tests for ' + batch.name + '.'}}</p>
                 </div>
                 <div class="portal-material-grid"><mat-card *ngFor="let test of upcomingTests"><mat-card-content><span
                                 class="material-type large assignment"><mat-icon>quiz</mat-icon></span><app-status-badge
                                 label="Upcoming" tone="warning"></app-status-badge>
                             <h2>{{test.name}}</h2>
-                            <p>{{test.subject}}</p><small>{{test.date}} · {{test.time}}</small><small>{{test.marks}} marks · {{test.mode}}</small><button
-                                mat-stroked-button color="primary" (click)="setTestReminder(test.name, test.date)"><mat-icon>notifications_active</mat-icon>
-                                Set reminder</button>
+                            <p>{{test.subject}}</p><small>{{test.date}}<ng-container *ngIf="test.time"> · {{test.time}}</ng-container></small><small>{{test.marks}} marks<ng-container *ngIf="test.mode"> · {{test.mode}}</ng-container></small>
                         </mat-card-content></mat-card></div>
+                <app-empty-state *ngIf="!upcomingTests.length" icon="quiz" title="No upcoming tests" description="Tests your teachers schedule appear here."></app-empty-state>
                 <div class="portal-panel portal-table section-gap">
                     <div class="panel-heading">
                         <div>
@@ -730,6 +762,7 @@
                                     <td>{{row.rank}}</td>
                                     <td><span class="grade-chip">{{row.percentage}}%</span></td>
                                 </tr>
+                                <tr *ngIf="!pastTests.length"><td colspan="6"><app-empty-state icon="emoji_events" title="No marks yet" description="Marks appear once results are published."></app-empty-state></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -738,12 +771,12 @@
             <section *ngSwitchCase="'exams'">
                 <div class="page-title"><span>MY SCHOOL</span>
                     <h1>Exams</h1>
-                    <p>Exam schedule for session {{schoolClass.session}} and the Term 1 date sheet.</p>
+                    <p>{{live ? 'Your exams and the date sheet of the next exam.' : 'Exam schedule for session ' + schoolClass.session + ' and the Term 1 date sheet.'}}</p>
                 </div>
                 <div class="portal-panel portal-table">
                     <div class="panel-heading">
                         <div>
-                            <h2>Exam schedule {{schoolClass.session}}</h2>
+                            <h2>Exam schedule<ng-container *ngIf="schoolClass.session !== '—'"> {{schoolClass.session}}</ng-container></h2>
                             <p>Unit tests, Term 1 and Term 2 · {{schoolClass.name}}</p>
                         </div>
                     </div>
@@ -762,8 +795,9 @@
                                     <td><strong>{{exam.name}}</strong></td>
                                     <td>{{exam.period}}</td>
                                     <td>{{exam.marks}}</td>
-                                    <td><app-status-badge [label]="exam.status" [tone]="exam.status==='Completed'?'success':exam.status==='Upcoming'?'warning':'neutral'"></app-status-badge></td>
+                                    <td><app-status-badge [label]="exam.status" [tone]="exam.status==='Completed'||exam.status==='Results out'?'success':exam.status==='Upcoming'?'warning':'neutral'"></app-status-badge></td>
                                 </tr>
+                                <tr *ngIf="!examSchedule.length"><td colspan="4"><app-empty-state icon="quiz" title="No exams yet" description="Exams the school schedules appear here."></app-empty-state></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -771,9 +805,9 @@
                 <div class="portal-panel portal-table section-gap">
                     <div class="panel-heading">
                         <div>
-                            <h2>Date sheet · Term 1 (Half-yearly)</h2>
-                            <p>Report by 8:40 am · bring your admit card and geometry box</p>
-                        </div><button (click)="download('term1-date-sheet-class9a.pdf')">Download date sheet</button>
+                            <h2>Date sheet · {{dateSheetTitle}}</h2>
+                            <p *ngIf="!live">Report by 8:40 am · bring your admit card and geometry box</p>
+                        </div><button *ngIf="!live" (click)="download('term1-date-sheet-class9a.pdf')">Download date sheet</button>
                     </div>
                     <div class="table-responsive">
                         <table class="table align-middle">
@@ -781,8 +815,8 @@
                                 <tr>
                                     <th>DATE</th>
                                     <th>SUBJECT</th>
-                                    <th>TIME</th>
-                                    <th>SYLLABUS</th>
+                                    <th>{{live ? 'MAX MARKS' : 'TIME'}}</th>
+                                    <th *ngIf="!live">SYLLABUS</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -790,7 +824,7 @@
                                     <td><strong>{{row.date}}</strong></td>
                                     <td>{{row.subject}}</td>
                                     <td>{{row.time}}</td>
-                                    <td>{{row.syllabus}}</td>
+                                    <td *ngIf="!live">{{row.syllabus}}</td>
                                 </tr>
                             </tbody>
                         </table>

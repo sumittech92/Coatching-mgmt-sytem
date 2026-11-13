@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { OwnerDashboard, ReportApiService, TeacherDashboard } from '../core/report-api.service';
+import { SyllabusApiService } from '../core/syllabus-api.service';
 import { ToastService } from '../core/toast.service';
 import { TenantContextService } from '../core/tenant-context.service';
 import { MockAuthService } from '../core/mock-auth.service';
@@ -10,12 +11,23 @@ export class ClientDashboardComponent implements OnInit {
   /** Real figures for a signed-in owner / teacher; demo sessions keep the sample content below. */
   dash?: OwnerDashboard;
   teacherDash?: TeacherDashboard;
-  constructor(private tenant: TenantContextService, private auth: MockAuthService, private reports: ReportApiService, private toast: ToastService) {}
+  /** Owner: syllabus summary (average done, subjects behind target) from the Syllabus page. */
+  syllabus?: { average: number; behind: string[]; behindCount: number; subjects: number };
+  constructor(private tenant: TenantContextService, private auth: MockAuthService, private reports: ReportApiService, private toast: ToastService, private syllabusApi: SyllabusApiService) {}
   ngOnInit(): void {
     if (!this.auth.token) return;
     this.reports.dashboard(this.auth.token).subscribe({
       next: data => { if (data.role === 'teacher') this.teacherDash = data; else this.dash = data; },
       error: (error: Error) => this.toast.error(`Dashboard: ${error.message}`)
+    });
+    if (this.auth.role === 'Owner') this.syllabusApi.overview(this.auth.token).subscribe({
+      next: groups => {
+        const cells = groups.flatMap(group => group.rows.flatMap(row => row.cells.filter(cell => cell.syllabusCode).map(cell => ({ ...cell, where: `${row.label} · ${cell.subject}` }))));
+        if (!cells.length) return;
+        const behind = cells.filter(cell => cell.status === 'Behind');
+        this.syllabus = { average: Math.round(cells.reduce((sum, cell) => sum + cell.percent, 0) / cells.length), behind: behind.slice(0, 3).map(cell => cell.where), behindCount: behind.length, subjects: cells.length };
+      },
+      error: () => { /* the strip is optional */ }
     });
   }
   get brand(): string { return this.tenant.current.businessName || 'your institute'; }

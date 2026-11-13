@@ -86,6 +86,8 @@ export class ModulePageComponent implements OnInit {
 
   tone(value: unknown): Tone { return TONES[String(value).toLowerCase()] || 'neutral'; }
   trackById(_: number, row: ModuleRow): number { return row.id; }
+  /** Row actions are rebuilt on every check; keeping their buttons by label stops a click landing on a replaced button. */
+  trackByLabel(_: number, action: ModuleRowAction): string { return action.label; }
 
   open(row?: ModuleRow, draft?: Record<string, unknown>): void {
     if (!this.canEdit) return;

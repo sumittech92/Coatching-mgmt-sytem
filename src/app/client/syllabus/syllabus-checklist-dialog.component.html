@@ -1,0 +1,32 @@
+<h2 mat-dialog-title class="dialog-title">{{ detail ? detail.course?.name + ' · ' + detail.subject : 'Syllabus' }}</h2>
+<p class="dialog-subtitle">Tick a chapter when the class finishes it. The date can be changed if it was finished earlier.</p>
+<mat-dialog-content class="dialog-content">
+  <app-loading-state *ngIf="loading" label="Loading chapters…"></app-loading-state>
+  <ng-container *ngIf="detail && !loading">
+    <mat-button-toggle-group class="batch-picker" *ngIf="detail.batches.length > 1" [(ngModel)]="batchCode" aria-label="Section or batch">
+      <mat-button-toggle *ngFor="let item of detail.batches" [value]="item.batchCode">{{ item.label }}</mat-button-toggle>
+    </mat-button-toggle-group>
+    <app-empty-state *ngIf="!detail.batches.length" icon="groups" title="No sections / batches" description="This class / course has no active sections or batches you can update."></app-empty-state>
+
+    <div class="checklist-summary" *ngIf="batch">
+      <div><strong>{{ batch.percent }}%</strong><span>{{ batch.done }} of {{ batch.total }} chapters done<ng-container *ngIf="batch.expected !== null"> · {{ batch.expected }}% expected by now</ng-container></span></div>
+      <app-status-badge [label]="batch.status" [tone]="tone(batch.status)"></app-status-badge>
+    </div>
+    <div class="track" *ngIf="batch"><i [style.width.%]="batch.percent" [class.behind]="batch.status === 'Behind'"></i><b *ngIf="batch.expected !== null" [style.left.%]="batch.expected"></b></div>
+
+    <ol class="chapter-list" *ngIf="batch">
+      <li *ngFor="let chapter of detail.chapters" [class.done]="completedOn(chapter.chapterId)">
+        <mat-checkbox [checked]="!!completedOn(chapter.chapterId)" [disabled]="saving === chapter.chapterId" (change)="toggle(chapter.chapterId, $event.checked)">{{ chapter.title }}</mat-checkbox>
+        <span class="meta">
+          <span class="target" *ngIf="chapter.targetMonth" [class.late]="overdue(chapter.targetMonth, chapter.chapterId)">{{ overdue(chapter.targetMonth, chapter.chapterId) ? 'Was due ' : 'Target ' }}{{ monthLabel(chapter.targetMonth) }}</span>
+          <input *ngIf="completedOn(chapter.chapterId)" class="done-date" type="date" [max]="maxDate" [value]="completedOn(chapter.chapterId)"
+            (change)="toggle(chapter.chapterId, true, $any($event.target).value)" [attr.aria-label]="'Finished on, ' + chapter.title">
+        </span>
+      </li>
+    </ol>
+    <p class="field-help" *ngIf="detail && !detail.chapters.length">This syllabus has no chapters yet. Add them from Chapter lists.</p>
+  </ng-container>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-flat-button color="primary" [mat-dialog-close]="changed">Done</button>
+</mat-dialog-actions>

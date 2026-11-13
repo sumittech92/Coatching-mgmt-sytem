@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
 import { ModuleRow } from './module-registry';
-import type { ModuleApiAdapter } from './module-api.service';
+import type { ModuleApiAdapter, ModuleRowAction } from './module-api.service';
 import { RecordField } from '../management/record-dialog.component';
 import { BusinessType } from '../../core/models/business-type';
 import { MockAuthService } from '../../core/mock-auth.service';
@@ -19,6 +19,7 @@ import { ApiTask, ApiTaskKind, ApiTaskOption, TaskApiService, TaskPayload } from
 import { SCHOOL_CLASSES } from '../../core/workspace-terms';
 import { SubjectDialogComponent, SubjectDialogData } from './subject-dialog.component';
 import { PERIOD_DAYS, PeriodDialogComponent, PeriodDialogData } from './period-dialog.component';
+import { SubmissionsDialogComponent, SubmissionsDialogData } from './submissions-dialog.component';
 
 const text = (value: unknown): string | null => String(value ?? '').trim() || null;
 const list = (value: unknown): string[] => String(value || '').split(',').map(item => item.trim()).filter(Boolean);
@@ -185,7 +186,7 @@ export class AcademicModuleApiService {
     const toRow = (task: ApiTask): ModuleRow => ({
       id: Number(task.taskCode), code: task.taskCode, task, title: task.title, group: task.batch?.label || '—', subject: task.subject,
       due: fromApiDay(task.dueDate), dueLabel: dayLabel(task.dueDate), description: task.description || '',
-      file: task.attachment?.name || '', attachment: task.attachment?.name || '—',
+      file: task.attachment?.name || '', attachment: task.attachment?.name || '—', submitted: `${task.submitted} / ${task.students}`,
       state: task.status === 'closed' ? 'Closed' : 'Assigned', status: task.status === 'closed' ? 'Closed' : task.overdue ? 'Overdue' : 'Assigned'
     });
     const upload = (file: unknown): Observable<{ url: string; name: string } | undefined> => {
@@ -195,7 +196,7 @@ export class AcademicModuleApiService {
     };
     const groupLabel = school ? 'Class / section' : 'Batch';
     return {
-      columns: [{ key: 'title', label: 'Title' }, { key: 'group', label: school ? 'Class' : 'Batch' }, { key: 'subject', label: 'Subject' }, { key: 'dueLabel', label: 'Due' }, ...(homework ? [] : [{ key: 'attachment', label: 'Attachment' }]), { key: 'status', label: 'Status', badge: true }],
+      columns: [{ key: 'title', label: 'Title' }, { key: 'group', label: school ? 'Class' : 'Batch' }, { key: 'subject', label: 'Subject' }, { key: 'dueLabel', label: 'Due' }, ...(homework ? [] : [{ key: 'submitted', label: 'Submitted' }, { key: 'attachment', label: 'Attachment' }]), { key: 'status', label: 'Status', badge: true }],
       load: () => forkJoin({ tasks: this.tasks.list(this.token, { kind }), options: this.tasks.options(this.token) }).pipe(
         tap(result => options = result.options),
         map(({ tasks }) => tasks.map(toRow))
@@ -225,8 +226,20 @@ export class AcademicModuleApiService {
       },
       canEditRow: row => (row['task'] as ApiTask).canManage,
       rowActions: row => {
-        const attachment = (row['task'] as ApiTask).attachment;
-        return attachment ? [{ label: 'Open attachment', icon: 'attach_file', run: () => { window.open(attachment.url, '_blank', 'noopener'); return of(undefined); } }] : [];
+        const task = row['task'] as ApiTask;
+        const actions: ModuleRowAction[] = [];
+        // Assignments: students upload their work from the portal; the teacher checks it here.
+        if (!homework && task.canManage) actions.push({
+          label: 'View submissions', icon: 'fact_check',
+          run: () => {
+            const data: SubmissionsDialogData = { taskCode: task.taskCode, title: task.title, group: task.batch?.label || '' };
+            return this.dialog.open(SubmissionsDialogComponent, { width: '880px', maxWidth: 'calc(100vw - 24px)', data }).afterClosed().pipe(
+              switchMap(changed => changed ? this.tasks.list(this.token, { kind }).pipe(map(list => { const fresh = list.find(item => item.taskCode === task.taskCode); return fresh ? toRow(fresh) : undefined; })) : of(undefined))
+            );
+          }
+        });
+        if (task.attachment) actions.push({ label: 'Open attachment', icon: 'attach_file', run: () => { window.open(task.attachment!.url, '_blank', 'noopener'); return of(undefined); } });
+        return actions;
       },
       remove: row => this.tasks.remove(this.token, String(row['code']))
     };

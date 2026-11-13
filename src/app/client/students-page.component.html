@@ -207,8 +207,8 @@
                                     placeholder="student@email.com" /><mat-error>{{ errorFor("email", "Email address")
                                     }}</mat-error></mat-form-field>
                         </div>
-                        <div class="col-md-6" *ngIf="mode === 'add'">
-                            <label class="field-label">Login password *</label><mat-form-field appearance="outline"
+                        <div class="col-md-6" *ngIf="mode === 'add' || (mode === 'edit' && live)">
+                            <label class="field-label">{{ mode === "add" ? "Login password *" : "New login password" }}</label><mat-form-field appearance="outline"
                                 class="w-100"><input matInput [type]="hidePassword ? 'password' : 'text'" autocomplete="new-password"
                                     formControlName="password" placeholder="Min. 8 characters" /><button
                                     mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"
@@ -246,6 +246,17 @@
                                     formControlName="parentPhone" placeholder="9876543210" /><mat-error>{{
                                     errorFor("parentPhone", "Parent phone") }}</mat-error></mat-form-field>
                         </div>
+                        <ng-container *ngIf="live && !isTeacher">
+                            <div class="col-md-6 parent-login">
+                                <mat-checkbox formControlName="parentLogin">Give the parent a login</mat-checkbox>
+                                <small class="field-help">The parent signs in to the family portal with the parent phone. Brothers and sisters with the same parent phone share one login.</small>
+                            </div>
+                            <div class="col-md-6" *ngIf="form.controls.parentLogin.value">
+                                <label class="field-label">Parent password{{ selected?.parentLogin ? " (leave empty to keep it)" : "" }}</label><mat-form-field
+                                    appearance="outline" class="w-100"><input matInput type="password" autocomplete="new-password" formControlName="parentPassword"
+                                        placeholder="Min. 8 characters" /><mat-error>{{ errorFor("parentPassword", "Parent password") }}</mat-error></mat-form-field>
+                            </div>
+                        </ng-container>
                     </div>
                 </section>
                 <section class="form-section">

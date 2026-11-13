@@ -9,7 +9,7 @@ import { TenantContextService } from '../../core/tenant-context.service';
 import { MockAuthService } from '../../core/mock-auth.service';
 import { ToastService } from '../../core/toast.service';
 import { AppValidators, normalizeMobile, validationMessage } from '../../core/app-validators';
-import { COACHING_SUBJECTS, SCHOOL_CLASSES, SCHOOL_DEPARTMENTS, SCHOOL_DESIGNATIONS, SCHOOL_SECTIONS, SCHOOL_SUBJECTS, termsFor } from '../../core/workspace-terms';
+import { COACHING_COURSES, COACHING_SUBJECTS, SCHOOL_CLASSES, SCHOOL_DEPARTMENTS, SCHOOL_DESIGNATIONS, SCHOOL_SECTIONS, SCHOOL_SUBJECTS, termsFor } from '../../core/workspace-terms';
 import { ApiTeacher, ApiTeacherStatus, TeacherApiService, TeacherPayload } from '../../core/teacher-api.service';
 import { ApiEnquiry, ApiEnquirySource, ApiEnquiryStatus, AdmissionApiService, EnquiryPayload } from '../../core/admission-api.service';
 import { ApiCourse, ApiFeeFrequency, COACHING_FEE_FREQUENCIES, CourseApiService, CoursePayload, FEE_FREQUENCY_LABELS, SCHOOL_FEE_FREQUENCIES } from '../../core/course-api.service';
@@ -54,15 +54,15 @@ export class ClientManagementComponent implements OnInit {
   isShop = false;
   readonly shopSocialData: Record<string, Row[]> = {
     posts: [
-      { id: 101, title: 'New season, softer layers', description: 'Meet the easy pieces we have been reaching for. Thoughtful fabrics, relaxed shapes and colours made for everyday wear.', type: 'Image', date: '28 Sep 2026', status: 'Published', pinned: true, media: 'assets/images/top-products/03.png', views: 248 },
-      { id: 102, title: 'A closer look at our linen edit', description: 'Lightweight, breathable and made to be worn on repeat. Find your favourite fit in store this week.', type: 'Image', date: '26 Sep 2026', status: 'Published', pinned: false, media: 'assets/images/top-products/01.png', views: 176 },
+      { id: 101, title: 'Festive collection is here', description: 'Chikankari kurtis, silk sarees and festive kurtas for Diwali and the wedding season. Come try them in store.', type: 'Image', date: '28 Sep 2026', status: 'Published', pinned: true, media: 'assets/images/shop/teal-saree.jpg', views: 248 },
+      { id: 102, title: 'A closer look at our chikankari edit', description: 'Hand-embroidered cotton kurtis from Lucknow, light and breathable for everyday wear.', type: 'Image', date: '26 Sep 2026', status: 'Published', pinned: false, media: 'assets/images/shop/chikankari-kurti.jpg', views: 176 },
       { id: 103, title: 'Weekend store hours', description: 'We are here until 8 pm this Saturday. Drop by, try something on and say hello.', type: 'Announcement', date: '24 Sep 2026', status: 'Draft', pinned: false, media: '', views: 0 }
     ],
     gallery: [
-      { id: 101, name: 'The new season edit', description: 'Soft layers and everyday favourites.', date: '28 Sep 2026', status: 'Published', media: 'assets/images/top-products/03.png', count: 12, accent: 'gallery-a' },
-      { id: 102, name: 'Linen, in the sunshine', description: 'Natural textures, easy silhouettes.', date: '21 Sep 2026', status: 'Published', media: 'assets/images/top-products/01.png', count: 8, accent: 'gallery-b' },
-      { id: 103, name: 'The little details', description: 'Accessories made for everyday.', date: '16 Sep 2026', status: 'Draft', media: 'assets/images/top-products/05.png', count: 6, accent: 'gallery-c' },
-      { id: 104, name: 'A weekend in colour', description: 'A few favourites from the studio.', date: '08 Sep 2026', status: 'Published', media: 'assets/images/top-products/04.png', count: 10, accent: 'gallery-d' }
+      { id: 101, name: 'Festive sarees', description: 'Silk sarees with zari borders for the season.', date: '28 Sep 2026', status: 'Published', media: 'assets/images/shop/red-saree.jpg', count: 12, accent: 'gallery-a' },
+      { id: 102, name: 'Chikankari, in the sunshine', description: 'Hand-embroidered cotton kurtis.', date: '21 Sep 2026', status: 'Published', media: 'assets/images/shop/chikankari-kurti.jpg', count: 8, accent: 'gallery-b' },
+      { id: 103, name: 'Men\'s kurtas', description: 'Kurta pyjama sets and festive kurtas.', date: '16 Sep 2026', status: 'Draft', media: 'assets/images/shop/festive-kurta.jpg', count: 6, accent: 'gallery-c' },
+      { id: 104, name: 'A weekend in colour', description: 'Anarkali kurtas in festive reds.', date: '08 Sep 2026', status: 'Published', media: 'assets/images/shop/red-kurta.jpg', count: 10, accent: 'gallery-d' }
     ]
   };
   get brandName(): string { return this.isShop ? 'Atelier & Co.' : this.tenant.current.businessName; }
@@ -100,15 +100,15 @@ export class ClientManagementComponent implements OnInit {
       { id: 42, title: 'Light – reflection worksheet', description: 'Practice questions for the Term 1 exam.', course: 'Class 10', batch: 'Section B', subject: 'Science', type: 'Assignment', file: 'light-reflection-worksheet.pdf', date: '24 Sep 2026', status: 'Published', size: '950 KB' }
     ],
     posts: [
-      { id: 41, title: 'Admissions open for 2027–28', description: 'Registrations for Nursery to Class 9 and Class 11 are now open. Visit the school office or apply online.', type: 'Announcement', date: '26 Sep 2026', status: 'Published', pinned: true, media: 'assets/images/gallery/01.png', views: 214 },
-      { id: 42, title: 'Gold at the inter-school science olympiad', description: 'Congratulations to our Class 8 team for winning the regional science olympiad.', type: 'Image', date: '24 Sep 2026', status: 'Published', pinned: false, media: 'assets/images/gallery/02.png', views: 132 },
+      { id: 41, title: 'Admissions open for 2027–28', description: 'Registrations for Nursery to Class 9 and Class 11 are now open. Visit the school office or apply online.', type: 'Announcement', date: '26 Sep 2026', status: 'Published', pinned: true, media: 'assets/images/edu/school-building.jpg', views: 214 },
+      { id: 42, title: 'Gold at the inter-school science olympiad', description: 'Congratulations to our Class 8 team for winning the regional science olympiad.', type: 'Image', date: '24 Sep 2026', status: 'Published', pinned: false, media: 'assets/images/edu/proud-moment.jpg', views: 132 },
       { id: 43, title: 'Parent-teacher meeting this Saturday', description: 'Meet your child’s class teacher to discuss Term 1 progress.', type: 'Text', date: '22 Sep 2026', status: 'Draft', pinned: false, media: '', views: 0 }
     ],
     gallery: [
-      { id: 41, name: 'School life', description: 'Everyday moments at Greenfield.', date: '18 Sep 2026', status: 'Published', media: 'assets/images/gallery/01.png', count: 18, accent: 'gallery-a' },
-      { id: 42, name: 'Science exhibition 2026', description: 'Projects from Classes 6–10.', date: '12 Sep 2026', status: 'Published', media: 'assets/images/gallery/02.png', count: 24, accent: 'gallery-b' },
-      { id: 43, name: 'Independence Day assembly', description: 'Celebrations across the school.', date: '15 Aug 2026', status: 'Draft', media: 'assets/images/gallery/03.png', count: 32, accent: 'gallery-c' },
-      { id: 44, name: 'Classrooms & labs', description: 'Smart classrooms, library and labs.', date: '28 Aug 2026', status: 'Published', media: 'assets/images/gallery/cover-signup-bg.png', count: 12, accent: 'gallery-d' }
+      { id: 41, name: 'School life', description: 'Everyday moments at Greenfield.', date: '18 Sep 2026', status: 'Published', media: 'assets/images/edu/school-life.jpg', count: 18, accent: 'gallery-a' },
+      { id: 42, name: 'Science exhibition 2026', description: 'Projects from Classes 6–10.', date: '12 Sep 2026', status: 'Published', media: 'assets/images/edu/science-exhibition.jpg', count: 24, accent: 'gallery-b' },
+      { id: 43, name: 'Independence Day assembly', description: 'Celebrations across the school.', date: '15 Aug 2026', status: 'Draft', media: 'assets/images/edu/independence-day.jpg', count: 32, accent: 'gallery-c' },
+      { id: 44, name: 'Classrooms & labs', description: 'Smart classrooms, library and labs.', date: '28 Aug 2026', status: 'Published', media: 'assets/images/edu/smart-classroom.jpg', count: 12, accent: 'gallery-d' }
     ]
   };
   readonly coachingCourses: Row[] = Array.from({ length: 12 }, (_, index) => ({ id: 100 + index, name: `Class ${index + 1}${index === 9 ? ' Foundation' : index >= 10 ? ' Science' : ''}`, description: `Guided coaching and practice for students in Class ${index + 1}.`, duration: '10 months', fee: index >= 10 ? '₹4,500 / month' : '₹2,800 / month', subjects: index >= 10 ? 'Physics, Chemistry, Mathematics' : 'Mathematics, Science, English', status: 'Active', enrolled: 64 + index * 9, accent: ['teal', 'blue', 'amber'][index % 3] }));
@@ -163,15 +163,15 @@ export class ClientManagementComponent implements OnInit {
       { id: 4, name: 'Ishaan Gupta', parent: 'Nitin Gupta', phone: '98100 21004', course: 'Class 12 Science', source: 'Walk-in', date: '24 Sep 2026', status: 'Joined', followup: '—' }
     ],
     posts: [
-      { id: 1, title: 'New batch admissions are open', description: 'Our new academic batches are now enrolling. Join us for focused learning and a great start to the year.', type: 'Announcement', date: '26 Sep 2026', status: 'Published', pinned: true, media: 'assets/images/gallery/01.png', views: 124 },
-      { id: 2, title: 'A proud moment for our students', description: 'Celebrating the hard work, curiosity and progress of our learners this month.', type: 'Image', date: '24 Sep 2026', status: 'Published', pinned: false, media: 'assets/images/gallery/02.png', views: 89 },
+      { id: 1, title: 'New batch admissions are open', description: 'Our new academic batches are now enrolling. Join us for focused learning and a great start to the year.', type: 'Announcement', date: '26 Sep 2026', status: 'Published', pinned: true, media: 'assets/images/edu/coaching-batch.jpg', views: 124 },
+      { id: 2, title: 'A proud moment for our students', description: 'Celebrating the hard work, curiosity and progress of our learners this month.', type: 'Image', date: '24 Sep 2026', status: 'Published', pinned: false, media: 'assets/images/edu/coaching-class.jpg', views: 89 },
       { id: 3, title: 'Parent orientation this Friday', description: 'Meet the teachers and learn about our learning approach for the new term.', type: 'Text', date: '22 Sep 2026', status: 'Draft', pinned: false, media: '', views: 0 }
     ],
     gallery: [
-      { id: 1, name: 'Campus life', description: 'Everyday moments at Northstar.', date: '18 Sep 2026', status: 'Published', media: 'assets/images/gallery/01.png', count: 18, accent: 'gallery-a' },
-      { id: 2, name: 'Science fair 2026', description: 'Curiosity on full display.', date: '12 Sep 2026', status: 'Published', media: 'assets/images/gallery/02.png', count: 24, accent: 'gallery-b' },
-      { id: 3, name: 'Annual day', description: 'A wonderful evening together.', date: '04 Sep 2026', status: 'Draft', media: 'assets/images/gallery/03.png', count: 32, accent: 'gallery-c' },
-      { id: 4, name: 'Learning spaces', description: 'Our classrooms and labs.', date: '28 Aug 2026', status: 'Published', media: 'assets/images/gallery/cover-signup-bg.png', count: 12, accent: 'gallery-d' }
+      { id: 1, name: 'Campus life', description: 'Everyday moments at Northstar.', date: '18 Sep 2026', status: 'Published', media: 'assets/images/edu/campus-life.jpg', count: 18, accent: 'gallery-a' },
+      { id: 2, name: 'Science fair 2026', description: 'Curiosity on full display.', date: '12 Sep 2026', status: 'Published', media: 'assets/images/edu/science-lab.jpg', count: 24, accent: 'gallery-b' },
+      { id: 3, name: 'Annual day', description: 'A wonderful evening together.', date: '04 Sep 2026', status: 'Draft', media: 'assets/images/edu/annual-day.jpg', count: 32, accent: 'gallery-c' },
+      { id: 4, name: 'Learning spaces', description: 'Our classrooms and labs.', date: '28 Aug 2026', status: 'Published', media: 'assets/images/edu/smart-classroom.jpg', count: 12, accent: 'gallery-d' }
     ],
     notices: [
       { id: 1, title: 'Mid-term examinations begin October 12', type: 'Exam', description: 'The detailed timetable is available at reception and on the student portal.', date: '25 Sep 2026', expires: '15 Oct 2026', status: 'Published', pinned: true },
@@ -250,6 +250,8 @@ export class ClientManagementComponent implements OnInit {
     if (this.useMaterialApi && !this.courseCodes.size) { this.toast.warning(`Add a ${this.isSchool ? 'class' : 'course'} first, then add its study materials.`); return; }
     if (this.useBatchApi && !this.courseCodes.size) { this.toast.warning(`Add a ${this.isSchool ? 'class' : 'course'} first, then create its batches.`); this.router.navigate(['/client/courses']); return; }
     const record = draft || (row ? { ...row, ...(row.phone ? { phone: normalizeMobile(String(row.phone)) } : {}) } : undefined);
+    // Coaching courses outside the usual list open as "Other" with their name filled in.
+    if (record && !draft && this.useCourseApi && !this.isSchool && record.name && !COACHING_COURSES.includes(String(record.name))) Object.assign(record, { customName: record.name, name: 'Other' });
     const ref = this.dialog.open(RecordDialogComponent, { width: '640px', maxWidth: 'calc(100vw - 24px)', data: { title: `${row ? 'Edit' : 'Add'} ${this.config.singular}`, submitLabel: row ? 'Save changes' : this.config.action, fields: this.dialogFields(row), record, successMessage: '' } });
     ref.afterClosed().subscribe(async value => {
       if (!value) { if (this.router.url.endsWith('/add')) this.router.navigate([`${this.isShop ? '/shop' : '/client'}/${this.key}`]); return; }
@@ -290,6 +292,7 @@ export class ClientManagementComponent implements OnInit {
   private recordProblem(value: Row): string {
     const time = (v: unknown): number => v instanceof Date ? v.getTime() : v ? new Date(String(v)).getTime() : NaN;
     const nameCheck = (key: string, label: string): string => value[key] ? validationMessage(new FormControl(value[key], AppValidators.personName), label) : '';
+    if (this.useCourseApi && !this.isSchool && value.name === 'Other' && !String(value.customName || '').trim()) return 'Type the course name in “Other course name”.';
     if (this.key === 'results') { const marks = Number(value.marks), total = Number(value.total); if (!(total > 0)) return 'Maximum marks must be greater than 0.'; if (marks < 0 || marks > total) return `Marks obtained must be between 0 and ${total}.`; }
     if (this.key === 'teachers' && value.experience && !/^\d+(\.\d+)?\b/.test(String(value.experience).trim())) return 'Enter experience in years, e.g. 5 years.';
     if (this.key === 'batches' && time(value.end) < time(value.start)) return 'End date must be on or after the start date.';
@@ -356,15 +359,16 @@ export class ClientManagementComponent implements OnInit {
       field.key === 'subjects' && this.teacherSubjectOptions.length ? { ...field, type: 'multiselect', options: keep('subjects', this.teacherSubjectOptions), hint: undefined }
       : field.key === 'classes' && this.teacherClassOptions.length ? { ...field, label: this.isSchool ? 'Classes / sections taught' : 'Courses taught', type: 'multiselect', options: keep('classes', this.teacherClassOptions), hint: undefined }
       : field);
-    if (row) return fields;
     const after = fields.findIndex(field => field.key === 'email') + 1;
+    // Editing: optionally set a new password (also how a sample teacher gets a login).
+    if (row) return this.auth.token ? [...fields.slice(0, after), { key: 'password', label: 'New login password', type: 'password', hint: 'Leave empty to keep the current password.' }, ...fields.slice(after)] : fields;
     return [...fields.slice(0, after), { key: 'password', label: 'Login password', type: 'password', required: true, hint: 'The teacher signs in with their email or phone and this password.' }, ...fields.slice(after)];
   }
   private saveTeacher(value: Row, row?: Row): void {
     const token = this.auth.token!;
     const payload = this.teacherPayload(value);
     const request: Observable<ApiTeacher> = row
-      ? this.teacherApi.update(token, row.code, payload)
+      ? this.teacherApi.update(token, row.code, { ...payload, ...(value.password ? { password: String(value.password) } : {}) })
       : this.teacherApi.create(token, { ...payload, password: String(value.password || '') }).pipe(map(result => result.teacher));
     request.subscribe({
       next: teacher => {
@@ -540,7 +544,11 @@ export class ClientManagementComponent implements OnInit {
   /** The fee is an amount plus how often it is charged; the choices differ for coaching and school. */
   private courseFields(): RecordField[] {
     const frequencies = (this.isSchool ? SCHOOL_FEE_FREQUENCIES : COACHING_FEE_FREQUENCIES).map(value => FEE_FREQUENCY_LABELS[value]);
-    return this.config.fields.flatMap<RecordField>(field => field.key !== 'fee' ? [field] : [
+    return this.config.fields.flatMap<RecordField>(field => field.key === 'name' && !this.isSchool ? [
+      // Coaching: pick a usual course, or "Other" and type the name.
+      { key: 'name', label: 'Course', type: 'select', options: [...COACHING_COURSES, 'Other'], required: true },
+      { key: 'customName', label: 'Other course name', hint: 'Only when you chose “Other”, e.g. Spoken English for adults' }
+    ] : field.key !== 'fee' ? [field] : [
       { key: 'feeAmount', label: 'Fee amount (₹)', type: 'number', required: true, hint: this.isSchool ? 'e.g. 18500' : 'e.g. 4500' },
       { key: 'feeFrequency', label: 'Fee charged', type: 'select', options: frequencies, required: true }
     ]);
@@ -549,7 +557,7 @@ export class ClientManagementComponent implements OnInit {
     const text = (v: unknown): string | null => String(v ?? '').trim() || null;
     const fallback: ApiFeeFrequency = this.isSchool ? 'perTerm' : 'monthly';
     return {
-      name: String(value.name || '').trim(),
+      name: String((!this.isSchool && value.name === 'Other' ? value.customName : value.name) || '').trim(),
       description: text(value.description),
       duration: text(value.duration),
       feeAmount: Number(value.feeAmount) || 0,

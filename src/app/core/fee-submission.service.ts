@@ -16,6 +16,9 @@ export interface FeeSubmission {
   submittedOn: string;
   status: FeeSubmissionStatus;
   reviewNote?: string;
+  /** Live submissions: the backend id and the uploaded proof. */
+  apiId?: string;
+  proofUrl?: string;
 }
 
 const STORAGE_KEY = 'demo-fee-submissions';

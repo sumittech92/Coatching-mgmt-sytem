@@ -55,3 +55,9 @@
 @media(max-height:700px),(max-width:900px){.portal-sidebar nav{margin-bottom:14px}.student-card{margin:14px 0 10px}}
 /* Phone tab bar: keep content and the menu's Log out button clear of it. */
 @media(max-width:900px){.portal-main{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}.portal-sidebar{padding-bottom:96px}.portal-logout{position:static;margin:8px 0 0;width:100%;padding:12px 10px}}
+
+.child-switch{margin:-8px 0 12px;font-size:12px;width:100%}.child-switch mat-icon{font-size:16px;width:16px;height:16px}
+
+.month-nav{display:flex;align-items:center;gap:4px}.batch-picker{margin-bottom:14px;flex-wrap:wrap}.batch-picker .mat-button-toggle{font-size:12px}
+
+.syllabus-item>span:nth-child(2){flex:1}.syllabus-item .summary-meter{display:block;margin:6px 0 0}
