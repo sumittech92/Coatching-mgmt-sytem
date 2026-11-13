@@ -44,6 +44,18 @@
       </div>
     </ng-template>
 
+    <ng-container *ngIf="school">
+      <div class="col-md-3 col-6">
+        <label class="field-label">Exam starts</label>
+        <mat-form-field appearance="outline" class="w-100"><input matInput type="time" formControlName="startTime"></mat-form-field>
+      </div>
+      <div class="col-md-3 col-6">
+        <label class="field-label">Exam ends</label>
+        <mat-form-field appearance="outline" class="w-100"><input matInput type="time" formControlName="endTime"></mat-form-field>
+      </div>
+      <div class="col-md-6 time-help"><small class="field-help">Same time for every paper. Printed on the admit card.</small></div>
+    </ng-container>
+
     <div class="col-12" *ngIf="school"><h3 class="sheet-title">Date sheet</h3></div>
     <ng-container formArrayName="papers">
       <div class="col-12 paper-row" *ngFor="let paper of papers.controls; let i = index" [formGroupName]="i">
@@ -78,6 +90,21 @@
       </div>
     </ng-container>
     <div class="col-12" *ngIf="school"><button mat-stroked-button type="button" (click)="addPaper()"><mat-icon>add</mat-icon>Add subject</button></div>
+    <ng-container *ngIf="school && data.owner">
+      <div class="col-12"><h3 class="sheet-title">Admit cards</h3></div>
+      <div class="col-md-6">
+        <mat-slide-toggle formControlName="released">Release admit cards</mat-slide-toggle>
+        <small class="field-help d-block">Students can download their admit card from their login once released.</small>
+      </div>
+      <div class="col-md-6">
+        <mat-slide-toggle formControlName="feeRequired">Fees must be paid</mat-slide-toggle>
+        <small class="field-help d-block">Students with fees due on or before the first paper can't download it themselves. Their class teacher can still print it, or you can allow a student from “Admit cards”.</small>
+      </div>
+      <div class="col-12">
+        <label class="field-label">Instructions on the admit card</label>
+        <mat-form-field appearance="outline" class="w-100"><textarea matInput rows="3" formControlName="instructions" placeholder="One instruction per line"></textarea><mat-error>Up to 1000 characters.</mat-error></mat-form-field>
+      </div>
+    </ng-container>
     <div class="col-12" *ngIf="data.test?.status === 'completed' || (data.test?.papers?.[0]?.entered || 0) > 0">
       <small class="field-help">Removing a subject also removes the marks entered for it.</small>
     </div>

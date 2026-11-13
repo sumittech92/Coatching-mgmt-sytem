@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { AuthApiService } from './auth-api.service';
 import { ApiBatchDay } from './batch-api.service';
 import { ApiPeriod } from './timetable-api.service';
+import { AdmitCard, AdmitStatus } from './test-api.service';
 
 interface ApiResponse<T> { success: boolean; message: string; data: T; }
 export interface PortalFile { url: string; name: string; }
@@ -45,7 +46,15 @@ export interface PaymentDetails { upiId: string | null; accountName: string | nu
 export interface PortalFees { fees: PortalFee[]; submissions: PortalFeeSubmission[]; paymentDetails: PaymentDetails; }
 export interface FeeSubmissionPayload { period: string; amount: number; mode: string; reference: string | null; proof: PortalFile | null; note: string | null; }
 
-export interface PortalTest { testCode: string; name: string; term: string | null; status: string; resultsPublished: boolean; papers: { subject: string; date: string; maxMarks: number; upcoming: boolean }[]; }
+export interface PortalAdmitInfo { released: boolean; status: AdmitStatus; feeDue: number; canDownload: boolean; message: string | null; }
+export interface PortalTest {
+  testCode: string; name: string; term: string | null; status: string; resultsPublished: boolean; startTime: string | null; endTime: string | null;
+  papers: { subject: string; date: string; maxMarks: number; optional: boolean; upcoming: boolean }[];
+  /** School only. */
+  admitCard: PortalAdmitInfo | null;
+}
+/** School: the class's optional subjects and the student's choice (locked while an exam is going on). */
+export interface PortalOptionalSubjects { options: string[]; chosen: string[]; locked: boolean; message: string | null; }
 export interface PortalResult {
   testCode: string; exam: string; term: string | null; subject: string; date: string; marks: number | null; maxMarks: number; absent: boolean;
   percentage: number; grade: string; remarks: string | null; rank: number | null; outOf: number;
@@ -83,6 +92,16 @@ export class PortalApiService {
   updates(token: string, child?: string): Observable<PortalUpdate[]> { return this.get(token, '/updates', child); }
   tasks(token: string, child?: string): Observable<PortalTask[]> { return this.get(token, '/tasks', child); }
   syllabus(token: string, child?: string): Observable<PortalSyllabus[]> { return this.get(token, '/syllabus', child); }
+
+  optionalSubjects(token: string, child?: string): Observable<PortalOptionalSubjects> { return this.get(token, '/optional-subjects', child); }
+  /** Student login only. */
+  saveOptionalSubjects(token: string, subjects: string[]): Observable<PortalOptionalSubjects> {
+    return this.request(this.http.put<ApiResponse<PortalOptionalSubjects>>(`${this.base}/optional-subjects`, { subjects }, { headers: this.headers(token) }));
+  }
+  /** Student login only: the student's own admit card (logged). */
+  admitCard(token: string, testCode: string): Observable<AdmitCard> {
+    return this.request(this.http.post<ApiResponse<AdmitCard>>(`${this.base}/tests/${testCode}/admit-card`, {}, { headers: this.headers(token) }));
+  }
 
   submitFee(token: string, payload: FeeSubmissionPayload, child?: string): Observable<PortalFeeSubmission> {
     return this.request(this.http.post<ApiResponse<PortalFeeSubmission>>(`${this.base}/fees/submissions`, payload, { headers: this.headers(token), params: child ? { student: child } : {} }));

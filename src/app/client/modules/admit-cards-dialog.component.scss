@@ -1,0 +1,14 @@
+.admit-content{min-width:min(960px,90vw)}
+.admit-settings{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:10px}
+.setting{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#7d8a99;background:#f3f5f8;border-radius:999px;padding:4px 10px}
+.setting.on{color:#1d6b3a;background:#e8f6ee}
+.setting mat-icon{font-size:15px;width:15px;height:15px}
+.admit-stats{margin-bottom:8px}
+.admit-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:4px}
+.admit-search{max-width:320px}
+.subjects-col{min-width:180px}
+.subject-pick{width:100%;font-size:12px}
+.due{color:#b5443d}
+.paid{color:#1d6b3a;font-size:12px}
+.row-actions{white-space:nowrap;text-align:right}
+.allow-btn{font-size:12px;min-width:0;padding:0 10px;height:32px;line-height:32px}

@@ -1,0 +1,88 @@
+<h2 mat-dialog-title class="dialog-title">Admit cards · {{ data.test.name }}</h2>
+<p class="dialog-subtitle">
+  {{ list?.className || data.test.course?.name }}<ng-container *ngIf="list"> · Exam time {{ timeLabel }} · First paper {{ list.firstPaper | date: 'dd MMM yyyy' }}</ng-container>
+</p>
+<mat-dialog-content class="dialog-content admit-content">
+  <ng-container *ngIf="list">
+    <div class="admit-settings">
+      <span class="setting" [class.on]="list.settings.released"><mat-icon>{{ list.settings.released ? 'lock_open' : 'lock' }}</mat-icon>{{ list.settings.released ? 'Released to students' : 'Not released to students yet' }}</span>
+      <span class="setting" [class.on]="list.settings.feeRequired"><mat-icon>payments</mat-icon>{{ list.settings.feeRequired ? 'Fees must be paid to download' : 'No fee check' }}</span>
+      <small class="field-help" *ngIf="list.canAllow">Change these under Edit exam.</small>
+    </div>
+    <div class="locked-note" *ngIf="list.cancelled"><mat-icon>event_busy</mat-icon>This exam is cancelled. Admit cards can't be printed.</div>
+
+    <div class="marks-stats admit-stats">
+      <span>Students <strong>{{ counts.total }}</strong></span>
+      <span>Can download <strong>{{ counts.can }}</strong></span>
+      <span>Fee pending <strong>{{ counts.pending }}</strong></span>
+      <span>Downloaded <strong>{{ counts.downloaded }}</strong></span>
+    </div>
+
+    <div class="admit-toolbar">
+      <input class="remarks-input admit-search" [(ngModel)]="search" placeholder="Search name, ID, roll no. or section" aria-label="Search students">
+      <mat-form-field appearance="outline" class="paper-select">
+        <mat-select [(ngModel)]="filter" aria-label="Filter">
+          <mat-option value="">All students</mat-option>
+          <mat-option value="eligible">Can download</mat-option>
+          <mat-option value="fee_pending">Fee pending</mat-option>
+          <mat-option value="allowed">Allowed by principal</mat-option>
+          <mat-option value="downloaded">Downloaded</mat-option>
+          <mat-option value="not_downloaded">Not downloaded</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </ng-container>
+
+  <app-loading-state *ngIf="loading && !list" label="Loading students…"></app-loading-state>
+  <app-empty-state *ngIf="list && !students.length" icon="groups" title="No students" description="Students of this exam's class / your sections appear here."></app-empty-state>
+
+  <div class="table-responsive" *ngIf="list && students.length">
+    <table class="table align-middle mb-0 marks-table">
+      <thead>
+        <tr>
+          <th><mat-checkbox [checked]="allShownSelected" (change)="toggleAll($event.checked)" aria-label="Select all shown"></mat-checkbox></th>
+          <th>STUDENT</th><th>SECTION</th><th *ngIf="list.optionalSubjects.length">OPTIONAL SUBJECTS</th><th>FEE DUE</th><th>STATUS</th><th>DOWNLOADS</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let student of filtered">
+          <td><mat-checkbox [checked]="selected.has(student.studentCode)" (change)="toggle(student.studentCode, $event.checked)" [attr.aria-label]="'Select ' + student.fullName"></mat-checkbox></td>
+          <td><strong>{{ student.fullName || 'Unnamed student' }}</strong><small class="sub">{{ student.rollNumber ? 'Roll ' + student.rollNumber + ' · ' : '' }}{{ student.studentCode }} · {{ student.papers }} paper{{ student.papers === 1 ? '' : 's' }}</small></td>
+          <td>{{ student.section }}</td>
+          <td *ngIf="list.optionalSubjects.length" class="subjects-col">
+            <mat-form-field appearance="outline" class="subject-pick">
+              <mat-select multiple placeholder="None chosen" [value]="picks.get(student.studentCode)" (valueChange)="picks.set(student.studentCode, $event)" (openedChange)="subjectsClosed(student, $event)" [disabled]="busy" [attr.aria-label]="'Optional subjects of ' + student.fullName">
+                <mat-option *ngFor="let subject of list.optionalSubjects" [value]="subject">{{ subject }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </td>
+          <td>
+            <ng-container *ngIf="student.feeDue; else noDue"><strong class="due">₹{{ student.feeDue | number }}</strong><small class="sub">{{ student.feePeriods.join(', ') }}</small></ng-container>
+            <ng-template #noDue><span class="paid">Cleared</span></ng-template>
+          </td>
+          <td><app-status-badge [label]="labels[student.status]" [tone]="tone(student.status)"></app-status-badge></td>
+          <td>
+            <ng-container *ngIf="student.lastDownload; else never"><strong>{{ student.downloads }}×</strong><small class="sub">Last by {{ student.lastDownload.name || roleLabel(student.lastDownload.role) }} ({{ roleLabel(student.lastDownload.role) }}) · {{ student.lastDownload.at | date: 'dd MMM, h:mm a' }}</small></ng-container>
+            <ng-template #never><span class="sub">Not yet</span></ng-template>
+          </td>
+          <td class="row-actions">
+            <button mat-icon-button [disabled]="busy || list.cancelled" (click)="printOne(student)" matTooltip="Print admit card" [attr.aria-label]="'Print admit card of ' + student.fullName"><mat-icon>print</mat-icon></button>
+            <ng-container *ngIf="list.canAllow && list.settings.feeRequired && student.feeDue > 0">
+              <button mat-stroked-button class="allow-btn" *ngIf="!student.allowed" [disabled]="busy" (click)="allow(student, true)">Allow</button>
+              <button mat-button class="allow-btn" *ngIf="student.allowed" [disabled]="busy" (click)="allow(student, false)">Remove allow</button>
+            </ng-container>
+          </td>
+        </tr>
+        <tr *ngIf="!filtered.length"><td colspan="8" class="sub">No students match.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <small class="field-help d-block mt-2" *ngIf="list?.optionalSubjects?.length">Optional subjects decide which papers appear on each student's card and marks sheet.</small>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button mat-dialog-close>Close</button>
+  <ng-container *ngIf="list && students.length && !list.cancelled">
+    <button mat-stroked-button color="primary" [disabled]="busy || !selected.size" (click)="printSelected()"><mat-icon>print</mat-icon>Print selected ({{ selected.size }})</button>
+    <button mat-flat-button color="primary" [disabled]="busy || !filtered.length" (click)="printAll()"><mat-icon>print</mat-icon>Print all shown ({{ filtered.length }})</button>
+  </ng-container>
+</mat-dialog-actions>

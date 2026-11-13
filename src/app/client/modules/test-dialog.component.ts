@@ -14,6 +14,8 @@ export interface TestDialogData {
   courses: ApiCourse[];
   /** Active batches (school: sections). */
   batches: ApiBatch[];
+  /** Owner (principal): may change the admit card settings. */
+  owner?: boolean;
 }
 
 /** Local calendar date as YYYY-MM-DD (toISOString would shift it a day back in IST). */
@@ -23,6 +25,8 @@ const isoDay = (value: unknown): string => {
 };
 /** "2026-10-19T00:00:00Z" from the API -> a local Date on that calendar day. */
 const fromApiDay = (value: string): Date => { const [year, month, day] = value.slice(0, 10).split('-').map(Number); return new Date(year, month - 1, day); };
+
+const DEFAULT_INSTRUCTIONS = 'Report 30 minutes before the exam starts.\nBring this admit card to every paper.\nMobile phones and calculators are not allowed in the exam hall.';
 
 /**
  * Coaching: a test for one batch and one subject.
@@ -41,6 +45,11 @@ export class TestDialogComponent {
       courseCode: [test?.course?.courseCode || '', data.school ? Validators.required : []],
       batchCodes: [test?.batches.map(batch => batch.batchCode) || []],
       batchCode: [test?.batches[0]?.batchCode || '', data.school ? [] : Validators.required],
+      startTime: [test?.startTime || ''],
+      endTime: [test?.endTime || ''],
+      released: [!!test?.admitCard?.released],
+      feeRequired: [test?.admitCard?.feeRequired ?? true],
+      instructions: [test?.admitCard?.instructions || DEFAULT_INSTRUCTIONS, Validators.maxLength(1000)],
       papers: this.fb.array((test?.papers.length ? test.papers : [null]).map(paper => this.paperGroup(paper ? { paperId: paper.paperId, subject: paper.subject, date: fromApiDay(paper.date), maxMarks: paper.maxMarks, passMarks: paper.passMarks } : undefined)))
     });
   }
@@ -97,6 +106,7 @@ export class TestDialogComponent {
     if (new Set(subjects).size !== subjects.length) { this.toast.error('Each subject can appear only once in the date sheet.'); return; }
     const badPass = papers.find(paper => paper.passMarks !== null && paper.passMarks !== '' && Number(paper.passMarks) > Number(paper.maxMarks));
     if (badPass) { this.toast.error(`Pass marks for ${badPass.subject} cannot be more than the maximum marks.`); return; }
+    if (this.school && value.startTime && value.endTime && value.endTime <= value.startTime) { this.toast.error('Exam end time must be after the start time.'); return; }
     const payload: TestPayload = {
       name: String(value.name).trim(),
       term: this.school ? value.term || null : null,
@@ -106,7 +116,9 @@ export class TestDialogComponent {
         ...(paper.paperId ? { paperId: paper.paperId } : {}),
         subject: paper.subject, date: isoDay(paper.date), maxMarks: Number(paper.maxMarks),
         passMarks: paper.passMarks === null || paper.passMarks === '' ? null : Number(paper.passMarks)
-      }))
+      })),
+      ...(this.school ? { startTime: value.startTime || null, endTime: value.endTime || null } : {}),
+      ...(this.school && this.data.owner ? { admitCard: { released: !!value.released, feeRequired: !!value.feeRequired, instructions: String(value.instructions || '').trim() || null } } : {})
     };
     this.ref.close(payload);
   }

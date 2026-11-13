@@ -39,6 +39,10 @@
         <mat-select formControlName="status"><mat-option value="active">Active</mat-option><mat-option value="inactive">Inactive</mat-option></mat-select>
       </mat-form-field>
     </div>
+    <div class="col-12">
+      <mat-checkbox formControlName="optional">Optional subject</mat-checkbox>
+      <small class="field-help d-block">For electives (e.g. Class 11–12 Physical Education, Computer Science). Only students who choose it sit its exam paper; students or class teachers pick it before the exam.</small>
+    </div>
 
     <div class="col-12"><h3 class="sheet-title">Teachers by section</h3></div>
     <div class="col-12" *ngIf="!form.value.courseCode"><small class="field-help">Choose a class to see its sections.</small></div>

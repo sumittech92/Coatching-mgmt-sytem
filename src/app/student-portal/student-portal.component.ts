@@ -13,7 +13,8 @@ import { LibraryApiService } from '../core/library-api.service';
 import { forkJoin, of, switchMap, catchError } from 'rxjs';
 import { BatchApiService } from '../core/batch-api.service';
 import { dayLabel } from '../core/api-client';
-import { PaymentDetails, PortalApiService, PortalAttendance, PortalClass, PortalFeeSubmission, PortalFees, PortalMaterial, PortalMe, PortalNotice, PortalResult, PortalSubject, PortalSyllabus, PortalTask, PortalTest, PortalUpdate } from '../core/portal-api.service';
+import { PaymentDetails, PortalApiService, PortalAttendance, PortalClass, PortalFeeSubmission, PortalFees, PortalMaterial, PortalMe, PortalNotice, PortalOptionalSubjects, PortalResult, PortalSubject, PortalSyllabus, PortalTask, PortalTest, PortalUpdate } from '../core/portal-api.service';
+import { AdmitCardPrintComponent, AdmitCardPrintData } from '../shared/ui/admit-card/admit-card-print.component';
 import { ApiPeriod } from '../core/timetable-api.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ReceiptPreviewComponent, ReceiptData } from '../shared/ui/receipt-preview/receipt-preview.component';
@@ -241,7 +242,11 @@ export class StudentPortalComponent {
   private pageAttendance?: PortalAttendance;
   private static monthKey(date: Date): string { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
   private proofFile?: File;
-  readonly portal: { classInfo?: PortalClass; subjects: PortalSubject[]; timetable: ApiPeriod[]; attendance?: PortalAttendance; fees?: PortalFees; tests: PortalTest[]; results: PortalResult[]; materials: PortalMaterial[]; notices: PortalNotice[]; updates: PortalUpdate[]; tasks: PortalTask[]; syllabus: PortalSyllabus[] } = { subjects: [], timetable: [], tests: [], results: [], materials: [], notices: [], updates: [], tasks: [], syllabus: [] };
+  readonly portal: { classInfo?: PortalClass; subjects: PortalSubject[]; timetable: ApiPeriod[]; attendance?: PortalAttendance; fees?: PortalFees; tests: PortalTest[]; results: PortalResult[]; materials: PortalMaterial[]; notices: PortalNotice[]; updates: PortalUpdate[]; tasks: PortalTask[]; syllabus: PortalSyllabus[]; optional?: PortalOptionalSubjects } = { subjects: [], timetable: [], tests: [], results: [], materials: [], notices: [], updates: [], tasks: [], syllabus: [] };
+  /** Optional subjects being picked on the Exams page (saved with "Save choice"). */
+  optionalPicks: string[] = [];
+  savingOptional = false;
+  admitLoading = '';
   /** Live data in the row shapes the template uses. */
   readonly view: { results: { exam: string; date: string; subject: string; marks: string; percentage: string; grade: string }[]; materials: { title: string; subject: string; type: string; file: string; date: string }[]; notices: { type: string; title: string; body: string; date: string; tone: string }[]; updates: { title: string; body: string; date: string; type: string }[]; assignments: PortalTaskRow[]; homework: PortalTaskRow[] } = { results: [], materials: [], notices: [], updates: [], assignments: [], homework: [] };
   private liveFees: PortalFee[] = [];
@@ -272,10 +277,11 @@ export class StudentPortalComponent {
         notices: safe(this.portalApi.notices(token, child), [] as PortalNotice[]),
         updates: safe(this.portalApi.updates(token, child), [] as PortalUpdate[]),
         tasks: safe(this.portalApi.tasks(token, child), [] as PortalTask[]),
-        syllabus: safe(this.portalApi.syllabus(token, child), [] as PortalSyllabus[])
+        syllabus: safe(this.portalApi.syllabus(token, child), [] as PortalSyllabus[]),
+        optional: school ? safe(this.portalApi.optionalSubjects(token, child), undefined as PortalOptionalSubjects | undefined) : of(undefined as PortalOptionalSubjects | undefined)
       });
     })).subscribe({
-      next: data => { this.selectedBatch = 0; Object.assign(this.portal, data); this.buildView(); this.loading = false; if (this.section === 'notices') this.markNoticesSeen(); this.refreshNoticeDot(); },
+      next: data => { this.selectedBatch = 0; Object.assign(this.portal, data); this.optionalPicks = [...(data.optional?.chosen || [])]; this.buildView(); this.loading = false; if (this.section === 'notices') this.markNoticesSeen(); this.refreshNoticeDot(); },
       error: (error: Error) => { this.loading = false; this.toast.error(error.message); }
     });
   }
@@ -389,22 +395,57 @@ export class StudentPortalComponent {
   }
   /** School exams: the session's exams and the date sheet of the next one. */
   get examSchedule() {
-    if (!this.live) return this.demoExamSchedule;
+    if (!this.live) return this.demoExamSchedule.map(exam => ({ ...exam, testCode: '', admit: null as PortalTest['admitCard'] }));
     return this.portal.tests.map(test => {
       const dates = test.papers.map(paper => dayLabel(paper.date));
       const maxMarks = [...new Set(test.papers.map(paper => paper.maxMarks))];
       return {
         name: test.term ? `${test.name} · ${test.term}` : test.name, period: dates.length > 1 ? `${dates[0]} – ${dates[dates.length - 1]}` : dates[0] || '—',
         marks: maxMarks.length === 1 ? `${maxMarks[0]} marks per subject` : `${maxMarks.join(' / ')} marks`,
-        status: test.resultsPublished ? 'Results out' : test.papers.some(paper => paper.upcoming) ? 'Upcoming' : 'Completed'
+        status: test.resultsPublished ? 'Results out' : test.papers.some(paper => paper.upcoming) ? 'Upcoming' : 'Completed',
+        testCode: test.testCode, admit: test.admitCard
       };
+    });
+  }
+  /** Exam time line shown above the date sheet. */
+  get examTime(): string {
+    const exam = this.nextExam;
+    return exam?.startTime ? `${BatchApiService.clock(exam.startTime)}${exam.endTime ? ` – ${BatchApiService.clock(exam.endTime)}` : ''}` : '';
+  }
+  get isStudentLogin(): boolean { return this.auth.role === 'Student'; }
+  get optionalChanged(): boolean { return [...this.optionalPicks].sort().join('|') !== [...(this.portal.optional?.chosen || [])].sort().join('|'); }
+  toggleOptional(subject: string, on: boolean): void { this.optionalPicks = on ? [...new Set([...this.optionalPicks, subject])] : this.optionalPicks.filter(name => name !== subject); }
+  saveOptional(): void {
+    if (this.savingOptional || !this.optionalChanged) return;
+    this.savingOptional = true;
+    this.portalApi.saveOptionalSubjects(this.auth.token!, this.optionalPicks).subscribe({
+      next: optional => {
+        this.savingOptional = false; this.portal.optional = optional; this.optionalPicks = [...optional.chosen];
+        this.toast.success('Optional subjects saved. Your date sheet and admit card now show these papers.');
+        this.portalApi.tests(this.auth.token!, this.childCode).subscribe({ next: tests => this.portal.tests = tests });
+      },
+      error: (error: Error) => { this.savingOptional = false; this.toast.error(error.message); }
+    });
+  }
+  /** Student login: their own admit card once released (and fees cleared when the school requires it). */
+  downloadAdmitCard(testCode: string): void {
+    if (this.admitLoading) return;
+    this.admitLoading = testCode;
+    this.portalApi.admitCard(this.auth.token!, testCode).subscribe({
+      next: card => {
+        this.admitLoading = '';
+        const profile = this.content.profile;
+        const data: AdmitCardPrintData = { cards: [card], institution: profile.settings['name'] || this.instituteName, logo: this.content.customLogo, address: profile.settings['address'] || profile.contact['address'], registration: WebsiteContentService.registrationLine(profile, true) };
+        this.dialog.open(AdmitCardPrintComponent, { width: '860px', maxWidth: 'calc(100vw - 24px)', data });
+      },
+      error: (error: Error) => { this.admitLoading = ''; this.toast.error(error.message); }
     });
   }
   private get nextExam(): PortalTest | undefined { return this.portal.tests.find(test => test.papers.some(paper => paper.upcoming)); }
   get dateSheetTitle(): string { return this.live ? this.nextExam?.name || 'No upcoming exam' : 'Term 1 (Half-yearly)'; }
   get dateSheet() {
     if (!this.live) return this.demoDateSheet;
-    return (this.nextExam?.papers || []).map(paper => ({ date: new Date(paper.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }), subject: paper.subject, time: `${paper.maxMarks} marks`, syllabus: '' }));
+    return (this.nextExam?.papers || []).map(paper => ({ date: new Date(paper.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }), subject: paper.optional ? `${paper.subject} (optional)` : paper.subject, time: `${paper.maxMarks} marks`, syllabus: '' }));
   }
 
   /** Calendar of the month shown (demo: September 2026). */

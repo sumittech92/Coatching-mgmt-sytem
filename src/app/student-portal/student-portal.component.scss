@@ -61,3 +61,10 @@
 .month-nav{display:flex;align-items:center;gap:4px}.batch-picker{margin-bottom:14px;flex-wrap:wrap}.batch-picker .mat-button-toggle{font-size:12px}
 
 .syllabus-item>span:nth-child(2){flex:1}.syllabus-item .summary-meter{display:block;margin:6px 0 0}
+
+.admit-cell{white-space:normal;min-width:150px}
+.admit-cell small{display:block;font-size:12px;color:#7d8a99;line-height:1.35}
+.admit-cell small.admit-warn{color:#b5443d}
+.optional-list{display:flex;flex-wrap:wrap;gap:6px 22px;padding:4px 0}
+.optional-note{font-size:12px;color:#8a5a00;margin:8px 0 0}
+.admit-cell button{border:1px solid #4770e3;background:#fff;color:#4770e3;border-radius:7px;font-size:12px;padding:5px 12px}.admit-cell button:disabled{opacity:.6}

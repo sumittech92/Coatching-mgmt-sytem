@@ -25,6 +25,7 @@ import { LibraryPageComponent } from '../client/library/library-page.component';
 import { FeeReminderDialogComponent } from '../client/fee-reminder-dialog.component';
 import { TestDialogComponent } from '../client/modules/test-dialog.component';
 import { MarksDialogComponent } from '../client/modules/marks-dialog.component';
+import { AdmitCardsDialogComponent } from '../client/modules/admit-cards-dialog.component';
 import { SubjectDialogComponent } from '../client/modules/subject-dialog.component';
 import { PeriodDialogComponent } from '../client/modules/period-dialog.component';
 import { SubmissionsDialogComponent } from '../client/modules/submissions-dialog.component';
@@ -33,5 +34,5 @@ import { SyllabusChecklistDialogComponent } from '../client/syllabus/syllabus-ch
 import { SyllabusEditorDialogComponent } from '../client/syllabus/syllabus-editor-dialog.component';
 import { AlbumDialogComponent } from '../client/management/album-dialog.component';
 import { ReportsPageComponent } from '../client/reports/reports-page.component';
-@NgModule({ declarations: [ReportsPageComponent, SubjectDialogComponent, PeriodDialogComponent, SubmissionsDialogComponent, SyllabusPageComponent, SyllabusChecklistDialogComponent, SyllabusEditorDialogComponent, AlbumDialogComponent, TestDialogComponent, MarksDialogComponent, LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
+@NgModule({ declarations: [ReportsPageComponent, SubjectDialogComponent, PeriodDialogComponent, SubmissionsDialogComponent, SyllabusPageComponent, SyllabusChecklistDialogComponent, SyllabusEditorDialogComponent, AlbumDialogComponent, TestDialogComponent, MarksDialogComponent, AdmitCardsDialogComponent, LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
 export class ComponentsModule {}

@@ -35,6 +35,7 @@ export class SubjectDialogComponent {
       code: [subject?.code || '', Validators.maxLength(20)],
       periodsPerWeek: [subject?.periodsPerWeek ?? null, [Validators.min(1), Validators.max(60)]],
       status: [subject?.status || 'active', Validators.required],
+      optional: [!!subject?.optional],
       sections: this.fb.array([])
     });
     this.buildSections();
@@ -73,6 +74,7 @@ export class SubjectDialogComponent {
       courseCode: value.courseCode, name,
       code: String(value.code || '').trim() || null,
       periodsPerWeek: value.periodsPerWeek ? Number(value.periodsPerWeek) : null,
+      optional: !!value.optional,
       sections: this.sections.controls.map(group => ({ batchCode: group.value.batchCode, teacherCode: group.value.teacherCode || null })),
       status: value.status
     };

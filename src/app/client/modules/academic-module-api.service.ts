@@ -92,7 +92,7 @@ export class AcademicModuleApiService {
   private subjectsAdapter(): ModuleApiAdapter {
     let courses: ApiCourse[] = [], batches: ApiBatch[] = [], teachers: ApiTeacher[] = [];
     const toRow = (subject: ApiSubject): ModuleRow => ({
-      id: Number(subject.subjectCode), code: subject.subjectCode, subject, name: subject.name, subjectCode: subject.code || '—',
+      id: Number(subject.subjectCode), code: subject.subjectCode, subject, name: subject.optional ? `${subject.name} (optional)` : subject.name, subjectCode: subject.code || '—',
       className: subject.course?.name || '—',
       teachers: subject.sections.length ? subject.sections.map(section => `${section.name.replace(/^Section\s+/, '')}: ${section.teacher?.fullName || 'not assigned'}`).join(' · ') : 'No sections yet',
       periods: subject.periodsPerWeek ? `${subject.scheduled} scheduled · ${subject.periodsPerWeek} / week per section` : `${subject.scheduled} scheduled`,

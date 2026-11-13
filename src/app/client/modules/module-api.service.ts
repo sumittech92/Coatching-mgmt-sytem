@@ -12,6 +12,7 @@ import { SCHOOL_CLASSES } from '../../core/workspace-terms';
 import { ApiTest, TEST_STATUS_LABELS, TestApiService, TestPayload } from '../../core/test-api.service';
 import { TestDialogComponent, TestDialogData } from './test-dialog.component';
 import { MarksDialogComponent } from './marks-dialog.component';
+import { AdmitCardsDialogComponent } from './admit-cards-dialog.component';
 import { AcademicModuleApiService } from './academic-module-api.service';
 
 /**
@@ -163,7 +164,7 @@ export class ModuleApiService {
         subject: test.papers.map(paper => paper.subject).join(', '),
         date: dates.length > 1 && dates[0] !== dates[dates.length - 1] ? `${day(dates[0])} – ${day(dates[dates.length - 1])}` : day(dates[0]),
         maxMarks: maxMarks.length === 1 ? maxMarks[0] : maxMarks.join(' / '),
-        marksEntered: `${entered} / ${test.students * test.papers.length}`,
+        marksEntered: `${entered} / ${test.papers.reduce((sum, paper) => sum + (paper.students ?? test.students), 0)}`,
         status: TEST_STATUS_LABELS[test.status]
       };
     };
@@ -179,7 +180,7 @@ export class ModuleApiService {
       blocker: () => school ? (courses.length ? '' : 'Add a class under Classes first, then schedule its exams.') : (batches.length ? '' : 'Create a batch first, then schedule its tests.'),
       fields: () => [{ key: 'name', label: school ? 'Exam' : 'Test' }, { key: 'term', label: 'Term' }, { key: 'group', label: school ? 'Class' : 'Batch' }, { key: 'subject', label: 'Subjects' }, { key: 'date', label: 'Date' }, { key: 'maxMarks', label: 'Max marks' }, { key: 'marksEntered', label: 'Marks entered' }, { key: 'status', label: 'Status' }].filter(field => school || field.key !== 'term'),
       edit: row => {
-        const data: TestDialogData = { school, test: row ? testOf(row) : undefined, courses, batches };
+        const data: TestDialogData = { school, test: row ? testOf(row) : undefined, courses, batches, owner: this.auth.role === 'Owner' };
         return this.dialog.open(TestDialogComponent, { width: '780px', maxWidth: 'calc(100vw - 24px)', data }).afterClosed().pipe(
           switchMap((payload: TestPayload | undefined) => !payload ? of(undefined) : (row ? this.tests.update(this.token, String(row['code']), payload) : this.tests.create(this.token, payload)).pipe(map(toRow)))
         );
@@ -192,6 +193,11 @@ export class ModuleApiService {
         if (!test.cancelled && test.papers.some(paper => paper.canEnterMarks)) actions.push({
           label: test.resultsPublished ? 'View marks' : 'Enter marks', icon: 'edit_square',
           run: () => this.dialog.open(MarksDialogComponent, { width: '920px', maxWidth: 'calc(100vw - 24px)', data: { test } }).afterClosed().pipe(switchMap(changed => changed ? reload(row) : of(undefined)))
+        });
+        // School admit cards: the owner sees every student, a class teacher their sections (the backend checks).
+        if (school && !test.cancelled && (this.auth.role === 'Owner' || this.auth.role === 'Teacher')) actions.push({
+          label: 'Admit cards', icon: 'badge',
+          run: () => this.dialog.open(AdmitCardsDialogComponent, { width: '1040px', maxWidth: 'calc(100vw - 24px)', data: { test } }).afterClosed().pipe(switchMap(() => reload(row)))
         });
         if (test.canManage && !test.cancelled) actions.push(test.resultsPublished
           ? { label: 'Unpublish results', icon: 'visibility_off', done: `Results of “${test.name}” moved back to draft.`, run: () => this.tests.publish(this.token, test.testCode, false).pipe(map(toRow)) }

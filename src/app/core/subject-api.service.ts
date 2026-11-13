@@ -13,6 +13,8 @@ export interface ApiSubject {
   name: string;
   code: string | null;
   periodsPerWeek: number | null;
+  /** Elective: only students who choose it sit its exam paper. */
+  optional: boolean;
   status: ApiSubjectStatus;
   course: { courseCode: string; name: string } | null;
   sections: { batchCode: string; name: string; teacher: ApiTeacherRef | null; scheduled: number }[];
@@ -23,6 +25,7 @@ export interface SubjectPayload {
   name: string;
   code: string | null;
   periodsPerWeek: number | null;
+  optional: boolean;
   sections: { batchCode: string; teacherCode: string | null }[];
   status: ApiSubjectStatus;
 }

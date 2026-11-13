@@ -788,6 +788,7 @@
                                     <th>DATES</th>
                                     <th>MAXIMUM MARKS</th>
                                     <th>STATUS</th>
+                                    <th *ngIf="live">ADMIT CARD</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -796,8 +797,16 @@
                                     <td>{{exam.period}}</td>
                                     <td>{{exam.marks}}</td>
                                     <td><app-status-badge [label]="exam.status" [tone]="exam.status==='Completed'||exam.status==='Results out'?'success':exam.status==='Upcoming'?'warning':'neutral'"></app-status-badge></td>
+                                    <td *ngIf="live" class="admit-cell">
+                                        <ng-container *ngIf="exam.admit as admit">
+                                            <button *ngIf="admit.canDownload && isStudentLogin" (click)="downloadAdmitCard(exam.testCode)" [disabled]="admitLoading === exam.testCode">{{admitLoading === exam.testCode ? 'Opening…' : 'Download'}}</button>
+                                            <small *ngIf="admit.canDownload && !isStudentLogin">Available in {{childName}}'s student login</small>
+                                            <small *ngIf="!admit.canDownload" [class.admit-warn]="admit.status === 'fee_pending'">{{admit.message}}</small>
+                                        </ng-container>
+                                        <small *ngIf="!exam.admit">—</small>
+                                    </td>
                                 </tr>
-                                <tr *ngIf="!examSchedule.length"><td colspan="4"><app-empty-state icon="quiz" title="No exams yet" description="Exams the school schedules appear here."></app-empty-state></td></tr>
+                                <tr *ngIf="!examSchedule.length"><td [attr.colspan]="live ? 5 : 4"><app-empty-state icon="quiz" title="No exams yet" description="Exams the school schedules appear here."></app-empty-state></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -807,6 +816,7 @@
                         <div>
                             <h2>Date sheet · {{dateSheetTitle}}</h2>
                             <p *ngIf="!live">Report by 8:40 am · bring your admit card and geometry box</p>
+                            <p *ngIf="live && examTime">Exam time for every paper: {{examTime}}</p>
                         </div><button *ngIf="!live" (click)="download('term1-date-sheet-class9a.pdf')">Download date sheet</button>
                     </div>
                     <div class="table-responsive">
@@ -829,6 +839,19 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+                <div class="portal-panel section-gap" *ngIf="live && portal.optional?.options?.length">
+                    <div class="panel-heading">
+                        <div>
+                            <h2>Optional subjects</h2>
+                            <p>{{isStudentLogin ? 'Choose the optional subjects you take. Only their papers appear on your date sheet and admit card.' : 'Optional subjects ' + childName + ' takes (chosen in the student login or by the class teacher).'}}</p>
+                        </div>
+                        <button *ngIf="isStudentLogin && !portal.optional?.locked" (click)="saveOptional()" [disabled]="savingOptional || !optionalChanged">{{savingOptional ? 'Saving…' : 'Save choice'}}</button>
+                    </div>
+                    <div class="optional-list">
+                        <mat-checkbox *ngFor="let subject of portal.optional?.options" [checked]="optionalPicks.includes(subject)" (change)="toggleOptional(subject, $event.checked)" [disabled]="!isStudentLogin || !!portal.optional?.locked">{{subject}}</mat-checkbox>
+                    </div>
+                    <p class="optional-note" *ngIf="portal.optional?.message">{{portal.optional?.message}}</p>
                 </div>
             </section>
             <section *ngSwitchCase="'unavailable'">

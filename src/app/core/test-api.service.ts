@@ -7,7 +7,11 @@ import { AuthApiService } from './auth-api.service';
 export type ApiTestStatus = 'scheduled' | 'completed' | 'published' | 'cancelled';
 export const TEST_STATUS_LABELS: Record<ApiTestStatus, string> = { scheduled: 'Scheduled', completed: 'Completed', published: 'Results published', cancelled: 'Cancelled' };
 
-export interface ApiTestPaper { paperId: string; subject: string; date: string; maxMarks: number; passMarks: number | null; entered: number; canEnterMarks: boolean; }
+/** `students` sit this paper (an optional subject's paper only those who chose it). */
+export interface ApiTestPaper { paperId: string; subject: string; date: string; maxMarks: number; passMarks: number | null; entered: number; canEnterMarks: boolean; optional: boolean; students: number; }
+
+/** School admit card settings (owner / principal). `allowed` = students let through despite pending fees. */
+export interface ApiAdmitSettings { released: boolean; feeRequired: boolean; instructions: string | null; }
 
 /**
  * A coaching test (one batch, one subject) or a school exam (a class, optional sections and a date sheet of papers).
@@ -23,6 +27,10 @@ export interface ApiTest {
   batches: { batchCode: string; name: string }[];
   papers: ApiTestPaper[];
   students: number;
+  /** School: one exam time for every paper (24-hour "HH:mm"). */
+  startTime: string | null;
+  endTime: string | null;
+  admitCard: (ApiAdmitSettings & { allowed: number }) | null;
   status: ApiTestStatus;
   cancelled: boolean;
   resultsPublished: boolean;
@@ -36,7 +44,33 @@ export interface TestPayload {
   courseCode?: string | null;
   batchCodes: string[];
   papers: { paperId?: string; subject: string; date: string; maxMarks: number; passMarks?: number | null }[];
+  startTime?: string | null;
+  endTime?: string | null;
+  /** Sent by the owner only; the backend refuses changes from teachers. */
+  admitCard?: Partial<ApiAdmitSettings>;
   cancelled?: boolean;
+}
+
+export type AdmitStatus = 'eligible' | 'allowed' | 'fee_pending' | 'not_released' | 'cancelled';
+export const ADMIT_STATUS_LABELS: Record<AdmitStatus, string> = { eligible: 'Can download', allowed: 'Allowed by principal', fee_pending: 'Fee pending', not_released: 'Not released', cancelled: 'Cancelled' };
+
+/** One student on the Admit cards screen (owner: every student; class teacher: their sections). */
+export interface ApiAdmitStudent {
+  studentCode: string; fullName: string | null; rollNumber: string | null; className: string; section: string;
+  optionalSubjects: string[]; papers: number; feeDue: number; feePeriods: string[]; allowed: boolean; status: AdmitStatus;
+  downloads: number; lastDownload: { name: string | null; role: string; at: string } | null;
+}
+export interface ApiAdmitList {
+  testCode: string; name: string; term: string | null; className: string | null; firstPaper: string; startTime: string | null; endTime: string | null; cancelled: boolean;
+  settings: ApiAdmitSettings; canAllow: boolean; optionalSubjects: string[]; students: ApiAdmitStudent[];
+}
+/** What an admit card prints (shared by staff and the student portal). */
+export interface AdmitCard {
+  admitNo: string;
+  exam: { testCode: string; name: string; term: string | null; className: string; startTime: string | null; endTime: string | null; instructions: string | null };
+  student: { studentCode: string; fullName: string | null; className: string; section: string; rollNumber: string | null; fatherName: string | null; motherName: string | null; dateOfBirth: string | null; gender: string | null; profileImage: string | null };
+  papers: { subject: string; date: string; maxMarks: number }[];
+  issuedAt: string;
 }
 
 export interface ApiMarkRow { studentCode: string; fullName: string | null; rollNo: string | null; course: string; batch: string; marks: number | null; absent: boolean; remarks: string | null; }
@@ -97,6 +131,24 @@ export class TestApiService {
 
   results(accessToken: string, status?: 'published' | 'draft'): Observable<ApiResult[]> {
     return this.request(this.http.get<ApiResponse<ApiResult[]>>(`${this.base}/results`, { headers: this.headers(accessToken), params: status ? { status } : {} }));
+  }
+
+  admitCards(accessToken: string, testCode: string): Observable<ApiAdmitList> {
+    return this.request(this.http.get<ApiResponse<ApiAdmitList>>(`${this.base}/${testCode}/admit-cards`, { headers: this.headers(accessToken) }));
+  }
+
+  /** Owner only: let a fee-pending student download their own admit card. */
+  allowAdmitCard(accessToken: string, testCode: string, studentCode: string, allowed: boolean): Observable<ApiAdmitList> {
+    return this.request(this.http.post<ApiResponse<ApiAdmitList>>(`${this.base}/${testCode}/admit-cards/allow`, { studentCode, allowed }, { headers: this.headers(accessToken) }));
+  }
+
+  /** Class teacher / owner: admit cards for these students (each download is logged). */
+  downloadAdmitCards(accessToken: string, testCode: string, studentCodes: string[]): Observable<AdmitCard[]> {
+    return this.request(this.http.post<ApiResponse<AdmitCard[]>>(`${this.base}/${testCode}/admit-cards/download`, { studentCodes }, { headers: this.headers(accessToken) }));
+  }
+
+  setOptionalSubjects(accessToken: string, testCode: string, studentCode: string, subjects: string[]): Observable<ApiAdmitList> {
+    return this.request(this.http.put<ApiResponse<ApiAdmitList>>(`${this.base}/${testCode}/admit-cards/${studentCode}/subjects`, { subjects }, { headers: this.headers(accessToken) }));
   }
 
   private headers(accessToken: string): HttpHeaders { return new HttpHeaders({ accesstoken: accessToken }); }
