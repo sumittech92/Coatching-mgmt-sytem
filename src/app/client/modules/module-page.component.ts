@@ -13,7 +13,7 @@ import { RecordField } from '../management/record-dialog.component';
 type Tone = 'success' | 'warning' | 'danger' | 'neutral' | 'info';
 const TONES: Record<string, Tone> = {
   active: 'success', current: 'success', published: 'success', submitted: 'success', completed: 'neutral', closed: 'neutral',
-  upcoming: 'info', scheduled: 'info', 'results published': 'success', assigned: 'info', draft: 'warning', inactive: 'neutral', cancelled: 'danger'
+  upcoming: 'info', scheduled: 'info', overdue: 'danger', 'results published': 'success', assigned: 'info', draft: 'warning', inactive: 'neutral', cancelled: 'danger'
 };
 
 /** Generic academic page (Classes, Sections, Homework, Tests, Marks entry…) driven by module-registry. */
@@ -96,7 +96,7 @@ export class ModulePageComponent implements OnInit {
         next: saved => {
           if (!saved) return;
           if (row) Object.assign(row, saved); else this.config.rows = [saved, ...this.config.rows];
-          this.toast.success(`${this.capital(this.config.singular)} “${saved['name']}” ${row ? 'updated' : 'scheduled'}.`);
+          this.toast.success(`${this.capital(this.config.singular)} “${saved['name'] || saved['title'] || this.config.singular}” ${row ? 'updated' : this.api?.createdVerb || 'added'}.`);
         },
         error: (error: Error) => this.toast.error(error.message)
       });
@@ -143,7 +143,8 @@ export class ModulePageComponent implements OnInit {
     this.api!.save(value, row).subscribe({
       next: saved => {
         if (row) Object.assign(row, saved); else this.config.rows = [...this.config.rows, saved];
-        this.toast.success(`${this.capital(this.config.singular)} “${saved['name'] || saved['title'] || this.config.singular}” ${row ? 'updated' : 'added'}.`);
+        this.toast.success(`${this.capital(this.config.singular)} “${saved['name'] || saved['title'] || this.config.singular}” ${row ? 'updated' : this.api?.createdVerb || 'added'}.`);
+        if (this.api?.refreshAfterSave) this.load(this.config);
       },
       // Reopen with the entered values so nothing is lost.
       error: (error: Error) => { this.toast.error(error.message); this.open(row, value); }

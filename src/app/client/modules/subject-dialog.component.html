@@ -1,0 +1,70 @@
+<h2 mat-dialog-title class="dialog-title">{{ data.subject ? 'Edit' : 'Add' }} subject</h2>
+<p class="dialog-subtitle">Pick the class, then choose who teaches the subject in each section.</p>
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="form" class="row g-2">
+    <div class="col-md-6">
+      <label class="field-label">Class *</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-select formControlName="courseCode" placeholder="Select class" (selectionChange)="buildSections()">
+          <mat-option *ngFor="let course of data.courses" [value]="course.courseCode">{{ course.name }}</mat-option>
+        </mat-select>
+        <mat-error>Choose the class.</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="col-md-6">
+      <label class="field-label">Subject *</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-select formControlName="name" placeholder="Select subject">
+          <mat-option *ngFor="let option of subjectOptions" [value]="option">{{ option }}</mat-option>
+          <mat-option [value]="other">Other…</mat-option>
+        </mat-select>
+        <mat-error>Choose the subject.</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="col-md-6" *ngIf="custom">
+      <label class="field-label">Subject name *</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput formControlName="customName" placeholder="e.g. French"></mat-form-field>
+    </div>
+    <div class="col-md-6">
+      <label class="field-label">Subject code</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput formControlName="code" placeholder="e.g. MATH-09"></mat-form-field>
+    </div>
+    <div class="col-md-3 col-6">
+      <label class="field-label">Periods / week</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput type="number" formControlName="periodsPerWeek" placeholder="e.g. 6"><mat-error>1 – 60</mat-error></mat-form-field>
+    </div>
+    <div class="col-md-3 col-6">
+      <label class="field-label">Status *</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-select formControlName="status"><mat-option value="active">Active</mat-option><mat-option value="inactive">Inactive</mat-option></mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="col-12"><h3 class="sheet-title">Teachers by section</h3></div>
+    <div class="col-12" *ngIf="!form.value.courseCode"><small class="field-help">Choose a class to see its sections.</small></div>
+    <div class="col-12" *ngIf="form.value.courseCode && !sections.length"><small class="field-help">This class has no sections yet. Add them under Sections; you can assign teachers later.</small></div>
+    <ng-container formArrayName="sections">
+      <div class="col-12 paper-row" *ngFor="let section of sections.controls; let i = index; let first = first" [formGroupName]="i">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-4"><strong>{{ section.value.name }}</strong><small class="field-help" *ngIf="section.value.inactive"> · inactive</small></div>
+          <div class="col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-select formControlName="teacherCode" placeholder="Not assigned">
+                <mat-option value="">Not assigned</mat-option>
+                <mat-option *ngFor="let teacher of teachers" [value]="teacher.teacherCode">{{ teacher.fullName }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="col-md-2" *ngIf="first && sections.length > 1">
+            <button mat-button type="button" [disabled]="!section.value.teacherCode" (click)="assignAll(section.value.teacherCode)">Use for all</button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+    <div class="col-12"><small class="field-help">Assigned teachers get this subject on their profile, so they can enter its exam marks.</small></div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()">{{ data.subject ? 'Save changes' : 'Add subject' }}</button>
+</mat-dialog-actions>

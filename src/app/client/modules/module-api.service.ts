@@ -12,6 +12,7 @@ import { SCHOOL_CLASSES } from '../../core/workspace-terms';
 import { ApiTest, TEST_STATUS_LABELS, TestApiService, TestPayload } from '../../core/test-api.service';
 import { TestDialogComponent, TestDialogData } from './test-dialog.component';
 import { MarksDialogComponent } from './marks-dialog.component';
+import { AcademicModuleApiService } from './academic-module-api.service';
 
 /**
  * Backend source for a ModulePageComponent page. `load` fills the rows (and any option lists the form needs),
@@ -33,6 +34,10 @@ export interface ModuleApiAdapter {
   canEditRow?(row: ModuleRow): boolean;
   /** False hides the page's add button (e.g. Marks entry, where rows come from exams). */
   canCreate?: boolean;
+  /** Read every row again after a save (when saving one row changes others, e.g. the current session). */
+  refreshAfterSave?: boolean;
+  /** Word in the "… added" toast for a new row (default "added"). */
+  createdVerb?: string;
 }
 
 export interface ModuleRowAction { label: string; icon: string; run(): Observable<ModuleRow | undefined>; /** Toast after it succeeds. */ done?: string; }
@@ -45,7 +50,7 @@ const list = (value: unknown): string[] => String(value || '').split(',').map(it
 /** Which module pages are API-backed for a signed-in (non-demo) account. Demo sessions keep the sample rows. */
 @Injectable({ providedIn: 'root' })
 export class ModuleApiService {
-  constructor(private auth: MockAuthService, private courses: CourseApiService, private batches: BatchApiService, private teachers: TeacherApiService, private tests: TestApiService, private dialog: MatDialog) {}
+  constructor(private auth: MockAuthService, private courses: CourseApiService, private batches: BatchApiService, private teachers: TeacherApiService, private tests: TestApiService, private dialog: MatDialog, private academic: AcademicModuleApiService) {}
 
   adapter(key: string, type: BusinessType): ModuleApiAdapter | undefined {
     if (!this.auth.token) return undefined;
@@ -53,7 +58,7 @@ export class ModuleApiService {
     if (type === 'school' && key === 'sections') return this.schoolSections();
     if ((type === 'coaching' && key === 'tests') || (type === 'school' && key === 'exams')) return this.testsAdapter(type === 'school', true);
     if (type === 'school' && key === 'marks') return this.testsAdapter(true, false);
-    return undefined;
+    return this.academic.adapter(key, type);
   }
 
   private get token(): string { return this.auth.token!; }
@@ -165,7 +170,7 @@ export class ModuleApiService {
     const reload = (row: ModuleRow) => this.tests.list(this.token).pipe(map(list => { const test = list.find(item => item.testCode === row['code']); return test ? toRow(test) : undefined; }));
     const testOf = (row: ModuleRow) => row['test'] as ApiTest;
     return {
-      canCreate: withCreate,
+      canCreate: withCreate, createdVerb: 'scheduled',
       columns: [{ key: 'name', label: school ? 'Exam' : 'Test' }, { key: 'group', label: school ? 'Class' : 'Batch' }, { key: 'subject', label: school ? 'Subjects' : 'Subject' }, { key: 'date', label: 'Date' }, { key: 'maxMarks', label: 'Max marks' }, { key: 'marksEntered', label: 'Marks entered' }, { key: 'status', label: 'Status', badge: true }],
       load: () => forkJoin({ tests: this.tests.list(this.token), courses: this.courses.list(this.token), batches: this.batches.list(this.token, { status: 'active' }) }).pipe(
         tap(result => { courses = result.courses.filter(course => course.status === 'active'); batches = result.batches; }),

@@ -1,0 +1,49 @@
+<h2 mat-dialog-title class="dialog-title">{{ data.period ? 'Edit' : 'Add' }} period</h2>
+<p class="dialog-subtitle">The teacher comes from the subject's teacher for this section (set under Subjects).</p>
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="form" class="row g-2">
+    <div class="col-md-6">
+      <label class="field-label">Class / section *</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-select formControlName="batchCode" placeholder="Select section" (selectionChange)="sectionChanged()">
+          <mat-option *ngFor="let batch of data.batches" [value]="batch.batchCode">{{ label(batch) }}</mat-option>
+        </mat-select>
+        <mat-error>Choose the section.</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="col-md-6">
+      <label class="field-label">Subject *</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-select formControlName="subjectCode" [placeholder]="section ? 'Select subject' : 'Choose a section first'">
+          <mat-option *ngFor="let subject of subjects" [value]="subject.subjectCode">{{ subject.name }} · {{ teacherFor(subject) }}</mat-option>
+        </mat-select>
+        <mat-error>Choose the subject.</mat-error>
+      </mat-form-field>
+      <small class="field-help" *ngIf="section && !subjects.length">No subjects for {{ section.course?.name }} yet. Add them under Subjects.</small>
+      <ng-container *ngFor="let subject of subjects"><small class="field-help" *ngIf="subject.subjectCode === form.value.subjectCode">Scheduled: {{ scheduledFor(subject) }}</small></ng-container>
+    </div>
+    <div class="col-md-4">
+      <label class="field-label">Day *</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-select formControlName="day"><mat-option *ngFor="let day of days" [value]="day.value">{{ day.label }}</mat-option></mat-select>
+      </mat-form-field>
+    </div>
+    <div class="col-md-4 col-6">
+      <label class="field-label">Starts *</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput type="time" formControlName="startTime"><mat-error>Pick the start time.</mat-error></mat-form-field>
+    </div>
+    <div class="col-md-4 col-6">
+      <label class="field-label">Ends *</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput type="time" formControlName="endTime"><mat-error>Pick the end time.</mat-error></mat-form-field>
+    </div>
+    <div class="col-md-6">
+      <label class="field-label">Room</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput formControlName="room" [placeholder]="section?.room ? 'Section room: ' + section?.room : 'e.g. Lab 1'"></mat-form-field>
+      <small class="field-help">Leave empty to use the section's room.</small>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()">{{ data.period ? 'Save changes' : 'Add period' }}</button>
+</mat-dialog-actions>

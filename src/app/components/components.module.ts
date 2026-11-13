@@ -25,7 +25,9 @@ import { LibraryPageComponent } from '../client/library/library-page.component';
 import { FeeReminderDialogComponent } from '../client/fee-reminder-dialog.component';
 import { TestDialogComponent } from '../client/modules/test-dialog.component';
 import { MarksDialogComponent } from '../client/modules/marks-dialog.component';
+import { SubjectDialogComponent } from '../client/modules/subject-dialog.component';
+import { PeriodDialogComponent } from '../client/modules/period-dialog.component';
 import { AlbumDialogComponent } from '../client/management/album-dialog.component';
 import { ReportsPageComponent } from '../client/reports/reports-page.component';
-@NgModule({ declarations: [ReportsPageComponent, AlbumDialogComponent, TestDialogComponent, MarksDialogComponent, LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
+@NgModule({ declarations: [ReportsPageComponent, SubjectDialogComponent, PeriodDialogComponent, AlbumDialogComponent, TestDialogComponent, MarksDialogComponent, LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, ReceiptPreviewComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
 export class ComponentsModule {}
