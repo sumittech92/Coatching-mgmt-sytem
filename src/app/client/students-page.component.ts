@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { AbstractControl, FormBuilder, ValidationErrors, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { PageEvent } from "@angular/material/paginator";
+import { map, of, switchMap } from "rxjs";
 import * as XLSX from "xlsx";
 import { MockDataService } from "../core/mock-data.service";
 import { MockStudent } from "../core/mock-data/management-data";
@@ -10,7 +11,9 @@ import { TenantContextService } from "../core/tenant-context.service";
 import { MockAuthService } from "../core/mock-auth.service";
 import { AppValidators, normalizeMobile, validationMessage } from "../core/app-validators";
 import { ToastService } from "../core/toast.service";
-import { StudentApiService, CreateStudentPayload } from "../core/student-api.service";
+import { StudentApiService, CreateStudentPayload, ApiStudent } from "../core/student-api.service";
+import { MediaApiService } from "../core/media-api.service";
+import { isoDay } from "../core/api-client";
 import { CourseApiService } from "../core/course-api.service";
 import { ApiBatch, BatchApiService } from "../core/batch-api.service";
 import { ADMISSION_QUOTAS, COACHING_BOARDS, SCHOOL_TERMS } from "../core/workspace-terms";
@@ -70,6 +73,7 @@ export class StudentsPageComponent implements OnInit {
     rollNo: ["", Validators.maxLength(30)],
     semester: [""],
     quota: [""],
+    status: ["Active", AppValidators.required],
   });
   readonly boards = COACHING_BOARDS;
   readonly schoolTerms = SCHOOL_TERMS;
@@ -86,7 +90,19 @@ export class StudentsPageComponent implements OnInit {
     private studentApi: StudentApiService,
     private courseApi: CourseApiService,
     private batchApi: BatchApiService,
+    private media: MediaApiService,
   ) {}
+  /** Students from crm-backend (signed-in owner or teacher); demo sessions use the sample list. */
+  apiRows: MockStudent[] = [];
+  loading = false;
+  /** Photo picked in the form, uploaded when the student is saved. */
+  private photoFile?: File;
+  get live(): boolean {
+    return !!this.auth.token;
+  }
+  get students(): MockStudent[] {
+    return this.live ? this.apiRows : this.data.students;
+  }
   /** The owner's active batches / sections from the Batches module; empty until any are added. */
   apiBatches: ApiBatch[] = [];
   /** The owner's active courses / classes from the Courses module; empty until any are added. */
@@ -117,23 +133,75 @@ export class StudentsPageComponent implements OnInit {
   ngOnInit(): void {
     this.courseApi.activeNames(this.auth.token).subscribe((names) => (this.apiCourseNames = names));
     this.batchApi.active(this.auth.token).subscribe((batches) => (this.apiBatches = batches));
-    this.route.paramMap.subscribe((params) => {
-      const id = Number(params.get("id"));
-      const path = this.router.url;
-      this.mode = path.endsWith("/add") ? "add" : id ? (path.includes("/edit") ? "edit" : "view") : "list";
-      this.selected = id ? this.data.students.find((student) => student.id === id) : undefined;
-      const password = this.form.controls.password;
-      password.setValidators(this.mode === "add" ? [AppValidators.required, AppValidators.password] : null);
-      password.updateValueAndValidity();
-      if (this.selected && this.mode !== "list")
-        this.form.patchValue({
-          ...this.selected,
-          phone: normalizeMobile(this.selected.phone),
-          parentPhone: normalizeMobile(this.selected.phone),
-          course: StudentsPageComponent.splitList(this.selected.course),
-          batch: StudentsPageComponent.splitList(this.selected.batch),
-        });
+    this.route.paramMap.subscribe(() => this.applyRoute());
+    if (this.live) this.load();
+  }
+  /** Reads the students again (after a save) and re-applies the open view / edit. */
+  private load(): void {
+    this.loading = true;
+    this.studentApi.list(this.auth.token!).subscribe({
+      next: (students) => {
+        this.loading = false;
+        this.apiRows = students.map((student) => this.toRow(student));
+        if (this.mode !== "list") this.applyRoute();
+      },
+      error: (error: Error) => {
+        this.loading = false;
+        this.toast.error(error.message);
+      },
     });
+  }
+  private applyRoute(): void {
+    const id = Number(this.route.snapshot.paramMap.get("id"));
+    const path = this.router.url;
+    this.mode = path.endsWith("/add") ? "add" : id ? (path.includes("/edit") ? "edit" : "view") : "list";
+    this.selected = id ? this.students.find((student) => student.id === id) : undefined;
+    this.photo = "";
+    this.photoFile = undefined;
+    const password = this.form.controls.password;
+    password.setValidators(this.mode === "add" ? [AppValidators.required, AppValidators.password] : null);
+    password.updateValueAndValidity();
+    if (this.mode === "add") this.form.reset({ course: [], batch: [], monthlyFee: 0, discount: 0, status: "Active" });
+    if (this.selected && this.mode !== "list")
+      this.form.patchValue({
+        ...this.selected,
+        phone: normalizeMobile(this.selected.studentPhone ?? this.selected.phone),
+        parentPhone: normalizeMobile(this.selected.parentPhone ?? this.selected.phone),
+        course: StudentsPageComponent.splitList(this.selected.course),
+        batch: StudentsPageComponent.splitList(this.selected.batch),
+      });
+  }
+  /** API student -> the row / form shape this page uses. */
+  private toRow(student: ApiStudent): MockStudent {
+    const school = student.workType === "school";
+    const info = school ? student.schoolInfo : student.coachingInfo;
+    const name = student.fullName || "—";
+    const section = student.schoolInfo?.section || "";
+    const parentPhone = student.parentsInfo?.phoneNumber || "";
+    const feeStatus = { paid: "Paid", pending: "Pending", overdue: "Overdue" } as const;
+    return {
+      id: Number(student.studentCode), code: student.studentCode, studentId: student.studentCode, name,
+      father: student.parentsInfo?.fatherName || "", mother: student.parentsInfo?.motherName || "",
+      phone: parentPhone || student.phoneNumber || "", studentPhone: student.phoneNumber || "", parentPhone,
+      email: student.email || "",
+      course: (school ? student.schoolInfo?.className : student.coachingInfo?.course || student.coachingInfo?.className) || "",
+      // Schools may store the section as "A"; the form lists "Section A".
+      batch: school ? section.split(",").map((item) => item.trim()).filter(Boolean).map((item) => (/^section/i.test(item) ? item : `Section ${item}`)).join(", ") : student.coachingInfo?.batchTiming || "",
+      admission: info?.admissionDate ? info.admissionDate.slice(0, 10) : "",
+      feeStatus: feeStatus[student.feeStatus || "paid"], attendance: student.attendance,
+      status: student.status === "inactive" ? "Inactive" : "Active",
+      photo: student.profileImage || name.split(/\s+/).map((word) => word[0]).join("").slice(0, 2).toUpperCase(),
+      dob: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : "",
+      gender: student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : "",
+      address: student.address?.addressLine || "", city: student.address?.city || "", state: student.address?.state || "", pincode: student.address?.pincode || "",
+      monthlyFee: student.feePlan?.amount ?? 0, discount: student.feePlan?.discount ?? 0,
+      school: student.coachingInfo?.schoolName || "", board: student.coachingInfo?.board || "",
+      rollNo: student.schoolInfo?.rollNumber || "", semester: student.schoolInfo?.currentTerm || "", quota: student.schoolInfo?.admissionCategory || "",
+    };
+  }
+  /** Uploaded photos are URLs; demo and fallback photos are initials. */
+  isImage(photo: string): boolean {
+    return /^(data:image|https?:)/.test(photo);
   }
   errorFor(name: string, label: string): string {
     const control = this.form.get(name);
@@ -144,14 +212,19 @@ export class StudentsPageComponent implements OnInit {
     return validationMessage(control, label);
   }
   get activeCount(): number {
-    return this.data.students.filter((student) => student.status === "Active").length;
+    return this.students.filter((student) => student.status === "Active").length;
   }
   get pendingCount(): number {
-    return this.data.students.filter((student) => student.feeStatus !== "Paid").length;
+    return this.students.filter((student) => student.feeStatus !== "Paid").length;
+  }
+  /** Average over students with attendance taken. */
+  get avgAttendance(): string {
+    const marked = this.students.map((student) => student.attendance).filter((value): value is number => value !== null && value !== undefined);
+    return marked.length ? `${Math.round(marked.reduce((sum, value) => sum + value, 0) / marked.length)}%` : "—";
   }
   get filtered(): MockStudent[] {
     const q = this.search.trim().toLowerCase();
-    return this.data.students.filter(
+    return this.students.filter(
       (student) =>
         (!q || `${student.name} ${student.studentId} ${student.phone} ${student.father}`.toLowerCase().includes(q)) &&
         (!this.batch || StudentsPageComponent.splitList(student.batch).includes(this.batch)) &&
@@ -188,10 +261,19 @@ export class StudentsPageComponent implements OnInit {
         destructive: true,
       })
       .subscribe((accepted) => {
-        if (accepted) {
-          this.data.students = this.data.students.filter((item) => item.id !== student.id);
-          this.toast.success(`Student “${student.name}” deleted.`);
+        if (!accepted) return;
+        if (this.live) {
+          this.studentApi.remove(this.auth.token!, student.code!).subscribe({
+            next: () => {
+              this.apiRows = this.apiRows.filter((item) => item.id !== student.id);
+              this.toast.success(`Student “${student.name}” deleted.`);
+            },
+            error: (error: Error) => this.toast.error(error.message),
+          });
+          return;
         }
+        this.data.students = this.data.students.filter((item) => item.id !== student.id);
+        this.toast.success(`Student “${student.name}” deleted.`);
       });
   }
   save(): void {
@@ -227,35 +309,53 @@ export class StudentsPageComponent implements OnInit {
       monthlyFee: Number(value.monthlyFee) || 0,
       discount: Number(value.discount) || 0,
       feeStatus: "Paid" as const,
+      status: value.status === "Inactive" ? ("Inactive" as const) : ("Active" as const),
     };
+    if (this.live) {
+      this.saveLive(record, password || "");
+      return;
+    }
     if (this.mode === "edit" && this.selected) {
-      // There is no update API yet, so edits stay in the local list.
+      // Demo session: edits stay in the local list.
       Object.assign(this.selected, record, this.photo ? { photo: this.photo } : {});
       this.toast.success("Changes saved.");
       this.closeForm();
       return;
     }
-    const token = this.auth.token;
-    if (!token) {
-      this.toast.error("Sign in with an Owner account to add students.");
-      return;
-    }
-    this.saving = true;
-    this.studentApi.create(token, this.createPayload(record, password || "")).subscribe({
-      next: () => {
-        this.saving = false;
-        // There is no list API yet, so the new student is also added to the local list.
-        this.data.addStudent({ ...record, photo: this.photo });
-        this.toast.success(`Student “${name}” added.`);
-        this.closeForm();
-      },
-      error: (error: Error) => {
-        this.saving = false;
-        this.toast.error(error.message);
-      },
-    });
+    this.data.addStudent({ ...record, photo: this.photo });
+    this.toast.success(`Student “${name}” added.`);
+    this.closeForm();
   }
-  private createPayload(record: Record<string, any>, password: string): CreateStudentPayload {
+  /** Uploads a new photo (if picked), then creates or updates the student in crm-backend and reloads the list. */
+  private saveLive(record: Record<string, any>, password: string): void {
+    const token = this.auth.token!;
+    const editing = this.mode === "edit" && this.selected;
+    const keptPhoto = editing && this.isImage(this.selected!.photo) ? this.selected!.photo : "";
+    this.saving = true;
+    const photo$ = this.photoFile ? this.media.uploadPhoto(token, this.photoFile).pipe(map((saved) => saved.url)) : of(keptPhoto);
+    photo$
+      .pipe(
+        switchMap((profileImage) => {
+          const payload = this.createPayload(record, password, profileImage);
+          if (!editing) return this.studentApi.create(token, payload);
+          const { password: _unused, ...update } = payload;
+          return this.studentApi.update(token, this.selected!.code!, update);
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.saving = false;
+          this.toast.success(editing ? "Changes saved." : `Student “${record["name"]}” added.`);
+          this.load();
+          this.closeForm();
+        },
+        error: (error: Error) => {
+          this.saving = false;
+          this.toast.error(error.message);
+        },
+      });
+  }
+  private createPayload(record: Record<string, any>, password: string, profileImage = ""): CreateStudentPayload {
     const parentPhone = normalizeMobile(this.form.controls.parentPhone.value || "");
     const gender = String(record["gender"]).toLowerCase();
     const academic = this.isSchool
@@ -287,9 +387,11 @@ export class StudentsPageComponent implements OnInit {
       countryCode: "+91",
       phoneNumber: normalizeMobile(this.form.controls.phone.value || ""),
       password,
-      // No upload API yet: the photo stays in the local list only.
-      profileImage: "",
+      profileImage,
       gender: ["male", "female", "other"].includes(gender) ? (gender as "male" | "female" | "other") : null,
+      dateOfBirth: record["dob"] || null,
+      status: record["status"] === "Inactive" ? "inactive" : "active",
+      feePlan: { amount: Number(record["monthlyFee"]) || 0, discount: Number(record["discount"]) || 0 },
       parentsInfo: {
         fatherName: record["father"] || null,
         motherName: record["mother"] || null,
@@ -308,10 +410,11 @@ export class StudentsPageComponent implements OnInit {
   private static splitList(value: string | null | undefined): string[] {
     return (value || "").split(", ").filter(Boolean);
   }
+  /** YYYY-MM-DD in local time (toISOString would move a picked date a day back in IST). */
   private dateValue(value: unknown): string {
     if (!value) return "";
     const date = value instanceof Date ? value : new Date(String(value));
-    return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+    return Number.isNaN(date.getTime()) ? "" : isoDay(date);
   }
   onPhoto(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -328,6 +431,7 @@ export class StudentsPageComponent implements OnInit {
       return;
     }
     const reader = new FileReader();
+    this.photoFile = file;
     reader.onload = () => {
       this.photo = String(reader.result || "");
       this.toast.success("Photo added.");
@@ -339,7 +443,7 @@ export class StudentsPageComponent implements OnInit {
       this.toast.error("No students to export.");
       return;
     }
-    const rows = this.filtered.map(({ photo, ...student }) => student);
+    const rows = this.filtered.map(({ photo, id, code, ...student }) => student);
     const sheet = XLSX.utils.json_to_sheet(rows);
     const book = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(book, sheet, "Students");

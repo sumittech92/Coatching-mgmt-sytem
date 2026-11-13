@@ -44,7 +44,7 @@
 <ng-container *ngIf="mode === 'list'">
     <div class="row g-3 mb-3">
         <div class="col-6 col-xl-3">
-            <app-stat-card label="Total students" [value]="data.students.length.toString()"
+            <app-stat-card label="Total students" [value]="students.length.toString()"
                 icon="groups"></app-stat-card>
         </div>
         <div class="col-6 col-xl-3">
@@ -54,7 +54,7 @@
             <app-stat-card label="Fees pending" [value]="pendingCount.toString()" icon="payments"></app-stat-card>
         </div>
         <div class="col-6 col-xl-3">
-            <app-stat-card label="Avg. attendance" value="90%" icon="event_available"></app-stat-card>
+            <app-stat-card label="Avg. attendance" [value]="avgAttendance" icon="event_available"></app-stat-card>
         </div>
     </div>
     <mat-card class="list-card"><mat-card-content>
@@ -93,9 +93,9 @@
                         <tr *ngFor="let student of visible">
                             <td>
                                 <div class="student-cell">
-                                    <img class="photo" *ngIf="student.photo.startsWith('data:image')"
+                                    <img class="photo" *ngIf="isImage(student.photo)"
                                         [src]="student.photo" [alt]="student.name" /><span class="photo"
-                                        *ngIf="!student.photo.startsWith('data:image')">{{ student.photo
+                                        *ngIf="!isImage(student.photo)">{{ student.photo
                                         }}</span><span><strong>{{ student.name }}</strong><small>{{ student.email
                                             }}</small></span>
                                 </div>
@@ -118,9 +118,9 @@
                   "></app-status-badge>
                             </td>
                             <td>
-                                <span class="attendance">{{ student.attendance }}%</span>
+                                <span class="attendance">{{ student.attendance === null ? "—" : student.attendance + "%" }}</span>
                             </td>
-                            <td><app-status-badge [label]="student.status" tone="success"></app-status-badge></td>
+                            <td><app-status-badge [label]="student.status" [tone]="student.status === 'Active' ? 'success' : 'neutral'"></app-status-badge></td>
                             <td>
                                 <button mat-icon-button [matMenuTriggerFor]="actions" aria-label="Student actions">
                                     <mat-icon>more_horiz</mat-icon></button><mat-menu #actions="matMenu"><button
@@ -133,17 +133,18 @@
                                     </button></mat-menu>
                             </td>
                         </tr>
-                        <tr *ngIf="!filtered.length">
-                            <td colspan="7">
+                        <tr *ngIf="!filtered.length && !loading">
+                            <td colspan="9">
                                 <app-empty-state title="No students found"
-                                    description="Try adjusting your search or filters, or add a new student."><button
-                                        mat-flat-button color="primary" (click)="goAdd()">Add
+                                    [description]="isTeacher ? 'Students of your sections and batches appear here.' : 'Try adjusting your search or filters, or add a new student.'"><button
+                                        mat-flat-button color="primary" *ngIf="!isTeacher" (click)="goAdd()">Add
                                         student</button></app-empty-state>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+            <app-loading-state *ngIf="loading" label="Loading students…"></app-loading-state>
             <mat-paginator [length]="filtered.length" [pageIndex]="pageIndex" [pageSize]="pageSize"
                 [pageSizeOptions]="[5, 10, 25]" (page)="pageChanged($event)"
                 aria-label="Student list pages"></mat-paginator>
@@ -164,8 +165,8 @@
                         <div class="col-12">
                             <label class="field-label">Student photo</label>
                             <div class="photo-upload">
-                                <span class="photo large-photo" *ngIf="!photo">{{ selected?.photo || "＋" }}</span><img
-                                    class="large-photo" *ngIf="photo" [src]="photo" alt="Student preview" />
+                                <span class="photo large-photo" *ngIf="!photo && !isImage(selected?.photo || '')">{{ selected?.photo || "＋" }}</span><img
+                                    class="large-photo" *ngIf="photo || isImage(selected?.photo || '')" [src]="photo || selected?.photo" alt="Student preview" />
                                 <div>
                                     <strong>Upload a photo</strong><small>JPG or PNG, up to 10 MB</small><label
                                         class="upload-link" *ngIf="mode !== 'view'">Choose file<input type="file"
@@ -322,6 +323,11 @@
                                             [value]="q">{{ q }}</mat-option></mat-select></mat-form-field>
                             </div>
                         </ng-container>
+                        <div class="col-md-6">
+                            <label class="field-label">Status *</label><mat-form-field appearance="outline"
+                                class="w-100"><mat-select formControlName="status"><mat-option value="Active">Active</mat-option><mat-option
+                                        value="Inactive">Inactive</mat-option></mat-select></mat-form-field>
+                        </div>
                     </div>
                 </section>
                 <section class="form-section">
@@ -361,7 +367,7 @@
                         </div>
                     </div>
                 </section>
-                <section class="form-section last-section">
+                <section class="form-section last-section" *ngIf="!isTeacher">
                     <div class="form-section-title">
                         <span class="section-icon green-icon"><mat-icon>payments</mat-icon></span>
                         <div>
