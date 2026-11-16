@@ -606,7 +606,8 @@ export class StudentPortalComponent {
     const data: ReceiptData = {
       receiptNo: fee.lastPayment.receiptNo, institution: this.instituteName, logo: this.content.customLogo,
       studentId: this.studentId, student: this.childName, month: fee.period, date: dayLabel(fee.lastPayment.date),
-      mode: fee.lastPayment.mode, discount: fee.discount, paid: fee.paid, total: fee.totalFee, due: fee.due, status: fee.status
+      mode: fee.lastPayment.mode, discount: fee.discount, paid: fee.paid, total: fee.totalFee, due: fee.due, status: fee.status,
+      receivedBy: fee.lastPayment.receivedBy || undefined, pending: (this.portal.fees?.fees || []).reduce((sum, item) => sum + (item.due || 0), 0)
     };
     this.dialog.open(ReceiptPreviewComponent, { width: '450px', maxWidth: 'calc(100vw - 24px)', data });
   }

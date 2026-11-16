@@ -6,7 +6,7 @@ import { AuthApiService } from './auth-api.service';
 import { PaymentDetails, PortalFeeSubmission, PortalSubmissionStatus } from './portal-api.service';
 
 export type ApiFeeStatus = 'Paid' | 'Partial' | 'Pending' | 'Overdue';
-export interface ApiFeePayment { id: string; receiptNo: string; amount: number; discount: number; mode: string; date: string; reference: string | null; note?: string | null; }
+export interface ApiFeePayment { id: string; receiptNo: string; amount: number; discount: number; mode: string; date: string; reference: string | null; note?: string | null; /** Name of the staff member who recorded the payment. */ receivedBy?: string | null; }
 
 /** A fee (one student, one month / term) as crm-backend returns it. Dates are YYYY-MM-DD. */
 export interface ApiFee {

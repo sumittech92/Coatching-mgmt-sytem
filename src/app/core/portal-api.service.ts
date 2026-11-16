@@ -34,7 +34,7 @@ export interface PortalAttendance {
 
 export interface PortalFee {
   id: string; period: string; totalFee: number; discount: number; paid: number; due: number; status: 'Paid' | 'Partial' | 'Pending' | 'Overdue'; dueDate: string | null;
-  lastPayment: { receiptNo: string; amount: number; mode: string; date: string; reference: string | null } | null;
+  lastPayment: { receiptNo: string; amount: number; mode: string; date: string; reference: string | null; receivedBy?: string | null } | null;
   payments: { receiptNo: string; amount: number; discount: number; mode: string; date: string; reference: string | null }[];
 }
 export type PortalSubmissionStatus = 'pending' | 'approved' | 'rejected';

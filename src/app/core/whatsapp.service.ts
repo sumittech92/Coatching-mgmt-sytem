@@ -5,7 +5,7 @@ import { WebsiteContentService } from './website-content.service';
 export type WhatsAppKind = 'reminder' | 'receipt';
 export interface WhatsAppLogEntry { key: string; kind: WhatsAppKind; to: string; sentOn: string; }
 /** Fields needed to write a fee message (matches the Fees page record). */
-export interface FeeMessageData { studentId: string; student: string; month: string; total: number; discount: number; paid: number; due: number; date: string; mode: string; status: string; receiptNo?: string; }
+export interface FeeMessageData { studentId: string; student: string; month: string; total: number; discount: number; paid: number; due: number; date: string; mode: string; status: string; receiptNo?: string; receivedBy?: string; pending?: number; }
 
 const STORAGE_KEY = 'demo-whatsapp-log';
 
@@ -61,7 +61,10 @@ export class WhatsAppService {
       `*Amount paid: ₹${this.money(fee.paid)}*`,
       `Payment date: ${fee.date}`,
       `Payment method: ${fee.mode}`,
-      fee.due > 0 ? `Balance due: ₹${this.money(fee.due)}` : `Balance due: Nil – fully paid`,
+      ...(fee.receivedBy ? [`Received by: ${fee.receivedBy}`] : []),
+      ...(fee.pending !== undefined
+        ? [fee.pending > 0 ? `Pending fees (all periods): ₹${this.money(fee.pending)}` : `Pending fees: Nil – fully paid`]
+        : [fee.due > 0 ? `Balance due: ₹${this.money(fee.due)}` : `Balance due: Nil – fully paid`]),
       ``,
       `You can view and print this receipt from the Fees page in your student portal.`,
       ``,
