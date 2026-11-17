@@ -161,7 +161,7 @@ export class AcademicModuleApiService {
       load: () => this.events.list(this.token).pipe(map(rows => rows.map(toRow))),
       fields: () => [
         { key: 'name', label: 'Event name', required: true },
-        { key: 'date', label: 'Date', type: 'date', required: true },
+        { key: 'date', label: 'Date', type: 'date', required: true, future: true },
         { key: 'startTime', label: 'Starts at', type: 'time' },
         { key: 'venue', label: 'Venue' },
         { key: 'audience', label: 'For', type: 'select', options: Object.values(EVENT_AUDIENCE_LABELS), required: true },
@@ -208,7 +208,7 @@ export class AcademicModuleApiService {
         { key: 'title', label: 'Title', required: true },
         { key: 'group', label: groupLabel, type: 'select', options: options.map(option => option.label), required: true },
         { key: 'subject', label: 'Subject', type: 'select', options: [...new Set(options.flatMap(option => option.subjects))], required: true, hint: 'Only subjects you teach in that class are accepted.' },
-        { key: 'due', label: 'Due date', type: 'date', required: true },
+        { key: 'due', label: 'Due date', type: 'date', required: true, future: true },
         { key: 'description', label: 'Instructions', type: 'textarea' },
         ...(homework ? [] : [{ key: 'file', label: 'Attachment', type: 'file' as const, accept: MATERIAL_ACCEPT, hint: 'PDF, Word, PowerPoint, Excel, text or image · up to 25 MB' }]),
         { key: 'state', label: 'Status', type: 'select', options: ['Assigned', 'Closed'], required: true }

@@ -571,7 +571,11 @@ export class StudentPortalComponent {
     this.toast.success(`Payment of ₹${amount.toLocaleString('en-IN')} submitted. The ${this.isSchool ? 'school' : 'institute'} office will verify it and send your receipt.`);
   }
   /** Uploads the proof (if any), sends the payment to the office and reloads the fee rows. */
+  /** True while a payment is being sent, so a double click can't submit it twice. */
+  paying = false;
   private submitLivePayment(amount: number, reference: string): void {
+    if (this.paying) return;
+    this.paying = true;
     const token = this.auth.token!;
     const proof$ = this.proofFile ? this.portalApi.upload(token, this.proofFile) : of(null);
     proof$.pipe(
@@ -579,10 +583,11 @@ export class StudentPortalComponent {
       switchMap(() => this.portalApi.fees(token, this.childCode))
     ).subscribe({
       next: fees => {
+        this.paying = false;
         this.portal.fees = fees; this.buildView(); this.payOpen = false; this.proofFile = undefined;
         this.toast.success(`Payment of ₹${amount.toLocaleString('en-IN')} submitted. The ${this.isSchool ? 'school' : 'institute'} office will verify it and send your receipt.`);
       },
-      error: (error: Error) => this.payError = error.message
+      error: (error: Error) => { this.paying = false; this.payError = error.message; }
     });
   }
   submissionTone(status: string): 'success' | 'warning' | 'danger' { return status === 'Approved' ? 'success' : status === 'Rejected' ? 'danger' : 'warning'; }

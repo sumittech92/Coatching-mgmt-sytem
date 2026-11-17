@@ -46,6 +46,7 @@ export class StudentsPageComponent implements OnInit {
   mode: "list" | "add" | "edit" | "view" = "list";
   saving = false;
   hidePassword = true;
+  hideParentPassword = true;
   readonly today = new Date();
   readonly form = this.fb.group({
     name: ["", [AppValidators.required, AppValidators.personName, Validators.maxLength(80)]],
@@ -357,7 +358,7 @@ export class StudentsPageComponent implements OnInit {
         next: () => {
           this.saving = false;
           this.toast.success(editing ? "Changes saved." : `Student “${record["name"]}” added.`);
-          this.load();
+          // closeForm() goes back to the list route, which recreates this page and loads the list once.
           this.closeForm();
         },
         error: (error: Error) => {

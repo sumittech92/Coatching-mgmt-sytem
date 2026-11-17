@@ -30,11 +30,11 @@
     </div>
     <div class="col-md-4 col-6">
       <label class="field-label">Starts *</label>
-      <mat-form-field appearance="outline" class="w-100"><input matInput type="time" formControlName="startTime"><mat-error>Pick the start time.</mat-error></mat-form-field>
+      <mat-form-field appearance="outline" class="w-100"><input matInput class="time-input" readonly [ngxTimepicker]="startPicker" [format]="24" formControlName="startTime" placeholder="HH:MM"><ngx-material-timepicker-toggle matSuffix [for]="startPicker"></ngx-material-timepicker-toggle><ngx-material-timepicker #startPicker [enableKeyboardInput]="true"></ngx-material-timepicker><mat-error>Pick the start time.</mat-error></mat-form-field>
     </div>
     <div class="col-md-4 col-6">
       <label class="field-label">Ends *</label>
-      <mat-form-field appearance="outline" class="w-100"><input matInput type="time" formControlName="endTime"><mat-error>Pick the end time.</mat-error></mat-form-field>
+      <mat-form-field appearance="outline" class="w-100"><input matInput class="time-input" readonly [ngxTimepicker]="endPicker" [format]="24" formControlName="endTime" placeholder="HH:MM"><ngx-material-timepicker-toggle matSuffix [for]="endPicker"></ngx-material-timepicker-toggle><ngx-material-timepicker #endPicker [enableKeyboardInput]="true"></ngx-material-timepicker><mat-error>Pick the end time.</mat-error></mat-form-field>
     </div>
     <div class="col-md-6">
       <label class="field-label">Room</label>

@@ -326,7 +326,8 @@ export class FeesPageComponent implements OnInit {
           const covered = months.length > 1 ? ` across ${months.length} ${this.isSchool ? 'terms' : 'months'}` : '';
           const studentName = rows[0]?.student || '';
           this.toast.success(plans.length === 1 ? `Payment of ₹${amount.toLocaleString('en-IN')} recorded for ${studentName}${covered}.` : `Payment of ₹${amount.toLocaleString('en-IN')} each recorded for ${plans.length} students${covered}.`);
-          leaveCollect(); this.load();
+          // Leaving /collect recreates the page, which loads by itself; reload only when staying here.
+          if (this.router.url.endsWith('/collect')) leaveCollect(); else this.load();
         },
         // Payments are saved one month at a time; reload so anything already saved shows up.
         error: (error: Error) => { this.toast.error(error.message); this.load(); this.collectLive(row, value); }
@@ -342,7 +343,7 @@ export class FeesPageComponent implements OnInit {
       { key: 'month', label: this.periodLabel, type: 'select', options: this.periodChoices, required: true },
       { key: 'totalFee', label: 'Total fee (₹)', type: 'number', required: true },
       { key: 'discount', label: this.isSchool ? 'Concession (₹)' : 'Discount (₹)', type: 'number' },
-      { key: 'dueDate', label: 'Due date', type: 'date' },
+      { key: 'dueDate', label: 'Due date', type: 'date', future: true },
       { key: 'notes', label: 'Notes', type: 'textarea' }
     ];
     const ref = this.dialog.open(RecordDialogComponent, { width: '640px', maxWidth: 'calc(100vw - 24px)', data: { title: 'Add fee', submitLabel: 'Add fee', fields, record: draft || { discount: 0 }, successMessage: '' } });

@@ -948,3 +948,13 @@ app-sign-in,app-student-signup,app-teacher-signup,app-forgot-password,app-otp-ve
   .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
   body { background: #fff !important; }
 }
+
+/* ngx-material-timepicker: above Material dialogs (cdk overlay is 1000) and in the app's pink theme. */
+.timepicker-backdrop-overlay, .timepicker-overlay { z-index: 1100 !important; }
+ngx-material-timepicker-container {
+    --dial-background-color: #ff2d8a;
+    --clock-hand-color: #ff2d8a;
+    --button-color: #ff2d8a;
+    --dial-editable-active-color: #ff2d8a;
+}
+.time-input { cursor: pointer; }

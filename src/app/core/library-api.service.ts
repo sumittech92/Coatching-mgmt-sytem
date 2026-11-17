@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Observable, catchError, forkJoin, map, tap, throwError } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthApiService } from './auth-api.service';
 import { IssueStatus, LibraryBook, LibraryIssue, LibraryRequest, LibraryView, fmtDate } from './library.service';
@@ -49,7 +49,7 @@ export class LibraryApiService implements LibraryView {
     return forkJoin({
       settings: this.get<LibrarySettings>(token, '/settings'), books: this.get<ApiBook[]>(token, '/books'),
       loans: this.get<ApiLoan[]>(token, '/loans'), requests: this.get<ApiRequest[]>(token, '/requests'),
-      members: owner ? this.get<LibraryMember[]>(token, '/members') : this.get<LibraryMember[]>(token, '/settings').pipe(map(() => []))
+      members: owner ? this.get<LibraryMember[]>(token, '/members') : of([] as LibraryMember[])
     }).pipe(map(result => {
       this.settings = result.settings; this.members = result.members;
       this.books = result.books.map(book => this.bookRow(book));

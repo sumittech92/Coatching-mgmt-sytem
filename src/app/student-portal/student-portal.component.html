@@ -251,7 +251,7 @@
                         <div class="pay-error" *ngIf="payError" role="alert"><mat-icon>error_outline</mat-icon>{{payError}}</div>
                         <div class="pay-actions">
                             <button mat-button type="button" (click)="payOpen = false">Cancel</button>
-                            <button mat-flat-button color="primary" type="submit"><mat-icon>send</mat-icon>Submit payment</button>
+                            <button mat-flat-button color="primary" type="submit" [disabled]="paying"><mat-icon>send</mat-icon>{{ paying ? 'Submitting…' : 'Submit payment' }}</button>
                         </div>
                     </form>
                 </div>

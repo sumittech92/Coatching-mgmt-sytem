@@ -47,11 +47,11 @@
     <ng-container *ngIf="school">
       <div class="col-md-3 col-6">
         <label class="field-label">Exam starts</label>
-        <mat-form-field appearance="outline" class="w-100"><input matInput type="time" formControlName="startTime"></mat-form-field>
+        <mat-form-field appearance="outline" class="w-100"><input matInput class="time-input" readonly [ngxTimepicker]="startPicker" [format]="24" formControlName="startTime" placeholder="HH:MM"><ngx-material-timepicker-toggle matSuffix [for]="startPicker"></ngx-material-timepicker-toggle><ngx-material-timepicker #startPicker [enableKeyboardInput]="true"></ngx-material-timepicker></mat-form-field>
       </div>
       <div class="col-md-3 col-6">
         <label class="field-label">Exam ends</label>
-        <mat-form-field appearance="outline" class="w-100"><input matInput type="time" formControlName="endTime"></mat-form-field>
+        <mat-form-field appearance="outline" class="w-100"><input matInput class="time-input" readonly [ngxTimepicker]="endPicker" [format]="24" formControlName="endTime" placeholder="HH:MM"><ngx-material-timepicker-toggle matSuffix [for]="endPicker"></ngx-material-timepicker-toggle><ngx-material-timepicker #endPicker [enableKeyboardInput]="true"></ngx-material-timepicker></mat-form-field>
       </div>
       <div class="col-md-6 time-help"><small class="field-help">Same time for every paper. Printed on the admit card.</small></div>
     </ng-container>
@@ -70,9 +70,9 @@
           <div class="col-md-3">
             <label class="field-label">Date *</label>
             <mat-form-field appearance="outline" class="w-100">
-              <input matInput [matDatepicker]="picker" formControlName="date" placeholder="DD/MM/YYYY">
+              <input matInput [matDatepicker]="picker" [min]="paperMin(paper)" formControlName="date" placeholder="DD/MM/YYYY">
               <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle><mat-datepicker #picker></mat-datepicker>
-              <mat-error>Pick the date.</mat-error>
+              <mat-error>{{ paper.get('date')?.hasError('matDatepickerMin') ? 'Date cannot be in the past.' : 'Pick the date.' }}</mat-error>
             </mat-form-field>
           </div>
           <div class="col-md-2 col-6">

@@ -253,8 +253,11 @@
                             </div>
                             <div class="col-md-6" *ngIf="form.controls.parentLogin.value">
                                 <label class="field-label">Parent password{{ selected?.parentLogin ? " (leave empty to keep it)" : "" }}</label><mat-form-field
-                                    appearance="outline" class="w-100"><input matInput type="password" autocomplete="new-password" formControlName="parentPassword"
-                                        placeholder="Min. 8 characters" /><mat-error>{{ errorFor("parentPassword", "Parent password") }}</mat-error></mat-form-field>
+                                    appearance="outline" class="w-100"><input matInput [type]="hideParentPassword ? 'password' : 'text'" autocomplete="new-password" formControlName="parentPassword"
+                                        placeholder="Min. 8 characters" /><button
+                                        mat-icon-button matSuffix type="button" (click)="hideParentPassword = !hideParentPassword"
+                                        [attr.aria-label]="hideParentPassword ? 'Show password' : 'Hide password'"><mat-icon>{{
+                                        hideParentPassword ? "visibility_off" : "visibility" }}</mat-icon></button><mat-error>{{ errorFor("parentPassword", "Parent password") }}</mat-error></mat-form-field>
                             </div>
                         </ng-container>
                     </div>

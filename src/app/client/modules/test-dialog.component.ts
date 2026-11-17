@@ -69,14 +69,22 @@ export class TestDialogComponent {
   }
   batchLabel(batch: ApiBatch): string { return batch.course ? `${batch.name} · ${batch.course.name}` : batch.name; }
 
+  /** Earliest pickable paper date: today, or the saved date when it is earlier (so editing an old exam stays valid). */
+  private paperMins = new WeakMap<FormGroup, Date>();
+  paperMin(group: FormGroup): Date { return this.paperMins.get(group) ?? TestDialogComponent.today(); }
+  private static today(): Date { const today = new Date(); today.setHours(0, 0, 0, 0); return today; }
+
   private paperGroup(paper?: { paperId?: string; subject?: string; date?: Date; maxMarks?: number; passMarks?: number | null }): FormGroup {
-    return this.fb.group({
+    const group = this.fb.group({
       paperId: [paper?.paperId || ''],
       subject: [paper?.subject || '', Validators.required],
       date: [paper?.date || null, Validators.required],
       maxMarks: [paper?.maxMarks ?? (this.data.school ? 80 : 50), [Validators.required, Validators.min(1), Validators.max(1000)]],
       passMarks: [paper?.passMarks ?? null, [Validators.min(0), Validators.max(1000)]]
     });
+    const today = TestDialogComponent.today();
+    this.paperMins.set(group, paper?.date && paper.date < today ? paper.date : today);
+    return group;
   }
 
   addPaper(): void { this.papers.push(this.paperGroup()); }

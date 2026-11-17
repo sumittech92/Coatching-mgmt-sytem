@@ -116,7 +116,7 @@ export class AttendancePageComponent implements OnInit {
 
   mark(record: AttendanceRecord, status: AttendanceStatus): void { record.status = status; }
   markAll(status: AttendanceStatus): void { const rows = this.register; if (!rows.length) { this.toast.warning('No students in view to mark.'); return; } rows.forEach(item => item.status = status); this.toast.success(`Marked ${rows.length} student${rows.length === 1 ? '' : 's'} ${status.toLowerCase()}.`); }
-  setView(value: 'daily'|'monthly'): void { this.view = value; this.clearHistory(); if (value === 'monthly' && this.live) this.loadMonthly(); }
+  setView(value: 'daily'|'monthly'): void { if (this.view === value) return; this.view = value; this.clearHistory(); if (value === 'monthly' && this.live) this.loadMonthly(); }
   showHistory(item: AttendanceRecord): void {
     this.history = item; this.historyStats = undefined;
     const token = this.auth.token; if (!this.live || !token) return;
@@ -131,11 +131,16 @@ export class AttendancePageComponent implements OnInit {
     if (!this.live || !this.dateKey) return;
     this.loadRegister(); if (this.monthKey !== this.loadedMonth) { this.loadSummary(); if (this.view === 'monthly') this.loadMonthly(); }
   }
+  /** Confirm dialog is open; a second click on Save is ignored. */
+  private confirming = false;
   save(): void {
+    if (this.saving || this.confirming) return;
     const date = this.date instanceof Date ? this.date : this.date ? new Date(this.date) : null; if (!date || Number.isNaN(date.getTime())) { this.toast.error('Choose a valid attendance date.'); return; } if (date.getTime() > Date.now()) { this.toast.error('Attendance cannot be saved for a future date.'); return; } if (!this.register.length) { this.toast.warning('No students in view to save attendance for.'); return; }
     if (this.unmarked) { this.toast.warning(`${this.unmarked} student${this.unmarked === 1 ? ' is' : 's are'} not marked yet. Mark them or use Mark all.`); return; }
     const rows = this.register; const scope = this.batch === 'All batches' ? (this.isSchool ? 'all sections' : 'all batches') : this.batch;
+    this.confirming = true;
     this.confirm.confirm({ title: 'Save attendance?', message: `Save attendance for ${rows.length} students on ${date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}?${this.live ? '' : ' This updates only the local demo state.'}`, confirmLabel: 'Save attendance' }).subscribe(accepted => {
+      this.confirming = false;
       if (!accepted) return;
       const token = this.auth.token;
       if (!this.live || !token) { this.toast.success(`Attendance saved for ${scope}.`); return; }

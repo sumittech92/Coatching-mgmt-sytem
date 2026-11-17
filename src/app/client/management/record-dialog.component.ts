@@ -3,7 +3,7 @@ import { FormBuilder, ValidatorFn, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { AppValidators, validationMessage } from '../../core/app-validators';
 import { ToastService } from '../../core/toast.service';
-export interface RecordField { key: string; label: string; type?: 'text'|'email'|'phone'|'number'|'password'|'time'|'date'|'select'|'multiselect'|'textarea'|'file'|'tags'; options?: string[]; required?: boolean; hint?: string; /** File inputs: accepted types, e.g. ".pdf,.docx". */ accept?: string; }
+export interface RecordField { key: string; label: string; type?: 'text'|'email'|'phone'|'number'|'password'|'time'|'date'|'select'|'multiselect'|'textarea'|'file'|'tags'; options?: string[]; required?: boolean; hint?: string; /** File inputs: accepted types, e.g. ".pdf,.docx". */ accept?: string; /** Date inputs: past days can't be picked (a date already saved stays allowed when editing). */ future?: boolean; }
 export interface RecordDialogData { title: string; submitLabel: string; fields: RecordField[]; record?: Record<string, unknown>; readonly?: boolean;
   /** Toast shown after a valid save. Defaults to "Saved successfully."; pass '' when the caller shows its own. */
   successMessage?: string; }
@@ -16,13 +16,26 @@ export class RecordDialogComponent {
   shown: Record<string, boolean> = {};
   constructor(@Inject(MAT_DIALOG_DATA) public data: RecordDialogData, private fb: FormBuilder, private ref: MatDialogRef<RecordDialogComponent>, private toast: ToastService) {
     const controls: Record<string, unknown> = {};
-    data.fields.forEach(field => controls[field.key] = [{ value: data.record?.[field.key] ?? '', disabled: !!data.readonly }, data.readonly ? [] : RecordDialogComponent.validatorsFor(field)]);
+    data.fields.forEach(field => controls[field.key] = [{ value: data.record?.[field.key] ?? RecordDialogComponent.defaultFor(field, data), disabled: !!data.readonly }, data.readonly ? [] : RecordDialogComponent.validatorsFor(field)]);
     this.form = this.fb.group(controls);
+  }
+  /** Earliest pickable day for `future` date fields: today, or the saved date if that is earlier (so editing keeps it valid). */
+  private minDates: Record<string, Date> = {};
+  minDate(field: RecordField): Date | null {
+    if (!field.future || this.data.readonly) return null;
+    if (!this.minDates[field.key]) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const raw = this.data.record?.[field.key];
+      const saved = raw instanceof Date ? new Date(raw) : raw ? new Date(String(raw)) : null;
+      if (saved && !isNaN(saved.getTime())) saved.setHours(0, 0, 0, 0);
+      this.minDates[field.key] = saved && !isNaN(saved.getTime()) && saved < today ? saved : today;
+    }
+    return this.minDates[field.key];
   }
   /** Name of the file already saved (edit), until a new one is picked. */
   currentFile(field: RecordField): string { const value = String(this.form.get(field.key)?.value || ''); return value && !value.startsWith('blob:') && !this.files[field.key] ? value : ''; }
   isPhone(field: RecordField): boolean { return RecordDialogComponent.phoneField(field); }
-  inputType(field: RecordField): string { return this.isPhone(field) ? 'tel' : field.type === 'password' ? (this.shown[field.key] ? 'text' : 'password') : field.type === 'email' || field.type === 'number' || field.type === 'time' ? field.type : 'text'; }
+  inputType(field: RecordField): string { return this.isPhone(field) ? 'tel' : field.type === 'password' ? (this.shown[field.key] ? 'text' : 'password') : field.type === 'email' || field.type === 'number' ? field.type : 'text'; }
   /** Example text for every field type, so empty fields show what to enter. */
   placeholderFor(field: RecordField): string {
     const label = field.label.replace(/\s*\(.*\)$/, '').toLowerCase();
@@ -39,6 +52,12 @@ export class RecordDialogComponent {
     return `Enter ${label}`;
   }
   errorFor(field: RecordField): string { return validationMessage(this.form.get(field.key), field.label); }
+  /** New records start as Active / Published (or the first status option, e.g. New, Scheduled, Upcoming) instead of blank. */
+  private static defaultFor(field: RecordField, data: RecordDialogData): unknown {
+    const blank = field.type === 'multiselect' ? [] : '';
+    if (data.readonly || field.type !== 'select' || !/^(status|state)$/i.test(field.key) || !field.options?.length) return blank;
+    return field.options.find(option => /^(active|published)$/i.test(option)) ?? field.options[0];
+  }
   private static phoneField(field: RecordField): boolean { return field.type === 'phone' || (!field.type || field.type === 'text') && /(phone|mobile|whatsapp)/i.test(field.key); }
   /** Validators follow the field's type and key, so every dialog in every panel validates the same way. */
   private static validatorsFor(field: RecordField): ValidatorFn[] {

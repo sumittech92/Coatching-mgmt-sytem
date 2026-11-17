@@ -70,6 +70,9 @@ export function validationMessage(control: AbstractControl | null | undefined, l
   if (errors['maxlength']) return `${label} must be at most ${errors['maxlength'].requiredLength} characters.`;
   if (errors['min']) return `${label} must be at least ${errors['min'].min}.`;
   if (errors['max']) return `${label} must be at most ${errors['max'].max}.`;
+  if (errors['matDatepickerParse']) return 'Enter a valid date (DD/MM/YYYY).';
+  if (errors['matDatepickerMin']) return `${label} cannot be in the past.`;
+  if (errors['matDatepickerMax']) return `${label} cannot be in the future.`;
   if (errors['positive']) return `${label} must be greater than 0.`;
   if (errors['nonNegative']) return `${label} cannot be negative.`;
   if (errors['url']) return 'Enter a valid link starting with https:// or /.';
