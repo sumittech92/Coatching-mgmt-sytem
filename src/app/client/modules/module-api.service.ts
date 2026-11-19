@@ -13,6 +13,7 @@ import { ApiTest, TEST_STATUS_LABELS, TestApiService, TestPayload } from '../../
 import { TestDialogComponent, TestDialogData } from './test-dialog.component';
 import { MarksDialogComponent } from './marks-dialog.component';
 import { AdmitCardsDialogComponent } from './admit-cards-dialog.component';
+import { OperationsModuleApiService } from '../operations/operations-module-api.service';
 import { AcademicModuleApiService } from './academic-module-api.service';
 
 /**
@@ -39,7 +40,13 @@ export interface ModuleApiAdapter {
   refreshAfterSave?: boolean;
   /** Word in the "… added" toast for a new row (default "added"). */
   createdVerb?: string;
+  /** Buttons next to the add button (e.g. "Generate month", "Export Excel"). `run` returns the new row list, or undefined to keep it. */
+  pageActions?: ModulePageAction[];
+  /** Own summary chips (e.g. payroll totals) instead of the per-status counts. */
+  summary?(rows: ModuleRow[]): { label: string; value: number | string }[];
 }
+
+export interface ModulePageAction { label: string; icon: string; run(): Observable<ModuleRow[] | undefined>; }
 
 export interface ModuleRowAction { label: string; icon: string; run(): Observable<ModuleRow | undefined>; /** Toast after it succeeds. */ done?: string; }
 
@@ -51,7 +58,7 @@ const list = (value: unknown): string[] => String(value || '').split(',').map(it
 /** Which module pages are API-backed for a signed-in (non-demo) account. Demo sessions keep the sample rows. */
 @Injectable({ providedIn: 'root' })
 export class ModuleApiService {
-  constructor(private auth: MockAuthService, private courses: CourseApiService, private batches: BatchApiService, private teachers: TeacherApiService, private tests: TestApiService, private dialog: MatDialog, private academic: AcademicModuleApiService) {}
+  constructor(private auth: MockAuthService, private courses: CourseApiService, private batches: BatchApiService, private teachers: TeacherApiService, private tests: TestApiService, private dialog: MatDialog, private academic: AcademicModuleApiService, private operations: OperationsModuleApiService) {}
 
   adapter(key: string, type: BusinessType): ModuleApiAdapter | undefined {
     if (!this.auth.token) return undefined;
@@ -59,7 +66,7 @@ export class ModuleApiService {
     if (type === 'school' && key === 'sections') return this.schoolSections();
     if ((type === 'coaching' && key === 'tests') || (type === 'school' && key === 'exams')) return this.testsAdapter(type === 'school', true);
     if (type === 'school' && key === 'marks') return this.testsAdapter(true, false);
-    return this.academic.adapter(key, type);
+    return this.operations.adapter(key, type === 'school') ?? this.academic.adapter(key, type);
   }
 
   private get token(): string { return this.auth.token!; }

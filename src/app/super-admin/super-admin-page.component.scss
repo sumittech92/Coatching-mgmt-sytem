@@ -16,3 +16,20 @@
 
   button + button { margin-left: 8px; }
 }
+
+/* Live panel additions: heading actions, clickable rows, reports bars, settings. */
+.heading-actions{display:flex;flex-wrap:wrap;gap:8px}.heading-actions button{font-size:12px;border-radius:8px}
+.clickable-row{cursor:pointer}.clickable-row:hover td{background:#fafbfd}
+.section-help{font-size:13px;color:#5b6778;margin:-4px 0 10px}
+.report-bars{display:flex;flex-direction:column;gap:12px}
+.report-bar{display:grid;grid-template-columns:44px 1fr 96px;align-items:center;gap:12px;font-size:13px}
+.report-bar-label{color:#4a5568;font-weight:600}
+.report-bar-track{height:12px;border-radius:999px;background:#eef1f6;overflow:hidden}
+.report-bar-track i{display:block;height:100%;min-width:2px;border-radius:inherit;background:linear-gradient(90deg,#ff1f8e,#ff8a1f)}
+.report-bar-track.growth i{background:linear-gradient(90deg,#4b77f0,#7aa2ff)}
+.report-bar strong{text-align:right;color:#263447}
+.settings-card{margin-bottom:16px}
+.plan-rows{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.plan-row{display:grid;grid-template-columns:1fr 160px 2fr auto;gap:10px;align-items:start}
+.settings-sub{margin-top:8px}
+@media(max-width:700px){.plan-row{grid-template-columns:1fr 1fr}.plan-row .plan-desc{grid-column:1/-1}.report-bar{grid-template-columns:40px 1fr 80px}}

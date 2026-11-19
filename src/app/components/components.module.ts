@@ -8,6 +8,9 @@ import { CategoryAdddeptComponent } from './company-mgt/category-adddept/categor
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { WorkspacePageComponent } from './workspace-page.component';
 import { SuperAdminPageComponent } from '../super-admin/super-admin-page.component';
+import { ModuleAccessDialogComponent } from '../super-admin/module-access-dialog.component';
+import { SalarySlipComponent } from '../client/operations/salary-slip.component';
+import { EntranceCandidatesDialogComponent } from '../client/operations/entrance-candidates-dialog.component';
 import { StudentsPageComponent } from '../client/students-page.component';
 import { ClientDashboardComponent } from '../client/client-dashboard.component';
 import { ClientSectionComponent } from '../client/client-section.component';
@@ -34,5 +37,5 @@ import { SyllabusChecklistDialogComponent } from '../client/syllabus/syllabus-ch
 import { SyllabusEditorDialogComponent } from '../client/syllabus/syllabus-editor-dialog.component';
 import { AlbumDialogComponent } from '../client/management/album-dialog.component';
 import { ReportsPageComponent } from '../client/reports/reports-page.component';
-@NgModule({ declarations: [ReportsPageComponent, SubjectDialogComponent, PeriodDialogComponent, SubmissionsDialogComponent, SyllabusPageComponent, SyllabusChecklistDialogComponent, SyllabusEditorDialogComponent, AlbumDialogComponent, TestDialogComponent, MarksDialogComponent, AdmitCardsDialogComponent, LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
+@NgModule({ declarations: [ModuleAccessDialogComponent, SalarySlipComponent, EntranceCandidatesDialogComponent, ReportsPageComponent, SubjectDialogComponent, PeriodDialogComponent, SubmissionsDialogComponent, SyllabusPageComponent, SyllabusChecklistDialogComponent, SyllabusEditorDialogComponent, AlbumDialogComponent, TestDialogComponent, MarksDialogComponent, AdmitCardsDialogComponent, LibraryPageComponent, FeeReminderDialogComponent, AccountSettingsComponent, ModulePageComponent, CompanyMgtComponent, CategoryAddbrandComponent, CategoryAdddeptComponent, DashboardComponent, WorkspacePageComponent, SuperAdminPageComponent, StudentsPageComponent, ClientDashboardComponent, ClientSectionComponent, ClientManagementComponent, RecordDialogComponent, AttendancePageComponent, FeesPageComponent, WebsiteCmsComponent, ShopDashboardComponent, ShopManagementComponent, ShopBillingComponent], imports: [CommonModule, ComponentsRoutingModule, SharedModule] })
 export class ComponentsModule {}

@@ -191,6 +191,47 @@ const MARKS: ModuleConfig = {
   ])
 };
 
+/** Owner operations: teacher salary and labs (school and coaching); entrance tests (schools, primary classes only). */
+const PRIMARY = ['Nursery', 'LKG', 'UKG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'];
+const SALARY: ModuleConfig = {
+  title: 'Teacher salary', description: 'Monthly payroll: set pay, mark salaries paid and print salary slips.', icon: 'account_balance_wallet', singular: 'salary', action: 'Add salary', editors: ['Owner'], filterKey: 'month',
+  columns: [{ key: 'teacherName', label: 'Teacher' }, { key: 'month', label: 'Month' }, { key: 'gross', label: 'Gross' }, { key: 'deductionLabel', label: 'Deductions' }, { key: 'net', label: 'Net pay' }, { key: 'status', label: 'Status', badge: true }, { key: 'paidLabel', label: 'Paid on' }],
+  fields: [{ key: 'teacherName', label: 'Teacher', required: true }, { key: 'month', label: 'Month', required: true }, { key: 'gross', label: 'Gross pay (₹)', required: true }, { key: 'deductionLabel', label: 'Deductions (₹)' }, { key: 'net', label: 'Net pay (₹)' }, { key: 'status', label: 'Status', type: 'select', options: ['Pending', 'Paid'], required: true }],
+  rows: status([
+    { teacherName: 'Priya Nair', month: 'Nov 2026', gross: '₹42,000', deductionLabel: '₹1,500', net: '₹40,500', status: 'Paid', paidLabel: '01 Nov 2026' },
+    { teacherName: 'Ankit Rao', month: 'Nov 2026', gross: '₹36,000', deductionLabel: '₹0', net: '₹36,000', status: 'Pending', paidLabel: '—' },
+    { teacherName: 'Nisha Thomas', month: 'Nov 2026', gross: '₹45,000', deductionLabel: '₹2,000', net: '₹43,000', status: 'Pending', paidLabel: '—' }
+  ])
+};
+const ENTRANCE: ModuleConfig = {
+  title: 'Entrance tests', description: 'Admission tests for new Nursery – Class 5 applicants: candidates, marks and results.', icon: 'assignment_ind', singular: 'entrance test', action: 'Add entrance test', editors: ['Owner'], filterKey: 'className',
+  columns: [{ key: 'name', label: 'Test' }, { key: 'className', label: 'Class' }, { key: 'dateLabel', label: 'Date' }, { key: 'venueLabel', label: 'Venue' }, { key: 'marksLabel', label: 'Pass / max' }, { key: 'candidatesLabel', label: 'Candidates' }, { key: 'status', label: 'Status', badge: true }],
+  fields: [{ key: 'name', label: 'Test name', required: true }, { key: 'className', label: 'Class', type: 'select', options: PRIMARY, required: true }, { key: 'dateLabel', label: 'Date', required: true }, { key: 'venueLabel', label: 'Venue' }, { key: 'status', label: 'Status', type: 'select', options: ['Scheduled', 'Cancelled'], required: true }],
+  rows: status([
+    { name: 'Admission test 2027–28', className: 'Class 1', dateLabel: '12 Jan 2027 · 9:30 AM', venueLabel: 'Primary block', marksLabel: '20 / 50', candidatesLabel: '18 · 0 qualified', status: 'Scheduled' },
+    { name: 'Interaction round', className: 'Nursery', dateLabel: '15 Jan 2027 · 10:00 AM', venueLabel: 'Activity room', marksLabel: '10 / 25', candidatesLabel: '24 · 0 qualified', status: 'Scheduled' }
+  ])
+};
+const LABS: ModuleConfig = {
+  title: 'Labs', description: 'Science, computer and other labs with their room, in-charge teacher and equipment.', icon: 'science', singular: 'lab', action: 'Add lab', editors: ['Owner'], filterKey: 'type',
+  columns: [{ key: 'name', label: 'Lab' }, { key: 'type', label: 'Type' }, { key: 'roomLabel', label: 'Room' }, { key: 'inChargeLabel', label: 'In-charge' }, { key: 'equipmentLabel', label: 'Equipment' }, { key: 'status', label: 'Status', badge: true }],
+  fields: [{ key: 'name', label: 'Lab name', required: true }, { key: 'type', label: 'Type', type: 'select', options: ['Science', 'Physics', 'Chemistry', 'Biology', 'Computer', 'Language', 'Other'], required: true }, { key: 'roomLabel', label: 'Room / location' }, { key: 'inChargeLabel', label: 'In-charge teacher' }, { key: 'status', label: 'Status', type: 'select', options: STATUS, required: true }],
+  rows: status([
+    { name: 'Physics lab', type: 'Physics', roomLabel: 'Block B · 1st floor', inChargeLabel: 'Priya Nair', equipmentLabel: '14 items', status: 'Active' },
+    { name: 'Computer lab', type: 'Computer', roomLabel: 'Block A · Room 12', inChargeLabel: 'Ankit Rao', equipmentLabel: '32 items · 2 need attention', status: 'Active' }
+  ])
+};
+const LAB_EQUIPMENT: ModuleConfig = {
+  title: 'Lab equipment', description: 'Equipment in every lab, how many there are and what needs repair.', icon: 'biotech', singular: 'equipment', action: 'Add equipment', editors: ['Owner'], filterKey: 'lab',
+  columns: [{ key: 'name', label: 'Equipment' }, { key: 'lab', label: 'Lab' }, { key: 'quantity', label: 'Quantity' }, { key: 'purchaseLabel', label: 'Purchased' }, { key: 'status', label: 'Condition', badge: true }],
+  fields: [{ key: 'name', label: 'Equipment', required: true }, { key: 'lab', label: 'Lab', required: true }, { key: 'quantity', label: 'Quantity', type: 'number', required: true }, { key: 'status', label: 'Condition', type: 'select', options: ['Working', 'Damaged', 'Under repair'], required: true }],
+  rows: status([
+    { name: 'Vernier calliper', lab: 'Physics lab', quantity: 20, purchaseLabel: '12 Jun 2025', status: 'Working' },
+    { name: 'Desktop computer', lab: 'Computer lab', quantity: 30, purchaseLabel: '03 Apr 2024', status: 'Working' },
+    { name: 'Projector', lab: 'Computer lab', quantity: 1, purchaseLabel: '03 Apr 2024', status: 'Under repair' }
+  ])
+};
+
 const cache = new Map<string, ModuleConfig>();
 
 /** Config for a route key (cached per workspace type so edits survive navigation), or undefined if the key isn't a module page. */
@@ -208,6 +249,10 @@ export function moduleConfig(key: string, type: BusinessType): ModuleConfig | un
       case 'my-batches': case 'my-classes': return teacherGroups(type);
       case 'my-subjects': return MY_SUBJECTS;
       case 'marks': return MARKS;
+      case 'salary': return SALARY;
+      case 'entrance': return type === 'school' ? ENTRANCE : undefined;
+      case 'labs': return LABS;
+      case 'lab-equipment': return LAB_EQUIPMENT;
       default: return undefined;
     }
   };
@@ -218,4 +263,4 @@ export function moduleConfig(key: string, type: BusinessType): ModuleConfig | un
   return copy;
 }
 
-export const MODULE_KEYS = ['sessions', 'classes', 'sections', 'subjects', 'events', 'exams', 'tests', 'assignments', 'homework', 'timetable', 'today', 'my-batches', 'my-classes', 'my-subjects', 'marks'];
+export const MODULE_KEYS = ['sessions', 'classes', 'sections', 'subjects', 'events', 'exams', 'tests', 'assignments', 'homework', 'timetable', 'today', 'my-batches', 'my-classes', 'my-subjects', 'marks', 'salary', 'entrance', 'labs', 'lab-equipment'];

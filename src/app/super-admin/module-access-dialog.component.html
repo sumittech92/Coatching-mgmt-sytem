@@ -1,0 +1,21 @@
+<h2 mat-dialog-title class="dialog-title">Module access · {{ data.name }}</h2>
+<p class="dialog-subtitle">Turn modules on or off for this {{ data.school ? 'school' : 'institute' }}. The owner and teachers only see modules that are on. Students, teachers, classes and the dashboard are always on.</p>
+<mat-dialog-content class="dialog-content">
+  <div class="module-toolbar">
+    <span><b>{{ onCount }}</b> of {{ modules.length }} on</span>
+    <span class="spacer"></span>
+    <button mat-button type="button" (click)="setAll(true)">Turn all on</button>
+    <button mat-button type="button" (click)="setAll(false)">Turn all off</button>
+  </div>
+  <div class="module-grid">
+    <label class="module-tile" *ngFor="let module of modules" [class.off]="!enabled[module.key]">
+      <span class="module-icon"><mat-icon>{{ module.icon }}</mat-icon></span>
+      <span class="module-text"><b>{{ module.label }}</b><small>{{ module.description }}</small></span>
+      <mat-slide-toggle color="primary" [(ngModel)]="enabled[module.key]" [attr.aria-label]="module.label"></mat-slide-toggle>
+    </label>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()">Save access</button>
+</mat-dialog-actions>

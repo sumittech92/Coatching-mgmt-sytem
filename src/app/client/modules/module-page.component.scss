@@ -2,6 +2,7 @@
 .module-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:18px}
 .module-head h1{margin:9px 0 4px}
 .add-btn{height:39px;border-radius:8px;font-size:12px}
+.head-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.head-actions .mat-mdc-outlined-button{height:39px;border-radius:8px;font-size:12px}
 .summary-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
 .summary-chip{display:flex;align-items:baseline;gap:7px;padding:10px 14px;border:1px solid #e8edf3;border-radius:12px;background:#fff}
 .summary-chip strong{font-size:clamp(16px, 15.296px + 0.1878vw, 18px);color:#263447}

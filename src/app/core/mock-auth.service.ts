@@ -25,6 +25,16 @@ export class MockAuthService {
   get isAuthenticated(): boolean { return !!this.session; }
   get isDemo(): boolean { return !!this.session && !this.session.token; }
   /** Name of the signed-in account, whichever field the backend returned it in. */
+  /** Modules the Super Admin turned off for this institute (demo sessions: none). */
+  get disabledModules(): string[] { return this.user?.disabledModules ?? []; }
+  isModuleOn(key: string | undefined): boolean { return !key || !this.disabledModules.includes(key); }
+  /** Stores a fresh module list in the session (kept in the same storage it was saved in). */
+  setDisabledModules(disabledModules: string[]): void {
+    if (!this.session?.user) return;
+    let remember = true;
+    try { remember = !!localStorage.getItem(SESSION_KEY); } catch { /* storage optional */ }
+    this.save({ ...this.session, user: { ...this.session.user, disabledModules } }, remember);
+  }
   get displayName(): string | null { return this.user?.fullName || this.user?.full_Name || null; }
 
   get landingPath(): string {

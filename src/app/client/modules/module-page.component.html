@@ -4,7 +4,10 @@
     <h1>{{ config.title }}</h1>
     <p>{{ config.description }}</p>
   </div>
-  <button mat-flat-button color="primary" class="add-btn" *ngIf="canCreate && config.action" (click)="open()"><mat-icon>add</mat-icon>{{ config.action }}</button>
+  <div class="head-actions">
+    <button mat-stroked-button *ngFor="let action of pageActions" (click)="runPageAction(action)"><mat-icon>{{ action.icon }}</mat-icon>{{ action.label }}</button>
+    <button mat-flat-button color="primary" class="add-btn" *ngIf="canCreate && config.action" (click)="open()"><mat-icon>add</mat-icon>{{ config.action }}</button>
+  </div>
 </div>
 
 <div class="summary-row">

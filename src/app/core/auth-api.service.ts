@@ -9,6 +9,8 @@ export interface ApiUser {
   _id: string;
   /** The Auth model field. Older responses used full_Name; read the name through MockAuthService.displayName. */
   fullName?: string | null;
+  /** Owners: modules the Super Admin turned off. Login also sends it to teachers and students (their institute's list). */
+  disabledModules?: string[];
   full_Name: string | null;
   profileImage: string;
   email: string | null;
@@ -91,6 +93,22 @@ export class AuthApiService {
   setUserDomain(accessToken: string, userId: string, customDomain: string): Observable<ApiUser> {
     return this.http.patch<ApiResponse<ApiUser>>(`${this.base}/users/${userId}/domain`, { customDomain }, { headers: new HttpHeaders({ accesstoken: accessToken }) }).pipe(
       map(response => response.data),
+      catchError((error: HttpErrorResponse) => throwError(() => new Error(AuthApiService.messageFor(error))))
+    );
+  }
+
+  /** Super Admin: modules turned off for an owner's institute. */
+  setUserModules(accessToken: string, userId: string, disabledModules: string[]): Observable<ApiUser> {
+    return this.http.patch<ApiResponse<ApiUser>>(`${this.base}/users/${userId}/modules`, { disabledModules }, { headers: new HttpHeaders({ accesstoken: accessToken }) }).pipe(
+      map(response => response.data),
+      catchError((error: HttpErrorResponse) => throwError(() => new Error(AuthApiService.messageFor(error))))
+    );
+  }
+
+  /** The signed-in user's turned-off modules (picks up Super Admin changes without signing in again). */
+  myModules(accessToken: string): Observable<string[]> {
+    return this.http.get<ApiResponse<{ disabledModules: string[] }>>(`${this.base}/modules`, { headers: new HttpHeaders({ accesstoken: accessToken }) }).pipe(
+      map(response => response.data.disabledModules || []),
       catchError((error: HttpErrorResponse) => throwError(() => new Error(AuthApiService.messageFor(error))))
     );
   }

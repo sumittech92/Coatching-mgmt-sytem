@@ -7,13 +7,14 @@ import { MockAuthService } from '../../core/mock-auth.service';
 import { TenantContextService } from '../../core/tenant-context.service';
 import { ToastService } from '../../core/toast.service';
 import { ModuleConfig, ModuleRow, moduleConfig } from './module-registry';
-import { ModuleApiAdapter, ModuleApiService, ModuleRowAction } from './module-api.service';
+import { ModuleApiAdapter, ModuleApiService, ModulePageAction, ModuleRowAction } from './module-api.service';
 import { RecordField } from '../management/record-dialog.component';
 
 type Tone = 'success' | 'warning' | 'danger' | 'neutral' | 'info';
 const TONES: Record<string, Tone> = {
   active: 'success', current: 'success', published: 'success', submitted: 'success', completed: 'neutral', closed: 'neutral',
-  upcoming: 'info', scheduled: 'info', overdue: 'danger', 'results published': 'success', assigned: 'info', draft: 'warning', inactive: 'neutral', cancelled: 'danger'
+  upcoming: 'info', scheduled: 'info', overdue: 'danger', 'results published': 'success', assigned: 'info', draft: 'warning', inactive: 'neutral', cancelled: 'danger',
+  paid: 'success', pending: 'warning', working: 'success', damaged: 'danger', 'under repair': 'warning'
 };
 
 /** Generic academic page (Classes, Sections, Homework, Tests, Marks entry…) driven by module-registry. */
@@ -63,6 +64,14 @@ export class ModulePageComponent implements OnInit {
       error: (error: Error) => this.toast.error(error.message)
     });
   }
+  /** Page buttons from the adapter (only for people who may edit). */
+  get pageActions(): ModulePageAction[] { return this.canEdit ? this.api?.pageActions || [] : []; }
+  runPageAction(action: ModulePageAction): void {
+    action.run().subscribe({
+      next: rows => { if (rows) this.config.rows = rows; },
+      error: (error: Error) => this.toast.error(error.message)
+    });
+  }
   get workspaceLabel(): string { return this.tenant.isSchool ? 'School' : 'Coaching'; }
   get filterLabel(): string { return this.config.columns.find(column => column.key === this.config.filterKey)?.label || 'Filter'; }
   get filterOptions(): string[] {
@@ -75,8 +84,9 @@ export class ModulePageComponent implements OnInit {
     return this.config.rows.filter(row => (!query || Object.values(row).join(' ').toLowerCase().includes(query)) && (!this.filter || !key || String(row[key]) === this.filter));
   }
   /** Small summary chips above the table: total plus a count per status. */
-  get summary(): { label: string; value: number }[] {
-    const chips = [{ label: `Total ${this.config.title.toLowerCase()}`, value: this.config.rows.length }];
+  get summary(): { label: string; value: number | string }[] {
+    if (this.api?.summary) return this.api.summary(this.config.rows);
+    const chips: { label: string; value: number | string }[] = [{ label: `Total ${this.config.title.toLowerCase()}`, value: this.config.rows.length }];
     if (!this.config.columns.some(column => column.key === 'status')) return chips;
     const counts = new Map<string, number>();
     this.config.rows.forEach(row => counts.set(row['status'], (counts.get(row['status']) || 0) + 1));
@@ -142,7 +152,10 @@ export class ModulePageComponent implements OnInit {
   }
 
   private saveApi(value: Record<string, unknown>, row?: ModuleRow): void {
-    this.api!.save(value, row).subscribe({
+    let request;
+    // Adapters may reject the values before calling the server; keep the form open with what was typed.
+    try { request = this.api!.save(value, row); } catch (error) { this.toast.error((error as Error).message); this.open(row, value); return; }
+    request.subscribe({
       next: saved => {
         if (row) Object.assign(row, saved); else this.config.rows = [...this.config.rows, saved];
         this.toast.success(`${this.capital(this.config.singular)} “${saved['name'] || saved['title'] || this.config.singular}” ${row ? 'updated' : this.api?.createdVerb || 'added'}.`);

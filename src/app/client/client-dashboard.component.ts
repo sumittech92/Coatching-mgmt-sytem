@@ -5,6 +5,8 @@ import { ToastService } from '../core/toast.service';
 import { TenantContextService } from '../core/tenant-context.service';
 import { MockAuthService } from '../core/mock-auth.service';
 interface DashLink { label: string; hint: string; icon: string; link: string; tone: string; }
+interface QuickAction { label: string; icon: string; link: string; module?: string; tone: string; }
+interface SetupStep { label: string; hint: string; link: string; done: boolean; }
 interface DashItem { time: string; title: string; detail: string; status: string; tone: 'success'|'warning'|'danger'|'neutral'|'info'; }
 @Component({ selector: 'app-client-dashboard', templateUrl: './client-dashboard.component.html', styleUrls: ['./client-dashboard.component.scss', './dashboard-typography.component.scss', './teacher-dashboard.component.scss'] })
 export class ClientDashboardComponent implements OnInit {
@@ -30,6 +32,40 @@ export class ClientDashboardComponent implements OnInit {
       error: () => { /* the strip is optional */ }
     });
   }
+  /** One-click shortcuts for the owner's everyday work (modules turned off by the Super Admin are hidden). */
+  get quickActions(): QuickAction[] {
+    const actions: QuickAction[] = [
+      { label: 'Add student', icon: 'person_add', link: '/client/students/add', tone: 'qa-pink' },
+      { label: 'Collect fee', icon: 'payments', link: '/client/fees/collect', module: 'fees', tone: 'qa-green' },
+      { label: 'Take attendance', icon: 'fact_check', link: '/client/attendance', module: 'attendance', tone: 'qa-blue' },
+      { label: 'New enquiry', icon: 'person_search', link: '/client/admissions', module: 'admissions', tone: 'qa-amber' },
+      { label: 'Send notice', icon: 'campaign', link: '/client/notices', module: 'notices', tone: 'qa-violet' },
+      { label: this.isSchool ? 'Plan exam' : 'Schedule test', icon: 'quiz', link: this.isSchool ? '/client/exams' : '/client/tests', module: 'exams', tone: 'qa-teal' }
+    ];
+    return this.quickCache.get(this.auth.disabledModules.join(',')) ?? this.cacheQuick(actions.filter(action => this.auth.isModuleOn(action.module)));
+  }
+  private readonly quickCache = new Map<string, QuickAction[]>();
+  private cacheQuick(list: QuickAction[]): QuickAction[] { this.quickCache.set(this.auth.disabledModules.join(','), list); return list; }
+
+  /** New owners: what to set up first, from live counts. Hidden once everything is done or dismissed. */
+  get setupSteps(): SetupStep[] {
+    const d = this.dash;
+    if (!d) return [];
+    const school = d.workType === 'school';
+    return [
+      { label: school ? 'Add your classes' : 'Add your courses', hint: school ? 'Nursery to Class 12 with fees' : 'Courses you teach and their fees', link: school ? '/client/classes' : '/client/courses', done: d.classes.courses > 0 },
+      { label: school ? 'Create sections' : 'Create batches', hint: school ? 'Section A, B… for each class' : 'Timings and teachers for each course', link: school ? '/client/sections' : '/client/batches', done: d.classes.batches > 0 },
+      { label: 'Add teachers', hint: 'They get their own login', link: '/client/teachers', done: d.teachers > 0 },
+      { label: 'Add students', hint: 'Students and parents get a portal', link: '/client/students/add', done: d.students.total > 0 },
+      { label: 'Mark attendance', hint: 'Take the first register', link: '/client/attendance', done: d.attendanceWeek.some(day => day.marked > 0) || d.attendanceToday.marked > 0 },
+      { label: 'Collect a fee', hint: 'Receipts go out on WhatsApp', link: '/client/fees/collect', done: d.fees.month > 0 || d.fees.pending > 0 }
+    ];
+  }
+  get setupDoneCount(): number { return this.setupSteps.filter(step => step.done).length; }
+  get showSetup(): boolean { return this.auth.role === 'Owner' && !this.setupHidden && this.setupSteps.length > 0 && this.setupDoneCount < this.setupSteps.length; }
+  setupHidden = (() => { try { return localStorage.getItem('edunexa-setup-hidden') === '1'; } catch { return false; } })();
+  hideSetup(): void { this.setupHidden = true; try { localStorage.setItem('edunexa-setup-hidden', '1'); } catch { /* storage optional */ } }
+
   get brand(): string { return this.tenant.current.businessName || 'your institute'; }
   get ownerName(): string { return this.dash ? (this.auth.displayName || '').split(' ')[0] || 'there' : 'Jordan'; }
   get todayLine(): string { return (this.dash ? new Date() : new Date(2026, 8, 28)).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase(); }

@@ -1,0 +1,38 @@
+<h2 mat-dialog-title class="dialog-title">{{ test.name }} · {{ test.className }}</h2>
+<p class="dialog-subtitle">Max marks {{ test.maxMarks }} · Pass marks {{ test.passMarks }}. Results update as you type marks.</p>
+<mat-dialog-content class="dialog-content">
+  <div class="stats">
+    <span><b>{{ rows.length }}</b> candidates</span><span><b>{{ marked }}</b> marked</span><span class="ok"><b>{{ qualified }}</b> qualified</span>
+  </div>
+  <div class="add-row">
+    <mat-form-field appearance="outline" class="applicant-field">
+      <mat-select [(ngModel)]="applicantCode" [placeholder]="loadingApplicants ? 'Loading applicants…' : available.length ? 'Add an applicant from Admissions (' + test.className + ')' : 'No open ' + test.className + ' enquiries left'" [disabled]="!available.length">
+        <mat-option *ngFor="let item of available" [value]="item.enquiryCode">{{ item.studentName }}<small *ngIf="item.parentName"> · {{ item.parentName }}</small></mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-stroked-button type="button" (click)="addApplicant()" [disabled]="!applicantCode"><mat-icon>person_add</mat-icon>Add</button>
+    <button mat-button type="button" (click)="addAll()" *ngIf="available.length > 1">Add all ({{ available.length }})</button>
+    <button mat-button type="button" (click)="addManual()"><mat-icon>edit</mat-icon>Add by hand</button>
+  </div>
+
+  <div class="table-responsive" *ngIf="rows.length; else empty">
+    <table class="table align-middle mb-0 candidate-table">
+      <thead><tr><th>STUDENT *</th><th>PARENT</th><th>MOBILE</th><th class="marks-col">MARKS</th><th>RESULT</th><th><span class="visually-hidden">Remove</span></th></tr></thead>
+      <tbody>
+        <tr *ngFor="let row of rows; let i = index">
+          <td><input class="cell-input" [(ngModel)]="row.studentName" [readonly]="!!row.enquiryCode" maxlength="80" placeholder="Student name" aria-label="Student name"><small *ngIf="row.enquiryCode" class="from">From Admissions</small></td>
+          <td><input class="cell-input" [(ngModel)]="row.parentName" maxlength="80" placeholder="Parent name" aria-label="Parent name"></td>
+          <td><input class="cell-input" [(ngModel)]="row.phoneNumber" maxlength="10" inputmode="numeric" placeholder="9876543210" aria-label="Mobile"></td>
+          <td class="marks-col"><input class="cell-input marks" type="number" min="0" [max]="test.maxMarks" [(ngModel)]="row.marks" placeholder="—" [attr.aria-label]="'Marks out of ' + test.maxMarks"></td>
+          <td><span class="result" [ngClass]="result(row)">{{ resultLabels[result(row)] }}</span></td>
+          <td class="text-end"><button mat-icon-button type="button" (click)="remove(i)" [attr.aria-label]="'Remove ' + (row.studentName || 'row')"><mat-icon>delete_outline</mat-icon></button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <ng-template #empty><app-empty-state icon="assignment_ind" title="No candidates yet" description="Add applicants from Admissions or add a student by hand."></app-empty-state></ng-template>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="saving">{{ saving ? 'Saving…' : 'Save candidates & marks' }}</button>
+</mat-dialog-actions>

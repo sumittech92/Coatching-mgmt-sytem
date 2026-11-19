@@ -51,7 +51,8 @@ const routes: Routes = [
   // Academic pages from module-registry (School and Coaching).
   ...([['sessions', ['Owner']], ['classes', ['Owner']], ['sections', ['Owner']], ['subjects', ['Owner']], ['events', ['Owner']], ['timetable', ['Owner']],
     ['exams', ['Owner', 'Teacher']], ['tests', ['Owner', 'Teacher']], ['assignments', ['Teacher']], ['homework', ['Teacher']], ['marks', ['Teacher']],
-    ['today', ['Teacher']], ['my-batches', ['Teacher']], ['my-classes', ['Teacher']], ['my-subjects', ['Teacher']]] as [string, string[]][])
+    ['today', ['Teacher']], ['my-batches', ['Teacher']], ['my-classes', ['Teacher']], ['my-subjects', ['Teacher']],
+    ['salary', ['Owner']], ['entrance', ['Owner']], ['labs', ['Owner', 'Teacher']], ['lab-equipment', ['Owner', 'Teacher']]] as [string, string[]][])
     .map(([key, roles]) => ({ path: `client/${key}`, component: ModulePageComponent, canActivate: [RoleAccessGuard], data: { roles } })),
   { path: 'client/batches/add', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/batches/:id', component: ClientManagementComponent },

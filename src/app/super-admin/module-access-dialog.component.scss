@@ -1,0 +1,20 @@
+:host { display: block; }
+.dialog-title { font-size: 20px; font-weight: 700; color: #263447; margin: 0; padding: 23px 24px 6px; }
+.dialog-subtitle { font-size: 13px; color: #5b6778; margin: 0; padding: 0 24px 12px; }
+.dialog-content { min-width: min(640px, 82vw); max-height: 64vh; padding: 4px 24px 12px; }
+.dialog-actions { padding: 14px 24px 22px; gap: 8px; }
+.module-toolbar { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #536176; margin-bottom: 10px; }
+.module-toolbar .spacer { flex: 1; }
+.module-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.module-tile { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e3e8ef; border-radius: 12px; background: #fff; cursor: pointer; transition: border-color .15s ease, background .15s ease, opacity .15s ease; }
+.module-tile:hover { border-color: #ffb3d4; }
+.module-tile.off { background: #f7f8fa; opacity: .72; }
+.module-icon { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; flex: none; background: linear-gradient(135deg, #ffe3f0, #ffeede); color: #ff2d8a; }
+.module-tile.off .module-icon { background: #eceff3; color: #8a95a3; }
+.module-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.module-text b { font-size: 14px; color: #263447; }
+.module-text small { font-size: 12px; color: #5b6778; }
+@media (max-width: 600px) {
+  .dialog-content { min-width: 0; padding: 4px 16px 10px; }
+  .module-grid { grid-template-columns: 1fr; }
+}
