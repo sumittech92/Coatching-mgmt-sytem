@@ -1,0 +1,129 @@
+<div class="page-header salary-head">
+  <div>
+    <app-breadcrumbs [items]="['Finance', 'Teacher salary']"></app-breadcrumbs>
+    <h1>Teacher salary</h1>
+    <p>Set each teacher's pay once, generate the month in one click, pay and print salary slips.</p>
+  </div>
+  <div class="head-actions">
+    <button mat-stroked-button (click)="export()"><mat-icon>download</mat-icon>Export</button>
+    <button mat-flat-button color="primary" (click)="openSalary()" *ngIf="tab === 0"><mat-icon>add</mat-icon>Add salary</button>
+  </div>
+</div>
+
+<app-empty-state *ngIf="!auth.token" icon="account_balance_wallet" title="Sign in to manage salaries" description="Teacher salary works with a signed-in owner account."></app-empty-state>
+<app-loading-state *ngIf="loading" label="Loading salaries…"></app-loading-state>
+
+<ng-container *ngIf="auth.token && !loading">
+  <section class="month-bar">
+    <div class="month-nav">
+      <button mat-icon-button (click)="shiftMonth(-1)" aria-label="Previous month"><mat-icon>chevron_left</mat-icon></button>
+      <mat-form-field appearance="outline" class="month-select"><mat-select [(ngModel)]="month" aria-label="Month"><mat-option *ngFor="let option of monthOptions" [value]="option.key">{{ option.label }}</mat-option></mat-select></mat-form-field>
+      <button mat-icon-button (click)="shiftMonth(1)" aria-label="Next month"><mat-icon>chevron_right</mat-icon></button>
+    </div>
+    <div class="month-progress" *ngIf="monthSalaries.length">
+      <div class="progress-text"><b>{{ paidPercent }}% paid</b><span>{{ rupees(total(paid)) }} of {{ rupees(total(monthSalaries)) }}</span></div>
+      <div class="progress-track"><i [style.width.%]="paidPercent"></i></div>
+    </div>
+  </section>
+
+  <div class="salary-cards">
+    <div class="salary-card"><span class="card-icon pink"><mat-icon>account_balance_wallet</mat-icon></span><div><small>Net payroll · {{ monthLabel }}</small><strong>{{ rupees(total(monthSalaries)) }}</strong><em>{{ monthSalaries.length }} salar{{ monthSalaries.length === 1 ? 'y' : 'ies' }}</em></div></div>
+    <div class="salary-card"><span class="card-icon green"><mat-icon>task_alt</mat-icon></span><div><small>Paid</small><strong>{{ rupees(total(paid)) }}</strong><em>{{ paid.length }} teacher{{ paid.length === 1 ? '' : 's' }}</em></div></div>
+    <div class="salary-card"><span class="card-icon amber"><mat-icon>schedule</mat-icon></span><div><small>Pending</small><strong>{{ rupees(total(pending)) }}</strong><em>{{ pending.length }} to pay</em></div></div>
+    <div class="salary-card"><span class="card-icon blue"><mat-icon>groups</mat-icon></span><div><small>Monthly commitment</small><strong>{{ rupees(monthlyCommitment) }}</strong><em>{{ withoutSetup.length ? withoutSetup.length + ' without salary setup' : 'All teachers set up' }}</em></div></div>
+  </div>
+
+  <mat-tab-group class="salary-tabs" [(selectedIndex)]="tab" animationDuration="150ms">
+    <!-- Payroll -->
+    <mat-tab [label]="'Payroll · ' + monthLabel">
+      <div class="notice" *ngIf="missing.length && !isFutureMonth">
+        <mat-icon>auto_awesome</mat-icon>
+        <span><b>{{ missing.length }} teacher{{ missing.length === 1 ? '' : 's' }}</b> {{ missing.length === 1 ? 'has' : 'have' }} no salary for {{ monthLabel }} yet.</span>
+        <button mat-flat-button color="primary" (click)="generate()" [disabled]="busy"><mat-icon>bolt</mat-icon>{{ busy ? 'Generating…' : 'Generate ' + monthLabel }}</button>
+      </div>
+      <div class="tab-toolbar">
+        <mat-form-field appearance="outline" class="search-field"><mat-icon matPrefix>search</mat-icon><input matInput [(ngModel)]="search" placeholder="Search teacher"></mat-form-field>
+        <mat-form-field appearance="outline" class="small-field"><mat-label>Status</mat-label><mat-select [(ngModel)]="statusFilter"><mat-option value="">All</mat-option><mat-option value="pending">Pending</mat-option><mat-option value="paid">Paid</mat-option></mat-select></mat-form-field>
+        <span class="spacer"></span>
+        <button mat-stroked-button *ngIf="pending.length" (click)="payAll()"><mat-icon>done_all</mat-icon>Mark all paid ({{ pending.length }})</button>
+      </div>
+      <mat-card class="table-card"><mat-card-content>
+        <div class="table-responsive">
+          <table mat-table [dataSource]="payroll" class="salary-table">
+            <ng-container matColumnDef="teacher"><th mat-header-cell *matHeaderCellDef>Teacher</th><td mat-cell *matCellDef="let s"><div class="name-cell"><span class="avatar">{{ s.teacherName.charAt(0) }}</span><div><b>{{ s.teacherName }}</b><small>ID {{ s.teacherCode }}</small></div></div></td></ng-container>
+            <ng-container matColumnDef="basic"><th mat-header-cell *matHeaderCellDef class="num">Basic</th><td mat-cell *matCellDef="let s" class="num">{{ rupees(s.basic) }}</td></ng-container>
+            <ng-container matColumnDef="allowances"><th mat-header-cell *matHeaderCellDef class="num">Allowances</th><td mat-cell *matCellDef="let s" class="num">{{ rupees(s.allowances) }}</td></ng-container>
+            <ng-container matColumnDef="bonus"><th mat-header-cell *matHeaderCellDef class="num">Bonus</th><td mat-cell *matCellDef="let s" class="num">{{ s.bonus ? rupees(s.bonus) : '—' }}</td></ng-container>
+            <ng-container matColumnDef="deductions"><th mat-header-cell *matHeaderCellDef class="num">Deductions</th><td mat-cell *matCellDef="let s" class="num minus">{{ s.deductions ? '− ' + rupees(s.deductions) : '—' }}</td></ng-container>
+            <ng-container matColumnDef="net"><th mat-header-cell *matHeaderCellDef class="num">Net pay</th><td mat-cell *matCellDef="let s" class="num"><b>{{ rupees(s.netPay) }}</b></td></ng-container>
+            <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let s"><app-status-badge [label]="s.status === 'paid' ? 'Paid' : 'Pending'" [tone]="s.status === 'paid' ? 'success' : 'warning'"></app-status-badge></td></ng-container>
+            <ng-container matColumnDef="paid"><th mat-header-cell *matHeaderCellDef>Paid on</th><td mat-cell *matCellDef="let s"><ng-container *ngIf="s.status === 'paid'; else payBtn">{{ day(s.paidOn) }}<small class="sub">{{ s.mode ? modeLabels[s.mode] : '' }}{{ s.reference ? ' · ' + s.reference : '' }}</small></ng-container><ng-template #payBtn><button mat-stroked-button class="pay-btn" (click)="markPaid(s)"><mat-icon>payments</mat-icon>Pay</button></ng-template></td></ng-container>
+            <ng-container matColumnDef="action"><th mat-header-cell *matHeaderCellDef></th><td mat-cell *matCellDef="let s" class="text-end">
+              <button mat-icon-button (click)="slip(s)" aria-label="Salary slip" matTooltip="Salary slip"><mat-icon>receipt_long</mat-icon></button>
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'More for ' + s.teacherName"><mat-icon>more_vert</mat-icon></button>
+              <mat-menu #rowMenu="matMenu">
+                <button mat-menu-item (click)="openSalary(s)"><mat-icon>edit</mat-icon>Edit amounts</button>
+                <button mat-menu-item *ngIf="s.status === 'paid'" (click)="markPending(s)"><mat-icon>undo</mat-icon>Mark as pending</button>
+                <button mat-menu-item class="delete-action" (click)="remove(s)"><mat-icon>delete_outline</mat-icon>Delete</button>
+              </mat-menu>
+            </td></ng-container>
+            <tr mat-header-row *matHeaderRowDef="payrollColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: payrollColumns"></tr>
+          </table>
+        </div>
+        <app-empty-state *ngIf="!payroll.length" icon="account_balance_wallet" [title]="monthSalaries.length ? 'No salaries match' : 'No salaries for ' + monthLabel" [description]="monthSalaries.length ? 'Try another search or status.' : 'Set each teacher’s pay in “Salary setup”, then generate the month.'"></app-empty-state>
+        <div class="table-total" *ngIf="payroll.length"><span>{{ payroll.length }} salar{{ payroll.length === 1 ? 'y' : 'ies' }}</span><b>Total {{ rupees(total(payroll)) }}</b></div>
+      </mat-card-content></mat-card>
+    </mat-tab>
+
+    <!-- Salary setup -->
+    <mat-tab [label]="'Salary setup' + (withoutSetup.length ? ' (' + withoutSetup.length + ' to set)' : '')">
+      <p class="tab-help"><mat-icon>info</mat-icon>Each teacher's regular monthly pay. “Generate month” creates salaries from these amounts; bonus and one-off deductions are added per month.</p>
+      <mat-card class="table-card"><mat-card-content>
+        <div class="table-responsive">
+          <table mat-table [dataSource]="setups" class="salary-table">
+            <ng-container matColumnDef="teacher"><th mat-header-cell *matHeaderCellDef>Teacher</th><td mat-cell *matCellDef="let t"><div class="name-cell"><span class="avatar">{{ t.teacherName.charAt(0) }}</span><div><b>{{ t.teacherName }}</b><small>ID {{ t.teacherCode }}{{ t.designation ? ' · ' + t.designation : '' }}{{ t.status === 'inactive' ? ' · Inactive' : '' }}</small></div></div></td></ng-container>
+            <ng-container matColumnDef="basic"><th mat-header-cell *matHeaderCellDef class="num">Basic</th><td mat-cell *matCellDef="let t" class="num">{{ t.structure ? rupees(t.structure.basic) : '—' }}</td></ng-container>
+            <ng-container matColumnDef="allowances"><th mat-header-cell *matHeaderCellDef class="num">Allowances</th><td mat-cell *matCellDef="let t" class="num">{{ t.structure ? rupees(t.structure.allowances) : '—' }}</td></ng-container>
+            <ng-container matColumnDef="deductions"><th mat-header-cell *matHeaderCellDef class="num">Deductions</th><td mat-cell *matCellDef="let t" class="num minus">{{ t.structure?.deductions ? '− ' + rupees(t.structure.deductions) : '—' }}</td></ng-container>
+            <ng-container matColumnDef="net"><th mat-header-cell *matHeaderCellDef class="num">Monthly net</th><td mat-cell *matCellDef="let t" class="num"><b *ngIf="t.structure">{{ rupees(t.structure.netPay) }}</b><app-status-badge *ngIf="!t.structure" label="Not set" tone="warning"></app-status-badge></td></ng-container>
+            <ng-container matColumnDef="payment"><th mat-header-cell *matHeaderCellDef>Paid by</th><td mat-cell *matCellDef="let t">{{ t.structure ? modeLabels[t.structure.mode] : '—' }}<small class="sub" *ngIf="t.structure?.account">{{ t.structure.account }}</small></td></ng-container>
+            <ng-container matColumnDef="action"><th mat-header-cell *matHeaderCellDef></th><td mat-cell *matCellDef="let t" class="text-end">
+              <button mat-stroked-button (click)="editSetup(t)"><mat-icon>{{ t.structure ? 'edit' : 'add' }}</mat-icon>{{ t.structure ? 'Edit' : 'Set salary' }}</button>
+              <button mat-icon-button *ngIf="t.structure && !isFutureMonth && !hasSalary(t.teacherCode)" (click)="tab = 0; openSalary(undefined, t.teacherCode)" [matTooltip]="'Add ' + monthLabel + ' salary'" aria-label="Add this month's salary"><mat-icon>post_add</mat-icon></button>
+            </td></ng-container>
+            <tr mat-header-row *matHeaderRowDef="setupColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: setupColumns" [class.inactive-row]="row.status === 'inactive'"></tr>
+          </table>
+        </div>
+        <app-empty-state *ngIf="!setups.length" icon="school" title="No teachers yet" description="Add teachers on the Teachers page, then set their salary here."></app-empty-state>
+      </mat-card-content></mat-card>
+    </mat-tab>
+
+    <!-- History -->
+    <mat-tab label="History">
+      <div class="tab-toolbar">
+        <mat-form-field appearance="outline" class="small-field"><mat-label>Year</mat-label><mat-select [(ngModel)]="historyYear"><mat-option *ngFor="let year of years" [value]="year">{{ year }}</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline" class="search-field"><mat-label>Teacher</mat-label><mat-select [(ngModel)]="historyTeacher"><mat-option value="">All teachers</mat-option><mat-option *ngFor="let t of setups" [value]="t.teacherCode">{{ t.teacherName }} · {{ t.teacherCode }}</mat-option></mat-select></mat-form-field>
+        <span class="spacer"></span>
+        <span class="history-total">Paid in {{ historyYear }}: <b>{{ rupees(historyPaid) }}</b></span>
+      </div>
+      <mat-card class="table-card"><mat-card-content>
+        <div class="table-responsive">
+          <table mat-table [dataSource]="history" class="salary-table">
+            <ng-container matColumnDef="month"><th mat-header-cell *matHeaderCellDef>Month</th><td mat-cell *matCellDef="let s"><b>{{ monthName(s.month) }}</b></td></ng-container>
+            <ng-container matColumnDef="teacher"><th mat-header-cell *matHeaderCellDef>Teacher</th><td mat-cell *matCellDef="let s">{{ s.teacherName }}</td></ng-container>
+            <ng-container matColumnDef="gross"><th mat-header-cell *matHeaderCellDef class="num">Gross</th><td mat-cell *matCellDef="let s" class="num">{{ rupees(s.basic + s.allowances + s.bonus) }}</td></ng-container>
+            <ng-container matColumnDef="deductions"><th mat-header-cell *matHeaderCellDef class="num">Deductions</th><td mat-cell *matCellDef="let s" class="num minus">{{ s.deductions ? '− ' + rupees(s.deductions) : '—' }}</td></ng-container>
+            <ng-container matColumnDef="net"><th mat-header-cell *matHeaderCellDef class="num">Net pay</th><td mat-cell *matCellDef="let s" class="num"><b>{{ rupees(s.netPay) }}</b></td></ng-container>
+            <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let s"><app-status-badge [label]="s.status === 'paid' ? 'Paid' : 'Pending'" [tone]="s.status === 'paid' ? 'success' : 'warning'"></app-status-badge></td></ng-container>
+            <ng-container matColumnDef="paid"><th mat-header-cell *matHeaderCellDef>Paid on</th><td mat-cell *matCellDef="let s">{{ day(s.paidOn) }}<button mat-icon-button (click)="slip(s)" aria-label="Salary slip"><mat-icon>receipt_long</mat-icon></button></td></ng-container>
+            <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: historyColumns"></tr>
+          </table>
+        </div>
+        <app-empty-state *ngIf="!history.length" icon="history" title="No salaries in this period" description="Salaries appear here once they are added."></app-empty-state>
+      </mat-card-content></mat-card>
+    </mat-tab>
+  </mat-tab-group>
+</ng-container>

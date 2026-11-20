@@ -10,14 +10,14 @@ export type ApiCandidateResult = 'pending' | 'qualified' | 'notQualified';
 export const CANDIDATE_RESULT_LABELS: Record<ApiCandidateResult, string> = { pending: 'Pending', qualified: 'Qualified', notQualified: 'Not qualified' };
 
 export interface ApiEntranceCandidate {
-  _id?: string; enquiryCode: string | null; studentName: string; parentName: string | null; phoneNumber: string | null;
+  _id?: string; rollNo?: string | null; rank?: number | null; enquiryCode: string | null; studentName: string; parentName: string | null; phoneNumber: string | null;
   marks: number | null; remarks: string | null; result?: ApiCandidateResult;
 }
 /** A school admission entrance test. Status comes from the date: scheduled → completed, or cancelled. */
 export interface ApiEntrance {
   _id: string; entranceCode: string; name: string; className: string; date: string; startTime: string | null; endTime: string | null;
   venue: string | null; maxMarks: number; passMarks: number; instructions: string | null; cancelled: boolean;
-  candidates: ApiEntranceCandidate[]; qualified: number; status: 'scheduled' | 'completed' | 'cancelled';
+  candidates: ApiEntranceCandidate[]; qualified: number; marked: number; topScore: number | null; averageScore: number | null; workType: 'school' | 'coaching'; status: 'scheduled' | 'completed' | 'cancelled';
 }
 export interface EntrancePayload {
   name: string; className: string; date: string; startTime: string | null; endTime: string | null; venue: string | null;

@@ -1,0 +1,76 @@
+<app-loading-state *ngIf="loading" label="Loading mock papers…"></app-loading-state>
+<app-empty-state *ngIf="!loading && options && !eligible" icon="description" title="Mock papers are for Classes 9 to 12" description="When you are in Class 9, 10, 11 or 12, you can generate chapter-wise and full-syllabus practice papers here."></app-empty-state>
+
+<ng-container *ngIf="!loading && options && eligible">
+  <section class="generator">
+    <div class="gen-head">
+      <span class="gen-icon"><mat-icon>auto_awesome</mat-icon></span>
+      <div><h2>Generate a mock test paper</h2><p>Choose board, subject and chapters. A fresh board-pattern paper with an answer key is written for you in about a minute.</p></div>
+    </div>
+
+    <div class="gen-grid">
+      <mat-form-field appearance="outline"><mat-label>Board</mat-label><mat-select [(ngModel)]="board" [disabled]="generating"><mat-option *ngFor="let item of options.boards" [value]="item">{{ item }}</mat-option></mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Class</mat-label><mat-select [(ngModel)]="className" (selectionChange)="classChanged()" [disabled]="portal || generating"><mat-option *ngFor="let item of classOptions" [value]="item">{{ item }}</mat-option></mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Subject</mat-label><mat-select [(ngModel)]="subject" (selectionChange)="subjectChanged()" [disabled]="generating"><mat-option *ngFor="let item of subjects" [value]="item.subject">{{ item.subject }}</mat-option><mat-option value="__other">Other subject…</mat-option></mat-select></mat-form-field>
+      <mat-form-field appearance="outline" *ngIf="subject === '__other'"><mat-label>Subject name</mat-label><input matInput [(ngModel)]="customSubject" maxlength="60" placeholder="e.g. Physics" [disabled]="generating"></mat-form-field>
+    </div>
+
+    <div class="kind-row">
+      <mat-button-toggle-group [(ngModel)]="kind" [disabled]="generating" aria-label="Paper type">
+        <mat-button-toggle value="chapter"><mat-icon>menu_book</mat-icon>Chapter-wise</mat-button-toggle>
+        <mat-button-toggle value="full"><mat-icon>library_books</mat-icon>Full syllabus</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <div class="chapters" *ngIf="kind === 'chapter'">
+      <div class="chapters-head"><b>Chapters</b><span>{{ chapters.length }} selected</span><button mat-button type="button" *ngIf="chapterOptions.length > 1" (click)="selectAllChapters()" [disabled]="generating">{{ chapters.length === chapterOptions.length ? 'Clear' : 'Select all' }}</button></div>
+      <div class="chapter-grid" *ngIf="chapterOptions.length; else noChapters">
+        <mat-checkbox *ngFor="let chapter of chapterOptions" [checked]="chapters.includes(chapter)" (change)="toggleChapter(chapter, $event.checked)" [disabled]="generating">{{ chapter }}</mat-checkbox>
+      </div>
+      <ng-template #noChapters><p class="muted">No chapter list for this subject in the Syllabus yet. Type the chapter names below.</p></ng-template>
+      <div class="add-chapter">
+        <mat-form-field appearance="outline"><mat-label>Add a chapter</mat-label><input matInput [(ngModel)]="customChapter" maxlength="120" placeholder="e.g. Quadratic Equations" (keydown.enter)="addChapter()" [disabled]="generating"></mat-form-field>
+        <button mat-stroked-button type="button" (click)="addChapter()" [disabled]="!customChapter.trim() || generating"><mat-icon>add</mat-icon>Add</button>
+      </div>
+    </div>
+
+    <div class="gen-grid">
+      <mat-form-field appearance="outline"><mat-label>Paper length</mat-label><mat-select [(ngModel)]="length" [disabled]="generating"><mat-option *ngFor="let item of lengths" [value]="item">{{ sizeLabel(item) }}</mat-option></mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Difficulty</mat-label><mat-select [(ngModel)]="difficulty" [disabled]="generating"><mat-option *ngFor="let item of difficulties" [value]="item.value">{{ item.label }}</mat-option></mat-select></mat-form-field>
+    </div>
+
+    <div class="gen-actions">
+      <div class="progress" *ngIf="generating"><mat-progress-spinner mode="indeterminate" diameter="22"></mat-progress-spinner><span>{{ hint }} <small>{{ elapsed }}s</small></span></div>
+      <small class="muted" *ngIf="!generating && portal">Each paper can be downloaded {{ options.maxDownloads }} times.</small>
+      <button mat-flat-button color="primary" (click)="generate()" [disabled]="generating"><mat-icon>auto_awesome</mat-icon>{{ generating ? 'Writing your paper…' : 'Generate paper' }}</button>
+    </div>
+  </section>
+
+  <section class="papers">
+    <div class="papers-head">
+      <h2>{{ portal ? 'My papers' : 'Generated papers' }} <small>({{ papers.length }})</small></h2>
+      <div class="filters">
+        <mat-form-field appearance="outline" class="search"><mat-icon matPrefix>search</mat-icon><input matInput [(ngModel)]="search" placeholder="Search papers"></mat-form-field>
+        <mat-form-field appearance="outline" *ngIf="!portal"><mat-label>Class</mat-label><mat-select [(ngModel)]="filterClass"><mat-option value="">All classes</mat-option><mat-option *ngFor="let item of classOptions" [value]="item">{{ item }}</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline" *ngIf="paperSubjects.length > 1"><mat-label>Subject</mat-label><mat-select [(ngModel)]="filterSubject"><mat-option value="">All subjects</mat-option><mat-option *ngFor="let item of paperSubjects" [value]="item">{{ item }}</mat-option></mat-select></mat-form-field>
+      </div>
+    </div>
+    <div class="paper-list">
+      <article class="paper" *ngFor="let paper of filtered">
+        <span class="paper-icon"><mat-icon>description</mat-icon></span>
+        <div class="paper-body">
+          <b>{{ paper.title }}</b>
+          <small>{{ paper.board }} · {{ paper.className }} · {{ paper.subject }} · {{ paper.totalMarks }} marks · {{ paper.durationMinutes >= 60 ? paper.durationMinutes / 60 + ' hr' : paper.durationMinutes + ' min' }} · {{ levelLabel(paper.difficulty) }}</small>
+          <small class="scope">{{ scope(paper) }}</small>
+          <small class="by">{{ day(paper.createdAt) }}<ng-container *ngIf="!portal"> · by {{ paper.createdByName || 'Unknown' }} ({{ paper.createdByRole === 'student' ? 'student' : paper.createdByRole === 'admin' ? 'owner' : 'teacher' }}) · downloaded {{ paper.downloads }}×</ng-container></small>
+        </div>
+        <div class="paper-actions">
+          <span class="count" *ngIf="paper.maxDownloads" [class.warn]="paper.downloadsLeft === 1" [class.done]="paper.downloadsLeft === 0">{{ paper.downloads }}/{{ paper.maxDownloads }} downloads</span>
+          <button mat-flat-button color="primary" (click)="download(paper, false)" [disabled]="downloading === paper.paperCode || paper.downloadsLeft === 0"><mat-icon>download</mat-icon>Paper</button>
+          <button mat-stroked-button (click)="download(paper, true)" [disabled]="downloading === paper.paperCode || paper.downloadsLeft === 0"><mat-icon>fact_check</mat-icon>With answers</button>
+        </div>
+      </article>
+      <app-empty-state *ngIf="!filtered.length" icon="description" [title]="papers.length ? 'No papers match' : 'No papers yet'" [description]="papers.length ? 'Try another search.' : 'Generate your first mock paper above.'"></app-empty-state>
+    </div>
+  </section>
+</ng-container>

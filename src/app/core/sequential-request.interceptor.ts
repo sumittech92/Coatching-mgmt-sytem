@@ -14,7 +14,8 @@ export class SequentialRequestInterceptor implements HttpInterceptor {
   private tail: Promise<void> = Promise.resolve();
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    if (!request.url.startsWith(environment.apiUrl)) return next.handle(request);
+    // Writing a mock paper takes a minute or more; it runs alongside so the page doesn't freeze waiting behind it.
+    if (!request.url.startsWith(environment.apiUrl) || /\/mock-paper(s)?\/generate$/.test(request.url)) return next.handle(request);
     return new Observable<HttpEvent<unknown>>(subscriber => {
       let release!: () => void;
       const done = new Promise<void>(resolve => release = resolve);

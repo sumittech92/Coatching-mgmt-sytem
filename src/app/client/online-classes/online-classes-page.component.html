@@ -1,0 +1,51 @@
+<div class="page-header oc-head">
+  <div>
+    <app-breadcrumbs [items]="[school ? 'School' : 'Coaching', 'Online classes']"></app-breadcrumbs>
+    <h1>Online classes</h1>
+    <p>Schedule live classes on Google Meet. Students join from their portal and are marked present when they join.</p>
+  </div>
+  <button mat-flat-button color="primary" (click)="open()"><mat-icon>add</mat-icon>Schedule class</button>
+</div>
+
+<app-empty-state *ngIf="!auth.token" icon="video_camera_front" title="Sign in to manage online classes" description="Online classes work with a signed-in account."></app-empty-state>
+<app-loading-state *ngIf="loading" label="Loading classes…"></app-loading-state>
+
+<ng-container *ngIf="auth.token && !loading">
+  <div class="oc-summary">
+    <div class="oc-chip live"><span class="dot"></span><strong>{{ liveCount }}</strong><small>Live now</small></div>
+    <div class="oc-chip"><strong>{{ today.length }}</strong><small>Today</small></div>
+    <div class="oc-chip"><strong>{{ upcoming.length }}</strong><small>Upcoming</small></div>
+    <div class="oc-chip"><strong>{{ past.length }}</strong><small>Past (60 days)</small></div>
+    <mat-form-field appearance="outline" class="oc-search"><mat-icon matPrefix>search</mat-icon><input matInput [(ngModel)]="search" placeholder="Search topic, subject, teacher"></mat-form-field>
+  </div>
+
+  <mat-tab-group [(selectedIndex)]="tab" animationDuration="150ms">
+    <mat-tab *ngFor="let t of ['today', 'upcoming', 'past']" [label]="(t === 'today' ? 'Today' : t === 'upcoming' ? 'Upcoming' : 'Past') + ' (' + listFor($any(t)).length + ')'">
+      <div class="oc-list">
+        <article class="oc-card" *ngFor="let item of listFor($any(t))" [class.is-live]="item.status === 'live'" [class.is-cancelled]="item.cancelled">
+          <div class="oc-time"><b>{{ clock(item.startTime) }}</b><small>{{ clock(item.endTime) }}</small><span *ngIf="t !== 'today'">{{ day(item) }}</span></div>
+          <div class="oc-body">
+            <div class="oc-title"><b>{{ item.topic }}</b><app-status-badge [label]="statusLabel(item)" [tone]="tone(item)"></app-status-badge><span class="series" *ngIf="item.seriesId" title="Weekly series"><mat-icon>repeat</mat-icon></span></div>
+            <small>{{ item.subject }} · {{ groups(item) }}<ng-container *ngIf="item.teacherName"> · {{ item.teacherName }}</ng-container></small>
+            <small class="desc" *ngIf="item.description">{{ item.description }}</small>
+            <small class="meta"><mat-icon>group</mat-icon>{{ item.joinCount || 0 }} joined<ng-container *ngIf="item.recordingLink"> · <a [href]="item.recordingLink" target="_blank" rel="noopener">Recording</a></ng-container></small>
+          </div>
+          <div class="oc-actions">
+            <button mat-flat-button color="primary" *ngIf="t === 'today' && (item.status === 'scheduled' || item.status === 'live')" (click)="item.status === 'live' ? openMeet(item) : start(item)"><mat-icon>videocam</mat-icon>{{ item.status === 'live' ? 'Open Meet' : 'Start class' }}</button>
+            <button mat-stroked-button *ngIf="item.status === 'completed' || item.status === 'live'" (click)="complete(item)"><mat-icon>{{ item.recordingLink ? 'edit' : 'video_library' }}</mat-icon>{{ item.status === 'live' ? 'Finish' : item.recordingLink ? 'Recording' : 'Add recording' }}</button>
+            <button mat-icon-button [matMenuTriggerFor]="menu" [attr.aria-label]="'More for ' + item.topic"><mat-icon>more_vert</mat-icon></button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="attendance(item)"><mat-icon>how_to_reg</mat-icon>Who joined</button>
+              <button mat-menu-item (click)="openMeet(item)"><mat-icon>open_in_new</mat-icon>Open Meet link</button>
+              <button mat-menu-item *ngIf="item.status !== 'completed'" (click)="open(item)"><mat-icon>edit</mat-icon>Edit</button>
+              <button mat-menu-item *ngIf="item.status !== 'completed'" (click)="cancel(item)"><mat-icon>{{ item.cancelled ? 'restore' : 'event_busy' }}</mat-icon>{{ item.cancelled ? 'Restore' : 'Cancel class' }}</button>
+              <button mat-menu-item class="delete-action" (click)="remove(item)"><mat-icon>delete_outline</mat-icon>Delete</button>
+              <button mat-menu-item class="delete-action" *ngIf="item.seriesId" (click)="remove(item, true)"><mat-icon>delete_sweep</mat-icon>Delete this & later</button>
+            </mat-menu>
+          </div>
+        </article>
+        <app-empty-state *ngIf="!listFor($any(t)).length" icon="video_camera_front" [title]="t === 'today' ? 'No online classes today' : t === 'upcoming' ? 'Nothing scheduled' : 'No past classes'" [description]="t === 'past' ? 'Completed classes and their recordings show here.' : 'Use “Schedule class” to add a Google Meet class.'"></app-empty-state>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</ng-container>

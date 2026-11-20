@@ -1,0 +1,110 @@
+<div class="page-header labs-head">
+  <div>
+    <app-breadcrumbs [items]="['School', 'Lab management']"></app-breadcrumbs>
+    <h1>Lab management</h1>
+    <p>Science, computer and other labs with their in-charge teacher and equipment.</p>
+  </div>
+  <button mat-stroked-button (click)="export()"><mat-icon>download</mat-icon>Export</button>
+</div>
+
+<div class="labs-summary">
+  <div class="labs-chip"><span class="chip-icon pink"><mat-icon>science</mat-icon></span><div><strong>{{ labs.length }}</strong><small>Labs · {{ activeLabs }} active</small></div></div>
+  <div class="labs-chip"><span class="chip-icon blue"><mat-icon>biotech</mat-icon></span><div><strong>{{ equipment.length }}</strong><small>Equipment types</small></div></div>
+  <div class="labs-chip"><span class="chip-icon green"><mat-icon>inventory_2</mat-icon></span><div><strong>{{ totalItems | number }}</strong><small>Items in all labs</small></div></div>
+  <div class="labs-chip"><span class="chip-icon amber"><mat-icon>build_circle</mat-icon></span><div><strong>{{ attention }}</strong><small>Need repair</small></div></div>
+</div>
+
+<mat-card class="filter-card"><mat-card-content>
+  <div class="filter-row">
+    <mat-form-field appearance="outline" class="range-field">
+      <mat-label>Added between</mat-label>
+      <mat-date-range-input [rangePicker]="rangePicker">
+        <input matStartDate placeholder="From" [(ngModel)]="from" (dateChange)="resetPages()">
+        <input matEndDate placeholder="To" [(ngModel)]="to" (dateChange)="resetPages()">
+      </mat-date-range-input>
+      <mat-datepicker-toggle matIconSuffix [for]="rangePicker"></mat-datepicker-toggle>
+      <mat-date-range-picker #rangePicker></mat-date-range-picker>
+    </mat-form-field>
+    <span class="spacer"></span>
+    <mat-form-field appearance="outline" class="status-field">
+      <mat-label>Sort by status</mat-label>
+      <mat-select [(ngModel)]="status" (selectionChange)="resetPages()"><mat-option value="">All</mat-option><mat-option value="active">Active</mat-option><mat-option value="inactive">Inactive</mat-option></mat-select>
+    </mat-form-field>
+    <button mat-button *ngIf="hasFilters" (click)="clearFilters()"><mat-icon>filter_alt_off</mat-icon>Clear</button>
+  </div>
+</mat-card-content></mat-card>
+
+<app-empty-state *ngIf="!auth.token" icon="science" title="Sign in to manage labs" description="Lab management works with a signed-in school account."></app-empty-state>
+<app-loading-state *ngIf="loading" label="Loading labs…"></app-loading-state>
+
+<mat-tab-group *ngIf="auth.token && !loading" class="labs-tabs" [(selectedIndex)]="tab" animationDuration="150ms">
+  <!-- Labs -->
+  <mat-tab [label]="'My labs (' + labs.length + ')'">
+    <div class="tab-toolbar">
+      <mat-form-field appearance="outline" class="search-field"><mat-icon matPrefix>search</mat-icon><input matInput [(ngModel)]="labSearch" (ngModelChange)="labPage.index = 0" placeholder="Search lab, location or teacher"></mat-form-field>
+      <button mat-flat-button color="primary" *ngIf="canEdit" (click)="openLab()"><mat-icon>add</mat-icon>Add new lab</button>
+    </div>
+    <mat-card class="table-card"><mat-card-content>
+      <div class="table-responsive">
+        <table mat-table [dataSource]="labRows" class="labs-table">
+          <ng-container matColumnDef="position"><th mat-header-cell *matHeaderCellDef>S.No.</th><td mat-cell *matCellDef="let lab; let i = index">{{ labPage.index * labPage.size + i + 1 }}</td></ng-container>
+          <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Lab name</th><td mat-cell *matCellDef="let lab"><div class="name-cell"><span class="lab-avatar" [ngClass]="lab.type"><mat-icon>{{ lab.type === 'computer' ? 'computer' : lab.type === 'language' ? 'translate' : 'science' }}</mat-icon></span><div><b>{{ lab.name }}</b><small>{{ typeLabels[lab.type] }}<ng-container *ngIf="lab.capacity"> · {{ lab.capacity }} seats</ng-container></small></div></div></td></ng-container>
+          <ng-container matColumnDef="room"><th mat-header-cell *matHeaderCellDef>Location</th><td mat-cell *matCellDef="let lab">{{ lab.room || '—' }}</td></ng-container>
+          <ng-container matColumnDef="inCharge"><th mat-header-cell *matHeaderCellDef>Assigned to</th><td mat-cell *matCellDef="let lab">{{ lab.inChargeName || 'Not assigned' }}</td></ng-container>
+          <ng-container matColumnDef="equipment"><th mat-header-cell *matHeaderCellDef>Equipment</th><td mat-cell *matCellDef="let lab"><button class="link-btn" (click)="showEquipment(lab)">{{ lab.equipmentCount }} item{{ lab.equipmentCount === 1 ? '' : 's' }}</button><small class="warn-text" *ngIf="lab.needsAttention">{{ lab.needsAttention }} need repair</small></td></ng-container>
+          <ng-container matColumnDef="added"><th mat-header-cell *matHeaderCellDef>Added date</th><td mat-cell *matCellDef="let lab">{{ added(lab.createdAt) }}</td></ng-container>
+          <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let lab"><mat-slide-toggle color="primary" [checked]="lab.status === 'active'" [disabled]="!canEdit" (change)="toggleLab(lab)" [attr.aria-label]="'Active: ' + lab.name"></mat-slide-toggle></td></ng-container>
+          <ng-container matColumnDef="action"><th mat-header-cell *matHeaderCellDef class="text-end">Action</th><td mat-cell *matCellDef="let lab" class="text-end">
+            <button mat-icon-button [matMenuTriggerFor]="labMenu" [attr.aria-label]="'Actions for ' + lab.name"><mat-icon>more_vert</mat-icon></button>
+            <mat-menu #labMenu="matMenu">
+              <button mat-menu-item (click)="viewLab(lab)"><mat-icon>visibility</mat-icon>View details</button>
+              <button mat-menu-item (click)="showEquipment(lab)"><mat-icon>biotech</mat-icon>View equipment</button>
+              <ng-container *ngIf="canEdit"><button mat-menu-item (click)="openLab(lab)"><mat-icon>edit</mat-icon>Edit</button><button mat-menu-item class="delete-action" (click)="removeLab(lab)"><mat-icon>delete_outline</mat-icon>Delete</button></ng-container>
+            </mat-menu>
+          </td></ng-container>
+          <tr mat-header-row *matHeaderRowDef="labColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: labColumns" [class.inactive-row]="row.status === 'inactive'"></tr>
+        </table>
+      </div>
+      <app-empty-state *ngIf="!filteredLabs.length" icon="science" [title]="labs.length ? 'No labs match' : 'No labs yet'" [description]="labs.length ? 'Try other filters.' : (canEdit ? 'Use “Add new lab” to add the first lab.' : 'Labs will appear here once the school adds them.')"></app-empty-state>
+      <mat-paginator *ngIf="filteredLabs.length > 10" [length]="filteredLabs.length" [pageIndex]="labPage.index" [pageSize]="labPage.size" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons (page)="labPage = { index: $event.pageIndex, size: $event.pageSize }"></mat-paginator>
+    </mat-card-content></mat-card>
+  </mat-tab>
+
+  <!-- Equipment -->
+  <mat-tab [label]="'Equipment (' + equipment.length + ')'">
+    <div class="tab-toolbar">
+      <mat-form-field appearance="outline" class="search-field"><mat-icon matPrefix>search</mat-icon><input matInput [(ngModel)]="equipmentSearch" (ngModelChange)="equipmentPage.index = 0" placeholder="Search equipment, ID or lab"></mat-form-field>
+      <mat-form-field appearance="outline" class="small-field"><mat-label>Lab</mat-label><mat-select [(ngModel)]="labFilter" (selectionChange)="equipmentPage.index = 0"><mat-option value="">All labs</mat-option><mat-option *ngFor="let lab of labs" [value]="lab.labCode">{{ lab.name }}</mat-option></mat-select></mat-form-field>
+      <mat-form-field appearance="outline" class="small-field"><mat-label>Condition</mat-label><mat-select [(ngModel)]="conditionFilter" (selectionChange)="equipmentPage.index = 0"><mat-option value="">Any condition</mat-option><mat-option *ngFor="let entry of conditions" [value]="entry[0]">{{ entry[1] }}</mat-option></mat-select></mat-form-field>
+      <span class="spacer"></span>
+      <button mat-flat-button color="primary" *ngIf="canEdit" (click)="openEquipment()"><mat-icon>add</mat-icon>Add new equipment</button>
+    </div>
+    <mat-card class="table-card"><mat-card-content>
+      <div class="table-responsive">
+        <table mat-table [dataSource]="equipmentRows" class="labs-table">
+          <ng-container matColumnDef="position"><th mat-header-cell *matHeaderCellDef>S.No.</th><td mat-cell *matCellDef="let item; let i = index">{{ equipmentPage.index * equipmentPage.size + i + 1 }}</td></ng-container>
+          <ng-container matColumnDef="code"><th mat-header-cell *matHeaderCellDef>Eq ID</th><td mat-cell *matCellDef="let item"><span class="code-pill">{{ item.equipmentCode }}</span></td></ng-container>
+          <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Equipment</th><td mat-cell *matCellDef="let item"><div class="name-cell"><span class="lab-avatar eq"><mat-icon>biotech</mat-icon></span><div><b>{{ item.name }}</b><small *ngIf="item.purchaseDate">Bought {{ added(item.purchaseDate) }}</small></div></div></td></ng-container>
+          <ng-container matColumnDef="department"><th mat-header-cell *matHeaderCellDef>Department</th><td mat-cell *matCellDef="let item">{{ department(item) }}</td></ng-container>
+          <ng-container matColumnDef="lab"><th mat-header-cell *matHeaderCellDef>Assigned lab</th><td mat-cell *matCellDef="let item">{{ item.labName }}</td></ng-container>
+          <ng-container matColumnDef="quantity"><th mat-header-cell *matHeaderCellDef>Qty</th><td mat-cell *matCellDef="let item"><b>{{ item.quantity }}</b></td></ng-container>
+          <ng-container matColumnDef="condition"><th mat-header-cell *matHeaderCellDef>Condition</th><td mat-cell *matCellDef="let item"><app-status-badge [label]="conditionLabels[item.condition]" [tone]="$any(conditionTone(item.condition))"></app-status-badge></td></ng-container>
+          <ng-container matColumnDef="added"><th mat-header-cell *matHeaderCellDef>Added date</th><td mat-cell *matCellDef="let item">{{ added(item.createdAt) }}</td></ng-container>
+          <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let item"><mat-slide-toggle color="primary" [checked]="item.status === 'active'" [disabled]="!canEdit" (change)="toggleEquipment(item)" [attr.aria-label]="'Active: ' + item.name"></mat-slide-toggle></td></ng-container>
+          <ng-container matColumnDef="action"><th mat-header-cell *matHeaderCellDef class="text-end">Action</th><td mat-cell *matCellDef="let item" class="text-end">
+            <button mat-icon-button [matMenuTriggerFor]="eqMenu" [attr.aria-label]="'Actions for ' + item.name"><mat-icon>more_vert</mat-icon></button>
+            <mat-menu #eqMenu="matMenu">
+              <button mat-menu-item (click)="viewEquipment(item)"><mat-icon>visibility</mat-icon>View details</button>
+              <ng-container *ngIf="canEdit"><button mat-menu-item (click)="openEquipment(item)"><mat-icon>edit</mat-icon>Edit</button><button mat-menu-item class="delete-action" (click)="removeEquipment(item)"><mat-icon>delete_outline</mat-icon>Delete</button></ng-container>
+            </mat-menu>
+          </td></ng-container>
+          <tr mat-header-row *matHeaderRowDef="equipmentColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: equipmentColumns" [class.inactive-row]="row.status === 'inactive'"></tr>
+        </table>
+      </div>
+      <app-empty-state *ngIf="!filteredEquipment.length" icon="biotech" [title]="equipment.length ? 'No equipment matches' : 'No equipment yet'" [description]="equipment.length ? 'Try other filters.' : (canEdit ? 'Use “Add new equipment” to add items to a lab.' : 'Equipment will appear here once it is added.')"></app-empty-state>
+      <mat-paginator *ngIf="filteredEquipment.length > 10" [length]="filteredEquipment.length" [pageIndex]="equipmentPage.index" [pageSize]="equipmentPage.size" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons (page)="equipmentPage = { index: $event.pageIndex, size: $event.pageSize }"></mat-paginator>
+    </mat-card-content></mat-card>
+  </mat-tab>
+</mat-tab-group>

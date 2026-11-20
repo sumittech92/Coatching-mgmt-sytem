@@ -5,7 +5,7 @@ import { MockAuthService } from '../../core/mock-auth.service';
 import { ToastService } from '../../core/toast.service';
 import { normalizeMobile } from '../../core/app-validators';
 
-interface CandidateRow { enquiryCode: string | null; studentName: string; parentName: string; phoneNumber: string; marks: number | null; remarks: string; }
+interface CandidateRow { rollNo: string | null; enquiryCode: string | null; studentName: string; parentName: string; phoneNumber: string; marks: number | null; remarks: string; }
 
 /** Candidates of one entrance test: add applicants from Admissions (same class) or by hand, enter marks, see the result. */
 @Component({ selector: 'app-entrance-candidates-dialog', templateUrl: './entrance-candidates-dialog.component.html', styleUrls: ['./entrance-candidates-dialog.component.scss'] })
@@ -18,7 +18,7 @@ export class EntranceCandidatesDialogComponent implements OnInit {
   readonly resultLabels = CANDIDATE_RESULT_LABELS;
 
   constructor(@Inject(MAT_DIALOG_DATA) public test: ApiEntrance, private ref: MatDialogRef<EntranceCandidatesDialogComponent, ApiEntrance>, private api: EntranceApiService, private auth: MockAuthService, private toast: ToastService) {
-    this.rows = test.candidates.map(candidate => ({ enquiryCode: candidate.enquiryCode, studentName: candidate.studentName, parentName: candidate.parentName || '', phoneNumber: candidate.phoneNumber || '', marks: candidate.marks, remarks: candidate.remarks || '' }));
+    this.rows = test.candidates.map(candidate => ({ rollNo: candidate.rollNo || null, enquiryCode: candidate.enquiryCode, studentName: candidate.studentName, parentName: candidate.parentName || '', phoneNumber: candidate.phoneNumber || '', marks: candidate.marks, remarks: candidate.remarks || '' }));
   }
 
   ngOnInit(): void {
@@ -36,6 +36,14 @@ export class EntranceCandidatesDialogComponent implements OnInit {
   get qualified(): number { return this.rows.filter(row => this.result(row) === 'qualified').length; }
   get marked(): number { return this.rows.filter(row => row.marks !== null && row.marks !== undefined && String(row.marks) !== '').length; }
 
+  get school(): boolean { return this.test.workType !== 'coaching'; }
+  /** Live rank by marks (ties share a rank); blank until marks are entered. */
+  rank(row: CandidateRow): number | null {
+    if (!this.hasMarks(row)) return null;
+    const scores = this.rows.filter(item => this.hasMarks(item)).map(item => Number(item.marks)).sort((a, b) => b - a);
+    return scores.indexOf(Number(row.marks)) + 1;
+  }
+  private hasMarks(row: CandidateRow): boolean { return row.marks !== null && row.marks !== undefined && String(row.marks) !== ''; }
   result(row: CandidateRow): ApiCandidateResult {
     if (row.marks === null || row.marks === undefined || String(row.marks) === '') return 'pending';
     return Number(row.marks) >= this.test.passMarks ? 'qualified' : 'notQualified';
@@ -43,11 +51,11 @@ export class EntranceCandidatesDialogComponent implements OnInit {
   addApplicant(): void {
     const applicant = this.available.find(item => item.enquiryCode === this.applicantCode);
     if (!applicant) return;
-    this.rows.push({ enquiryCode: applicant.enquiryCode, studentName: applicant.studentName, parentName: applicant.parentName || '', phoneNumber: normalizeMobile(applicant.phoneNumber || '').slice(-10), marks: null, remarks: '' });
+    this.rows.push({ rollNo: null, enquiryCode: applicant.enquiryCode, studentName: applicant.studentName, parentName: applicant.parentName || '', phoneNumber: normalizeMobile(applicant.phoneNumber || '').slice(-10), marks: null, remarks: '' });
     this.applicantCode = '';
   }
   addAll(): void { this.available.forEach(item => { this.applicantCode = item.enquiryCode; this.addApplicant(); }); }
-  addManual(): void { this.rows.push({ enquiryCode: null, studentName: '', parentName: '', phoneNumber: '', marks: null, remarks: '' }); }
+  addManual(): void { this.rows.push({ rollNo: null, enquiryCode: null, studentName: '', parentName: '', phoneNumber: '', marks: null, remarks: '' }); }
   remove(index: number): void { this.rows.splice(index, 1); }
 
   /** First problem with the list, or '' when it can be saved. */
@@ -68,6 +76,7 @@ export class EntranceCandidatesDialogComponent implements OnInit {
     if (problem) { this.toast.error(problem); return; }
     if (!token || this.saving) return;
     const candidates: ApiEntranceCandidate[] = this.rows.map(row => ({
+      rollNo: row.rollNo,
       enquiryCode: row.enquiryCode, studentName: row.studentName.trim(), parentName: row.parentName.trim() || null,
       phoneNumber: row.phoneNumber ? normalizeMobile(row.phoneNumber) : null,
       marks: row.marks === null || row.marks === undefined || String(row.marks) === '' ? null : Number(row.marks), remarks: row.remarks.trim() || null

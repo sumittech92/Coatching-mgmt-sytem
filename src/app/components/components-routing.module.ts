@@ -1,3 +1,7 @@
+import { OnlineClassesPageComponent } from '../client/online-classes/online-classes-page.component';
+import { MockPapersPageComponent } from '../client/mock-papers/mock-papers-page.component';
+import { SalaryPageComponent } from '../client/salary/salary-page.component';
+import { LabsPageComponent } from '../client/labs/labs-page.component';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { CompanyMgtComponent } from './company-mgt/company-mgt.component';
@@ -52,12 +56,18 @@ const routes: Routes = [
   ...([['sessions', ['Owner']], ['classes', ['Owner']], ['sections', ['Owner']], ['subjects', ['Owner']], ['events', ['Owner']], ['timetable', ['Owner']],
     ['exams', ['Owner', 'Teacher']], ['tests', ['Owner', 'Teacher']], ['assignments', ['Teacher']], ['homework', ['Teacher']], ['marks', ['Teacher']],
     ['today', ['Teacher']], ['my-batches', ['Teacher']], ['my-classes', ['Teacher']], ['my-subjects', ['Teacher']],
-    ['salary', ['Owner']], ['entrance', ['Owner']], ['labs', ['Owner', 'Teacher']], ['lab-equipment', ['Owner', 'Teacher']]] as [string, string[]][])
+    ['entrance', ['Owner']]] as [string, string[]][])
     .map(([key, roles]) => ({ path: `client/${key}`, component: ModulePageComponent, canActivate: [RoleAccessGuard], data: { roles } })),
   { path: 'client/batches/add', component: ClientManagementComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
   { path: 'client/batches/:id', component: ClientManagementComponent },
   { path: 'client/batches', component: ClientManagementComponent },
   { path: 'client/attendance', component: AttendancePageComponent },
+  { path: 'client/salary', component: SalaryPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },
+  // Labs are a school page (Labs and Equipment tabs); the old equipment address opens the Equipment tab.
+  { path: 'client/labs', component: LabsPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
+  { path: 'client/lab-equipment', redirectTo: 'client/labs?tab=equipment' },
+  { path: 'client/online-classes', component: OnlineClassesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
+  { path: 'client/mock-papers', component: MockPapersPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
   { path: 'client/syllabus', component: SyllabusPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
   { path: 'client/library', component: LibraryPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner', 'Teacher'] } },
   { path: 'client/fees/collect', component: FeesPageComponent, canActivate: [RoleAccessGuard], data: { roles: ['Owner'] } },

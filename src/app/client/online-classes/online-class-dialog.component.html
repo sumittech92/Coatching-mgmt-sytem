@@ -1,0 +1,57 @@
+<h2 mat-dialog-title class="dialog-title">{{ data.item ? 'Edit online class' : 'Schedule online class' }}</h2>
+<p class="dialog-subtitle">Students join from their portal with one click on Google Meet.</p>
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="form" class="row g-2">
+    <div class="col-md-6">
+      <label class="field-label">{{ groupLabel }} *</label>
+      <mat-form-field appearance="outline" class="w-100"><mat-select formControlName="batchCodes" multiple [placeholder]="'Choose ' + groupLabel.toLowerCase()"><mat-option *ngFor="let batch of data.batches" [value]="batch.batchCode">{{ batchLabel(batch) }}</mat-option></mat-select><mat-error>Choose at least one.</mat-error></mat-form-field>
+    </div>
+    <div class="col-md-6">
+      <label class="field-label">Subject *</label>
+      <mat-form-field appearance="outline" class="w-100" *ngIf="subjects.length; else typeSubject"><mat-select formControlName="subject" placeholder="Choose subject"><mat-option *ngFor="let subject of subjects" [value]="subject">{{ subject }}</mat-option></mat-select><mat-error>Choose the subject.</mat-error></mat-form-field>
+      <ng-template #typeSubject><mat-form-field appearance="outline" class="w-100"><input matInput formControlName="subject" maxlength="60" placeholder="e.g. Physics"><mat-error>Enter the subject.</mat-error></mat-form-field></ng-template>
+    </div>
+    <div class="col-md-6">
+      <label class="field-label">Topic *</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput formControlName="topic" maxlength="120" placeholder="e.g. Laws of motion – revision"><mat-error>Enter the topic.</mat-error></mat-form-field>
+    </div>
+    <div class="col-md-6" *ngIf="data.owner">
+      <label class="field-label">Teacher</label>
+      <mat-form-field appearance="outline" class="w-100"><mat-select formControlName="teacherCode" placeholder="Choose teacher"><mat-option value="">Not assigned</mat-option><mat-option *ngFor="let teacher of data.teachers" [value]="teacher.teacherCode">{{ teacher.fullName }}</mat-option></mat-select></mat-form-field>
+    </div>
+    <div class="col-md-4">
+      <label class="field-label">{{ form.value.repeat ? 'Starts from *' : 'Date *' }}</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput [matDatepicker]="picker" [min]="minDate" formControlName="date" placeholder="DD/MM/YYYY"><mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle><mat-datepicker #picker></mat-datepicker><mat-error>Pick a date (today or later).</mat-error></mat-form-field>
+    </div>
+    <div class="col-md-4 col-6">
+      <label class="field-label">Starts *</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput class="time-input" readonly [ngxTimepicker]="startPicker" [format]="24" formControlName="startTime" placeholder="HH:MM"><ngx-material-timepicker-toggle matSuffix [for]="startPicker"></ngx-material-timepicker-toggle><ngx-material-timepicker #startPicker [enableKeyboardInput]="true"></ngx-material-timepicker><mat-error>Pick the start time.</mat-error></mat-form-field>
+    </div>
+    <div class="col-md-4 col-6">
+      <label class="field-label">Ends *</label>
+      <mat-form-field appearance="outline" class="w-100"><input matInput class="time-input" readonly [ngxTimepicker]="endPicker" [format]="24" formControlName="endTime" placeholder="HH:MM"><ngx-material-timepicker-toggle matSuffix [for]="endPicker"></ngx-material-timepicker-toggle><ngx-material-timepicker #endPicker [enableKeyboardInput]="true"></ngx-material-timepicker><mat-error>Pick the end time.</mat-error></mat-form-field>
+    </div>
+    <div class="col-12">
+      <label class="field-label">Google Meet link *</label>
+      <div class="meet-row">
+        <mat-form-field appearance="outline" class="meet-field"><mat-icon matPrefix class="meet-icon">videocam</mat-icon><input matInput formControlName="meetLink" placeholder="https://meet.google.com/abc-defg-hij" (blur)="normaliseLink()"><mat-error>Paste a Google Meet link like https://meet.google.com/abc-defg-hij</mat-error></mat-form-field>
+        <button mat-stroked-button type="button" class="meet-btn" (click)="createMeet()"><mat-icon>add_call</mat-icon>Create Google Meet</button>
+      </div>
+    </div>
+    <div class="col-12">
+      <label class="field-label">Notes for students</label>
+      <mat-form-field appearance="outline" class="w-100"><textarea matInput rows="2" formControlName="description" placeholder="What to prepare, chapter, homework…"></textarea></mat-form-field>
+    </div>
+    <div class="col-12 repeat" *ngIf="!data.item">
+      <mat-slide-toggle formControlName="repeat" color="primary">Repeat weekly</mat-slide-toggle>
+      <ng-container *ngIf="form.value.repeat">
+        <div class="day-chips"><button type="button" *ngFor="let day of days" class="day-chip" [class.on]="form.value.repeatDays?.includes(day)" (click)="toggleDay(day)">{{ day }}</button></div>
+        <mat-form-field appearance="outline" class="weeks"><mat-label>For weeks</mat-label><mat-select formControlName="repeatWeeks"><mat-option *ngFor="let n of [1,2,3,4,6,8,12,16,26]" [value]="n">{{ n }} week{{ n === 1 ? '' : 's' }}</mat-option></mat-select></mat-form-field>
+      </ng-container>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()">{{ data.item ? 'Save changes' : 'Schedule class' }}</button>
+</mat-dialog-actions>

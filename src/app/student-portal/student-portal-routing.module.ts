@@ -28,6 +28,9 @@ const routes: Routes = [
   { path: 'homework', component: StudentPortalComponent, canActivate: portalAccess, data: studentOnly },
   { path: 'exams', component: StudentPortalComponent, canActivate: portalAccess, data: studentOnly },
   // Both workspaces
-  { path: 'assignments', component: StudentPortalComponent, canActivate: portalAccess, data: studentOnly }
+  { path: 'assignments', component: StudentPortalComponent, canActivate: portalAccess, data: studentOnly },
+  { path: 'live-classes', component: StudentPortalComponent, canActivate: portalAccess, data: studentOnly },
+  // School students in Classes 9–12
+  { path: 'mock-papers', component: StudentPortalComponent, canActivate: portalAccess, data: studentOnly }
 ];
 @NgModule({imports:[RouterModule.forChild(routes)],exports:[RouterModule]}) export class StudentPortalRoutingModule {}

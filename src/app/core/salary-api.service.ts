@@ -17,6 +17,9 @@ export interface SalaryPayload {
   status: 'pending' | 'paid'; paidOn: string | null; mode: ApiSalaryMode | null; reference: string | null; note: string | null;
 }
 export interface SalaryGenerateResult { month: string; created: number; skipped: string[]; }
+/** A teacher's regular monthly pay (used by "Generate month"). */
+export interface SalaryStructure { basic: number; allowances: number; deductions: number; mode: ApiSalaryMode; account: string | null; netPay: number; }
+export interface TeacherSalarySetup { teacherCode: string; teacherName: string; status: string; designation: string | null; structure: SalaryStructure | null; }
 
 /** Client for crm-backend /salary (owner only). */
 @Injectable({ providedIn: 'root' })
@@ -27,6 +30,15 @@ export class SalaryApiService extends ApiClient<ApiSalary, SalaryPayload> {
   /** Pending salaries for the month for every active teacher paid before (copies their last basic pay). */
   generate(accessToken: string, month: string): Observable<SalaryGenerateResult> {
     return this.request(this.http.post<ApiResponse<SalaryGenerateResult>>(`${this.base}/generate`, { month }, { headers: this.headers(accessToken) }));
+  }
+
+  structures(accessToken: string): Observable<TeacherSalarySetup[]> { return this.get<TeacherSalarySetup[]>(accessToken, '/structures'); }
+  saveStructure(accessToken: string, teacherCode: string, payload: Omit<SalaryStructure, 'netPay'>): Observable<TeacherSalarySetup> {
+    return this.request(this.http.put<ApiResponse<TeacherSalarySetup>>(`${this.base}/structures/${teacherCode}`, payload, { headers: this.headers(accessToken) }));
+  }
+  /** Marks every pending salary of the month as paid. */
+  payAll(accessToken: string, payload: { month: string; mode: ApiSalaryMode; paidOn: string; reference: string | null }): Observable<{ month: string; paid: number }> {
+    return this.request(this.http.post<ApiResponse<{ month: string; paid: number }>>(`${this.base}/pay-all`, payload, { headers: this.headers(accessToken) }));
   }
 
   /** "2026-11" -> "Nov 2026" */

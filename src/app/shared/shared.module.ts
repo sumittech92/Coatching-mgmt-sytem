@@ -20,7 +20,8 @@ import { StackTableDirective } from './ui/stack-table.directive';
 import { BottomNavComponent } from './ui/bottom-nav/bottom-nav.component';
 import { ReceiptPreviewComponent } from './ui/receipt-preview/receipt-preview.component';
 import { AdmitCardPrintComponent } from './ui/admit-card/admit-card-print.component';
+import { MockPaperWorkspaceComponent } from './ui/mock-papers/mock-paper-workspace.component';
 
-const components = [ReceiptPreviewComponent, AdmitCardPrintComponent, HeaderComponent, SidebarComponent, BreadcrumbsComponent, StatCardComponent, StatusBadgeComponent, EmptyStateComponent, LoadingStateComponent, SearchToolbarComponent, DataTableComponent, FormFieldComponent, ConfirmationDialogComponent, ChangePasswordComponent, MultiSelectComponent, StackTableDirective, BottomNavComponent];
+const components = [MockPaperWorkspaceComponent, ReceiptPreviewComponent, AdmitCardPrintComponent, HeaderComponent, SidebarComponent, BreadcrumbsComponent, StatCardComponent, StatusBadgeComponent, EmptyStateComponent, LoadingStateComponent, SearchToolbarComponent, DataTableComponent, FormFieldComponent, ConfirmationDialogComponent, ChangePasswordComponent, MultiSelectComponent, StackTableDirective, BottomNavComponent];
 @NgModule({ declarations: components, imports: [CommonModule, RouterModule, MatModule, FormsModule, ReactiveFormsModule], exports: [CommonModule, RouterModule, MatModule, FormsModule, ReactiveFormsModule, ...components] })
 export class SharedModule {}

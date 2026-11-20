@@ -3,7 +3,7 @@
  * Core pages (dashboard, students, teachers, classes / courses, sections / batches, subjects, sessions, profile) are always on.
  */
 export type ModuleKey = 'admissions' | 'attendance' | 'fees' | 'exams' | 'homework' | 'timetable' | 'syllabus' | 'library' | 'labs'
-  | 'salary' | 'entrance' | 'notices' | 'events' | 'posts' | 'gallery' | 'materials' | 'website' | 'reports';
+  | 'salary' | 'entrance' | 'notices' | 'events' | 'posts' | 'gallery' | 'materials' | 'website' | 'reports' | 'onlineClasses' | 'mockPapers';
 
 export interface ModuleInfo { key: ModuleKey; label: string; icon: string; description: string; schoolOnly?: boolean; }
 
@@ -16,9 +16,9 @@ export const MODULES: ModuleInfo[] = [
   { key: 'timetable', label: 'Timetable', icon: 'calendar_month', description: 'Periods and today’s classes' },
   { key: 'syllabus', label: 'Syllabus', icon: 'fact_check', description: 'Chapters and progress' },
   { key: 'library', label: 'Library', icon: 'local_library', description: 'Books, loans and requests' },
-  { key: 'labs', label: 'Labs', icon: 'science', description: 'Labs and their equipment' },
+  { key: 'labs', label: 'Labs', icon: 'science', description: 'Labs and their equipment', schoolOnly: true },
   { key: 'salary', label: 'Teacher salary', icon: 'account_balance_wallet', description: 'Monthly payroll and salary slips' },
-  { key: 'entrance', label: 'Entrance tests', icon: 'assignment_ind', description: 'Admission tests for Nursery – Class 5', schoolOnly: true },
+  { key: 'entrance', label: 'Entrance tests', icon: 'assignment_ind', description: 'Admission / scholarship tests for new students' },
   { key: 'notices', label: 'Notices', icon: 'campaign', description: 'Announcements to families and staff' },
   { key: 'events', label: 'Events', icon: 'celebration', description: 'School events calendar', schoolOnly: true },
   { key: 'posts', label: 'Posts', icon: 'dynamic_feed', description: 'News and updates feed' },
@@ -26,6 +26,8 @@ export const MODULES: ModuleInfo[] = [
   { key: 'materials', label: 'Study materials', icon: 'folder_open', description: 'Notes and resources' },
   { key: 'website', label: 'Website', icon: 'language', description: 'Public website and CMS' },
   { key: 'reports', label: 'Reports', icon: 'bar_chart', description: 'Reports and exports' },
+  { key: 'onlineClasses', label: 'Online classes', icon: 'video_camera_front', description: 'Live classes on Google Meet' },
+  { key: 'mockPapers', label: 'Mock papers', icon: 'description', description: 'AI mock test papers for Classes 9–12', schoolOnly: true },
 ];
 
 /** First path segment after /client -> module. */
@@ -33,7 +35,7 @@ const ROUTE_MODULES: Record<string, ModuleKey> = {
   admissions: 'admissions', attendance: 'attendance', fees: 'fees', exams: 'exams', tests: 'exams', marks: 'exams', results: 'exams',
   homework: 'homework', assignments: 'homework', timetable: 'timetable', today: 'timetable', syllabus: 'syllabus', library: 'library',
   labs: 'labs', 'lab-equipment': 'labs', salary: 'salary', entrance: 'entrance', notices: 'notices', events: 'events', posts: 'posts',
-  gallery: 'gallery', materials: 'materials', website: 'website', reports: 'reports',
+  gallery: 'gallery', materials: 'materials', website: 'website', reports: 'reports', 'online-classes': 'onlineClasses', 'mock-papers': 'mockPapers',
 };
 
 /** "/client/library/..." -> 'library'; undefined for core pages. */

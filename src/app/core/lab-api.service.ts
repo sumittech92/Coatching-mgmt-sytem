@@ -9,13 +9,13 @@ export const EQUIPMENT_CONDITION_LABELS: Record<ApiEquipmentCondition, string> =
 
 export interface ApiLab {
   _id: string; labCode: string; name: string; type: ApiLabType; room: string | null; inChargeCode: string | null; inChargeName: string | null;
-  capacity: number | null; description: string | null; status: 'active' | 'inactive'; equipmentCount: number; needsAttention: number;
+  capacity: number | null; description: string | null; status: 'active' | 'inactive'; equipmentCount: number; needsAttention: number; createdAt: string;
 }
 export interface LabPayload { name: string; type: ApiLabType; room: string | null; inChargeCode: string | null; capacity: number | null; description: string | null; status: 'active' | 'inactive'; }
 
 export interface ApiLabEquipment {
   _id: string; equipmentCode: string; labCode: string | null; labName: string; name: string; quantity: number;
-  condition: ApiEquipmentCondition; purchaseDate: string | null; note: string | null; status: 'active' | 'inactive';
+  condition: ApiEquipmentCondition; purchaseDate: string | null; note: string | null; status: 'active' | 'inactive'; createdAt: string;
 }
 export interface EquipmentPayload { labCode: string; name: string; quantity: number; condition: ApiEquipmentCondition; purchaseDate: string | null; note: string | null; status: 'active' | 'inactive'; }
 

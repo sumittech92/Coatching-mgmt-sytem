@@ -1,0 +1,28 @@
+<app-loading-state *ngIf="loading" label="Loading live classes…"></app-loading-state>
+<mat-tab-group *ngIf="!loading" [(selectedIndex)]="tab" animationDuration="150ms">
+  <mat-tab *ngFor="let t of ['today', 'upcoming', 'past']" [label]="(t === 'today' ? 'Today' : t === 'upcoming' ? 'Upcoming' : 'Past & recordings') + ' (' + (t === 'today' ? today : t === 'upcoming' ? upcoming : past).length + ')'">
+    <div class="lc-list">
+      <article class="lc-card" *ngFor="let item of (t === 'today' ? today : t === 'upcoming' ? upcoming : past)" [class.live]="item.status === 'live'" [class.cancelled]="item.cancelled">
+        <div class="lc-time"><b>{{ clock(item.startTime) }}</b><small>to {{ clock(item.endTime) }}</small><span *ngIf="t !== 'today'">{{ day(item) }}</span></div>
+        <div class="lc-body">
+          <div class="lc-title"><b>{{ item.topic }}</b><span class="badge live" *ngIf="item.status === 'live'"><i></i>Live now</span><span class="badge off" *ngIf="item.cancelled">Cancelled</span><span class="badge done" *ngIf="item.joined">Attended</span></div>
+          <small>{{ item.subject }} · {{ groups(item) }}<ng-container *ngIf="item.teacherName"> · {{ item.teacherName }}</ng-container></small>
+          <small class="desc" *ngIf="item.description">{{ item.description }}</small>
+          <div class="meet" *ngIf="item.meetLink && !item.cancelled">
+            <mat-icon>videocam</mat-icon><a [href]="item.meetLink" target="_blank" rel="noopener" (click)="openLink($event, item)">{{ item.meetLink }}</a>
+            <button mat-icon-button type="button" (click)="copy(item)" aria-label="Copy Meet link" matTooltip="Copy link"><mat-icon>content_copy</mat-icon></button>
+          </div>
+        </div>
+        <div class="lc-actions">
+          <ng-container *ngIf="t === 'today' && !item.cancelled && item.status !== 'completed'">
+            <button mat-flat-button color="primary" *ngIf="isStudent" [disabled]="!item.joinable || joining === item.classCode" (click)="join(item)"><mat-icon>videocam</mat-icon>{{ joining === item.classCode ? 'Joining…' : 'Join class' }}</button>
+            <small class="when" *ngIf="!item.joinable">{{ countdown(item) }} · Join opens 10 min before</small>
+          </ng-container>
+          <button mat-stroked-button *ngIf="item.recordingLink" (click)="watch(item)"><mat-icon>play_circle</mat-icon>Watch recording</button>
+          <small class="when" *ngIf="t === 'past' && !item.recordingLink && !item.cancelled">No recording shared</small>
+        </div>
+      </article>
+      <app-empty-state *ngIf="!(t === 'today' ? today : t === 'upcoming' ? upcoming : past).length" icon="video_camera_front" [title]="t === 'today' ? 'No live classes today' : t === 'upcoming' ? 'No upcoming classes' : 'No past classes'" [description]="t === 'past' ? 'Recordings of past classes show here.' : 'Your teachers’ Google Meet classes will appear here.'"></app-empty-state>
+    </div>
+  </mat-tab>
+</mat-tab-group>

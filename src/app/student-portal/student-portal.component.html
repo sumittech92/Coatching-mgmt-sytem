@@ -854,6 +854,14 @@
                     <p class="optional-note" *ngIf="portal.optional?.message">{{portal.optional?.message}}</p>
                 </div>
             </section>
+            <section *ngSwitchCase="'live-classes'">
+                <div class="portal-section-intro"><h2>Live classes</h2><p>Join your teachers' Google Meet classes from here. Join opens 10 minutes before the class starts, and you're marked present when you join.</p></div>
+                <app-portal-live-classes></app-portal-live-classes>
+            </section>
+            <section *ngSwitchCase="'mock-papers'">
+                <div class="portal-section-intro"><h2>Mock test papers</h2><p>Make a fresh board-pattern practice paper for any subject and chapters. Each paper can be downloaded 3 times — save it as a PDF to keep it.</p></div>
+                <app-mock-paper-workspace [portal]="true"></app-mock-paper-workspace>
+            </section>
             <section *ngSwitchCase="'unavailable'">
                 <div class="page-title"><span>{{isParent ? 'YOUR CHILD' : 'MY LEARNING'}}</span>
                     <h1>Page not available</h1>

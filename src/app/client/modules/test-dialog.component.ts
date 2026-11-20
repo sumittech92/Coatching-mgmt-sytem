@@ -58,8 +58,23 @@ export class TestDialogComponent {
   get papers(): FormArray<FormGroup> { return this.form.get('papers') as FormArray<FormGroup>; }
   /** Sections of the chosen class (school). */
   get sections(): ApiBatch[] { const code = this.form.value.courseCode; return this.data.batches.filter(batch => batch.course?.courseCode === code); }
-  get sectionNames(): string[] { return this.sections.map(batch => batch.name); }
-  get chosenSectionNames(): string[] { const codes: string[] = this.form.value.batchCodes || []; return this.sections.filter(batch => codes.includes(batch.batchCode)).map(batch => batch.name); }
+  /**
+   * Section lists for the multi-select. They are cached until the class or the chosen sections change:
+   * a new array on every check makes ngModel write again and again, which froze the dialog.
+   */
+  private sectionCache = { key: '', names: [] as string[] };
+  private chosenCache = { key: '', names: [] as string[] };
+  get sectionNames(): string[] {
+    const key = `${this.form.value.courseCode}|${this.data.batches.length}`;
+    if (key !== this.sectionCache.key) this.sectionCache = { key, names: this.sections.map(batch => batch.name) };
+    return this.sectionCache.names;
+  }
+  get chosenSectionNames(): string[] {
+    const codes: string[] = this.form.value.batchCodes || [];
+    const key = `${this.form.value.courseCode}|${codes.join(',')}`;
+    if (key !== this.chosenCache.key) this.chosenCache = { key, names: this.sections.filter(batch => codes.includes(batch.batchCode)).map(batch => batch.name) };
+    return this.chosenCache.names;
+  }
   /** Subjects of the chosen course / class, falling back to the standard list. */
   get subjects(): string[] {
     const courseCode = this.school ? this.form.value.courseCode : this.data.batches.find(batch => batch.batchCode === this.form.value.batchCode)?.course?.courseCode;

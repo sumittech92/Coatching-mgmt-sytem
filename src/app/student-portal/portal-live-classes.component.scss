@@ -1,0 +1,23 @@
+:host { display: block; }
+.lc-list { display: flex; flex-direction: column; gap: 10px; padding: 14px 2px; }
+.lc-card { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; background: #fff; border: 1px solid #edf0f4; }
+.lc-card.live { border-color: #86efac; box-shadow: 0 8px 22px rgba(22, 163, 74, .12); }
+.lc-card.cancelled { opacity: .6; }
+.lc-time { width: 84px; flex: none; display: flex; flex-direction: column; }
+.lc-time b { font-size: 16px; color: #1f2a3c; } .lc-time small { font-size: 12px; color: #5b6778; } .lc-time span { font-size: 11.5px; font-weight: 600; color: #e11d74; margin-top: 2px; }
+.lc-body { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lc-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lc-title b { font-size: 15px; color: #1f2a3c; }
+.lc-body small { font-size: 12.5px; color: #4a5568; } .lc-body .desc { color: #5b6778; }
+.badge { font-size: 11.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
+.badge.live { background: #dcfce7; color: #166534; } .badge.live i { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; }
+.badge.off { background: #fee2e2; color: #991b1b; } .badge.done { background: #e0ecff; color: #1d4ed8; }
+.lc-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.lc-actions button { border-radius: 10px; }
+.when { font-size: 12px; color: #5b6778; }
+@media (max-width: 600px) { .lc-actions { width: 100%; align-items: stretch; } }
+.meet { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; }
+.meet > mat-icon { color: #00897b; font-size: 18px; width: 18px; height: 18px; }
+.meet a { color: #1d4ed8; word-break: break-all; }
+.meet button { width: 32px; height: 32px; padding: 4px; }
+.meet button mat-icon { font-size: 17px; width: 17px; height: 17px; }

@@ -68,3 +68,8 @@
 .optional-list{display:flex;flex-wrap:wrap;gap:6px 22px;padding:4px 0}
 .optional-note{font-size:12px;color:#8a5a00;margin:8px 0 0}
 .admit-cell button{border:1px solid #4770e3;background:#fff;color:#4770e3;border-radius:7px;font-size:12px;padding:5px 12px}.admit-cell button:disabled{opacity:.6}
+
+/* Intro line above the Live classes / Mock papers sections. */
+.portal-section-intro { margin-bottom: 12px; }
+.portal-section-intro h2 { font-size: 20px; font-weight: 750; color: #1f2a3c; margin: 0 0 4px; }
+.portal-section-intro p { margin: 0; font-size: 13.5px; color: #4a5568; max-width: 760px; }

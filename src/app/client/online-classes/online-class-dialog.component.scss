@@ -1,0 +1,17 @@
+:host { display: block; }
+.dialog-title { font-size: 20px; font-weight: 700; color: #263447; margin: 0; padding: 23px 24px 6px; }
+.dialog-subtitle { font-size: 13px; color: #5b6778; margin: 0; padding: 0 24px 12px; }
+.dialog-content { min-width: min(720px, 86vw); max-height: 70vh; padding: 4px 24px 12px; }
+.dialog-actions { padding: 14px 24px 22px; gap: 8px; }
+.field-label { font-size: 12px; font-weight: 650; color: #536176; display: block; margin-bottom: 5px; }
+.meet-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+.meet-field { flex: 1 1 320px; }
+.meet-icon { color: #00897b; margin-right: 6px; }
+.meet-btn { height: 52px; border-radius: 10px; }
+.repeat { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-top: 4px; }
+.day-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.day-chip { border: 1px solid #dfe5ec; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; color: #263447; }
+.day-chip.on { background: #ff2d8a; border-color: #ff2d8a; color: #fff; }
+.weeks { width: 150px; }
+.weeks ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+@media (max-width: 600px) { .dialog-content { min-width: 0; padding: 4px 16px 10px; } }
